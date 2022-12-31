@@ -1,11 +1,15 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+
 from user.models import User
 from .models import Subject, Skill, Module, Question, Lesson, Choice
 from .serializers import SubjectSerializer, SkillSerializer, ModuleSerializer, QuestionSerializer
 
 import random
+
 
 
 @api_view(['POST'])
@@ -126,3 +130,6 @@ def add_question(request):
         Choice.objects.create(body=choice, question=question)
 
     return Response(1)
+
+# upload = Upload(file=image_file)
+# image_url = upload.file.url

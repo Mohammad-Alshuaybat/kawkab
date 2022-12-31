@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 
+from school.cdn.backends import MediaRootS3Boto3Storage
 from user.models import User
 
 
@@ -81,6 +82,7 @@ class Question(models.Model):
     correct_answer = models.TextField(null=True, blank=True)
     skills = models.ManyToManyField('Skill', blank=True)     # many to many
     generalSkills = models.TextField(null=True, blank=True)
+    image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
 
     def __str__(self):
         return self.body
