@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.عaticfiles',
+    'django.contrib.staticfiles',
 
     'rest_framework',
     'corsheaders',
@@ -151,3 +151,8 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+
+# docker build --tag s2023:latest .
+# docker tag s2023:latest malekaldebsi/s2023:latest
+# docker push malekaldebsi/s2023:latest
