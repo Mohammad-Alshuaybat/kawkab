@@ -11,5 +11,5 @@ AWS_S3_OBJECT_PARAMETERS = {
 
 AWS_LOCATION = 'https://sarmadi-spaces.nyc3.digitaloceanspaces.com'
 
-DEFAULT_FILE_STORAGE = 'sarmadi-spaces.cdn.backends.MediaRootS3Boto3Storage'
-STATICFILES_STORAGE = 'sarmadi-spaces.cdn.backends.StaticRootS3Boto3Storage'
+DEFAULT_FILE_STORAGE = 'school.cdn.backends.MediaRootS3Boto3Storage'
+STATICFILES_STORAGE = 'school.cdn.backends.StaticRootS3Boto3Storage'
