@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 import sys
-import dj_database_url
+# import dj_database_url
 from pathlib import Path
 from django.core.management.utils import get_random_secret_key
 
@@ -89,8 +89,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'defaultdb',
         'USER': 'doadmin',
-        'PASSWORD': 'AVNS_cDJ6h6eyEVHeyXeTJ7V',
-        'HOST': 'sarmadi-do-user-12556147-0.b.db.ondigitalocean.com',
+        'PASSWORD': 'AVNS_JxYd1cotXPqfjSy_kUf',
+        'HOST': 'db-postgresql-nyc1-63439-do-user-12556147-0.b.db.ondigitalocean.com',
         'PORT': '25060',
     }
 }
