@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'storages',
+
     'rest_framework',
     'corsheaders',
     
@@ -153,8 +155,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles-cdn")
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+
+from .cdn.conf import *
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -163,7 +167,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-
+# https://sarmadi-spaces.nyc3.digitaloceanspaces.com
 # docker build --tag s2023:latest .
 # docker tag s2023:latest malekaldebsi/s2023:latest
 # docker push malekaldebsi/s2023:latest
