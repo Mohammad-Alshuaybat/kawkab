@@ -116,8 +116,12 @@ def add_question(request):
     skills = data.pop('skills', None)
     generalSkills = data.pop('generalSkills', None)
     choices = data.pop('choices', None)
+    # image = data.pop('image', None)
 
-    question = Question.objects.create(**data)
+    question, _ = Question.objects.get_or_create(**data)
+    # question.image = image
+    # question.save()
+
     for skill in skills:
         _skill, _ = Skill.objects.get_or_create(name=skill)
         question.skills.add(_skill)
@@ -127,9 +131,19 @@ def add_question(request):
         question.skills.add(_skill)
 
     for choice in choices:
-        Choice.objects.create(body=choice, question=question)
+        Choice.objects.create(body=list(choice.keys())[0], info=list(choice.values())[0], question=question)
 
+    return Response({'questionId': question.id})
+
+
+@api_view(['POST'])
+def add_question_image(request):
+    data = request.data
+    questionId = data.pop('questionId', None)[0]
+
+    question = Question.objects.get(id=questionId)
+    question.image = data['image']
+    question.save()
     return Response(1)
-
 # upload = Upload(file=image_file)
 # image_url = upload.file.url

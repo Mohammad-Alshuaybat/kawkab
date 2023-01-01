@@ -92,6 +92,7 @@ class Choice(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     body = models.TextField(null=True, blank=True)
     question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    info = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return f'Q:{self.question}  choice:{self.body}'
