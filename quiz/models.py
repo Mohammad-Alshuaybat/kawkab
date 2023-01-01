@@ -85,7 +85,7 @@ class Question(models.Model):
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
 
     def __str__(self):
-        return self.id
+        return str(self.id)
 
 
 class Choice(models.Model):
