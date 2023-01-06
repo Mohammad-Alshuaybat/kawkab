@@ -26,9 +26,14 @@ class Subject(models.Model):
 
 
 class Skill(models.Model):
+    type_choices = (
+        (1, 'normal_skill'),
+        (2, 'general_skill'),
+    )
+
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     name = models.CharField(max_length=200, null=True, blank=True)
-    type = models.CharField(max_length=200, null=True, blank=True)
+    type = models.IntegerField(choices=type_choices, null=True, blank=True)
     dependencies = models.ManyToManyField('self', symmetrical=False, blank=True)  # symmetrical even if I follow you, you can don't follow me
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     category = models.CharField(max_length=100, null=True, blank=True)
@@ -77,11 +82,17 @@ class Quiz(models.Model):
 
 
 class Question(models.Model):
+    level_choices = (
+        (0, 'easy'),
+        (1, 'normal'),
+        (2, 'difficult'),
+    )
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     body = models.TextField(null=True, blank=True)
     correct_answer = models.TextField(null=True, blank=True)
     skills = models.ManyToManyField('Skill', blank=True)     # many to many
     generalSkills = models.TextField(null=True, blank=True)
+    level = models.IntegerField(choices=level_choices, null=True, blank=True)
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
 
     def __str__(self):
