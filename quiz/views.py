@@ -11,12 +11,14 @@ from .serializers import SubjectSerializer, SkillSerializer, ModuleSerializer, Q
 import random
 
 
-
 @api_view(['POST'])
 def subject_set(request):
     data = request.data
 
     try:
+        # if not User.objects.filter(**data).exists():
+        #     return 0
+
         user = User.objects.get(**data)
 
         subjects = Subject.objects.filter(grade=user.grade)
@@ -37,9 +39,11 @@ def skill_set(request):
 
     try:
         user = User.objects.get(**data)
-        skills = Skill.objects.filter(subject__id=subject_id)
-        serializer = SkillSerializer(skills, many=True)
-        return Response(serializer.data)
+        skills = Skill.objects.filter(subject__id=subject_id, type=1)
+        generalSkills = Skill.objects.filter(subject__id=subject_id, type=2)
+        skillSerializer = SkillSerializer(skills, many=True)
+        generalSkillsSerializer = SkillSerializer(generalSkills, many=True)
+        return Response({'skills': skillSerializer.data, 'generalSkills': generalSkillsSerializer.data})
     except:
         return Response(0)
 
@@ -59,55 +63,101 @@ def lesson_set(request):
 
 
 @api_view(['POST'])
-def skills_quiz(request):
+def build_quiz(request):
     data = request.data
     skills = data.pop('skills', None)
+    general_skills = data.pop('general_skills', None)
     question_num = data.pop('question_num', None)
-    question_set = set()
-    try:
-        User.objects.get(**data)
-        counter = 0
-        while len(question_set) < question_num:
-            questions = Question.objects.filter(skills=skills[counter % len(skills)])
-            if len(questions) >= 1:
-                question_set.add(random.choice(questions))
-            counter += 1
-            if counter > question_num * 3:
-                break
+    quiz_level = data.pop('quiz_level', None)
+    question_set = Question.objects.all()[0:question_num]
+    # question_set = set()
+    # try:
+    #     User.objects.get(**data)
+    #     counter = 0
+    #     while len(question_set) < question_num:
+    #         questions = Question.objects.filter(skills=skills[counter % len(skills)])
+    #         if len(questions) >= 1:
+    #             question_set.add(random.choice(questions))
+    #         counter += 1
+    #         if counter > question_num * 5:
+    #             break
 
-        serializer = QuestionSerializer(question_set, many=True)
-        return Response(serializer.data)
-    except:
-        return Response(0)
+    serializer = QuestionSerializer(question_set, many=True)
+    return Response(serializer.data)
+    # except:
+    #     return Response(0)
 
-
-@api_view(['POST'])
-def lessons_quiz(request):
-    data = request.data
-    lessons = data.pop('lessons', None)
-    question_num = data.pop('question_num', None)
-
-    skills = []
-    for lesson in lessons:
-        skills += list(Lesson.objects.get(id=lesson).skills.all().values_list('id', flat=True))
-
-    skills = list(set(skills))
-    question_set = set()
-    try:
-        User.objects.get(**data)
-        counter = 0
-        while len(question_set) < question_num:
-            questions = Question.objects.filter(skills=skills[counter % len(skills)])
-            if len(questions) >= 1:
-                question_set.add(random.choice(questions))
-            counter += 1
-            if counter > question_num * 3:
-                break
-
-        serializer = QuestionSerializer(question_set, many=True)
-        return Response(serializer.data)
-    except:
-        return Response(0)
+# @api_view(['POST'])
+# def lessons_quiz(request):
+#     data = request.data
+#     lessons = data.pop('lessons', None)
+#     question_num = data.pop('question_num', None)
+#
+#     skills = []
+#     for lesson in lessons:
+#         skills += list(Lesson.objects.get(id=lesson).skills.all().values_list('id', flat=True))
+#
+#     skills = list(set(skills))
+#     question_set = set()
+#     try:
+#         User.objects.get(**data)
+#         counter = 0
+#         while len(question_set) < question_num:
+#             questions = Question.objects.filter(skills=skills[counter % len(skills)])
+#             if len(questions) >= 1:
+#                 question_set.add(random.choice(questions))
+#             counter += 1
+#             if counter > question_num * 3:
+#                 break
+#
+#         serializer = QuestionSerializer(question_set, many=True)
+#         return Response(serializer.data)
+#     except:
+#         return Response(0)
+    # @api_view(['POST'])
+    # def lessons_quiz(request):
+    #     data = request.data
+    #     skills = data.pop('skills', None)
+    #     question_num = data.pop('question_num', None)
+    #     print(skills)
+    # [skills]
+    # modules = {}
+    # Lesson.objects.filter(skills)
+    # for lesson in lessons:
+    #   modules['lesson.module.id'].add(lesson.id)
+    #
+    # dic = {
+    #     '1': {
+    #         'lessons': [
+    #             {'a': {
+    #                 'skills': ['+', '-'],
+    #                 'skills_num': 2
+    #             }},
+    #             {'b': {
+    #                 'skills': ['*'],
+    #                 'skills_num': 1
+    #             }}
+    #         ],
+    #         'skills_num': 3
+    #     },
+    #     '2': {
+    #         'lessons': [
+    #             {'c': {
+    #                 'skills': ['^', '%', '$'],
+    #                 'skills_num': 3
+    #             }},
+    #             {'d': {
+    #                 'skills': ['#'],
+    #                 'skills_num': 1
+    #             }}
+    #         ],
+    #         'skills_num': 4
+    #     }
+    # }
+    # # 10
+    # question_num = [0.4, 0.5]
+    #
+    # return Response(0)
 
 
 @api_view(['POST'])
@@ -127,7 +177,7 @@ def add_question(request):
         question.skills.add(_skill)
 
     for generalSkill in generalSkills:
-        _skill, _ = Skill.objects.get_or_create(name=generalSkill, type='general')
+        _skill, _ = Skill.objects.get_or_create(name=generalSkill, type=2)
         question.skills.add(_skill)
 
     for choice in choices:

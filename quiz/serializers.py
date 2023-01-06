@@ -9,27 +9,15 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 
 class SkillSerializer(serializers.ModelSerializer):
-    status = serializers.SerializerMethodField('status_value')
-
-    @staticmethod
-    def status_value(obj):
-        return False
-
     class Meta:
         model = Skill
-        fields = ['id', 'name', 'status']
+        fields = ['id', 'name']
 
 
 class LessonSerializer(serializers.ModelSerializer):
-    status = serializers.SerializerMethodField('status_value')
-
-    @staticmethod
-    def status_value(obj):
-        return False
-
     class Meta:
         model = Lesson
-        fields = ['id', 'name', 'status']
+        fields = ['id', 'name', 'skills']
 
 
 class ModuleSerializer(serializers.ModelSerializer):
