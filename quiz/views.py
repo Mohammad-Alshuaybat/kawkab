@@ -1,9 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from django.conf import settings
-from django.core.files.storage import FileSystemStorage
-
 from user.models import User
 from .models import Subject, Skill, Module, Question, Lesson, Choice
 from .serializers import SubjectSerializer, SkillSerializer, ModuleSerializer, QuestionSerializer
@@ -69,7 +66,8 @@ def build_quiz(request):
     general_skills = data.pop('general_skills', None)
     question_num = data.pop('question_num', None)
     quiz_level = data.pop('quiz_level', None)
-    question_set = Question.objects.all()[0:question_num]
+    question_set = Question.objects.all()[:question_num]
+
     # question_set = set()
     # try:
     #     User.objects.get(**data)
@@ -166,11 +164,8 @@ def add_question(request):
     skills = data.pop('skills', None)
     generalSkills = data.pop('generalSkills', None)
     choices = data.pop('choices', None)
-    # image = data.pop('image', None)
 
     question, _ = Question.objects.get_or_create(**data)
-    # question.image = image
-    # question.save()
 
     for skill in skills:
         _skill, _ = Skill.objects.get_or_create(name=skill)
@@ -178,7 +173,7 @@ def add_question(request):
 
     for generalSkill in generalSkills:
         _skill, _ = Skill.objects.get_or_create(name=generalSkill, type=2)
-        question.skills.add(_skill)
+        question.generalSkills.add(_skill)
 
     for choice in choices:
         Choice.objects.create(body=list(choice.keys())[0], info=list(choice.values())[0], question=question)
@@ -197,3 +192,4 @@ def add_question_image(request):
     return Response(1)
 # upload = Upload(file=image_file)
 # image_url = upload.file.url
+# >>> QuizAnswer.objects.create(duration=datetime.timedelta(seconds = 68400))
