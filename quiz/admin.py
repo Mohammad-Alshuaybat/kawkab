@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Subject, Skill, SkillInst, Module, Lesson, Quiz, Question, Choice, QuizAnswer, QuestionAnswer
+from .models import Subject, Skill, SkillInst, Module, Lesson, Question, Choice, QuizAnswer, QuestionAnswer
 from import_export.admin import ExportActionMixin
 
 
@@ -21,7 +21,6 @@ admin.site.register(Subject)
 admin.site.register(SkillInst)
 admin.site.register(Module)
 admin.site.register(Lesson)
-admin.site.register(Quiz)
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Choice, ChoiceAdmin)
 admin.site.register(QuizAnswer)

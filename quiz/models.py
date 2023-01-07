@@ -71,16 +71,6 @@ class Lesson(models.Model):
         return self.name
 
 
-class Quiz(models.Model):
-    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    name = models.CharField(max_length=200, null=True, blank=True)
-    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    question = models.ManyToManyField('Question', blank=True)     # many to many
-
-    def __str__(self):
-        return self.name
-
-
 class Question(models.Model):
     level_choices = (
         (0, 'easy'),
@@ -113,11 +103,11 @@ class Choice(models.Model):
 
 class QuizAnswer(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    quiz = models.ForeignKey(Quiz, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f'{self.user} - {self.quiz}'
+        return f'{self.user} - {self.subject}'
 
 
 class QuestionAnswer(models.Model):

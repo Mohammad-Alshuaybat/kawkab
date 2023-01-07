@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from user.models import User
-from .models import Subject, Skill, Module, Question, Lesson, Choice
+from .models import Subject, Skill, Module, Question, Lesson, Choice, QuestionAnswer, QuizAnswer
 from .serializers import SubjectSerializer, SkillSerializer, ModuleSerializer, QuestionSerializer
 
 import random
@@ -84,6 +84,39 @@ def build_quiz(request):
     return Response(serializer.data)
     # except:
     #     return Response(0)
+
+
+@api_view(['POST'])
+def marking(request):
+    def check_answer(Q, A):
+        return Q.correct_answer.strip() == A.body.strip()
+    data = request.data
+    # answers = data.pop('answers', None)
+    # subject = data.pop('subject', None)
+    answers = {'2d94f4c7-bcae-4043-bf84-ec613e38f5c4': {'duration': 4, 'body': ''},
+               '1f87a81e-7102-4cc0-9269-d3f4e4fb42d4': {'duration': 6, 'body': ''},
+               '6b762c73-3467-453d-af52-9cf3c1c8d048': {'duration': 0, 'body': '$25k^2-16$'}}
+    subject = 'الرياضيات'
+    attempt_duration = 0
+    correct_questions = 0
+    skill_set = set()
+    try:
+        # user = User.objects.get(**data)
+        user = User.objects.get(email='osama@gmail.com')
+        subject = Subject.objects.get(name=subject)
+        quiz = QuizAnswer.objects.create(subject=subject, user=user)
+        for ID, ans in answers.items():
+            question = Question.objects.get(id=ID)
+            answer = QuestionAnswer.objects.create(body=ans['body'], duration=ans['duration'], question=question, quiz_answer=quiz)
+            attempt_duration += answer.duration
+            correct_questions += 1 if check_answer(question, answer) else 0
+            skill_set.add(question.skills.all())
+        print(attempt_duration)
+        print(correct_questions)
+        print(skill_set)
+        return Response(1)
+    except:
+        return Response(0)
 
 # @api_view(['POST'])
 # def lessons_quiz(request):
