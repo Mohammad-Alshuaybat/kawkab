@@ -90,8 +90,10 @@ class Question(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     body = models.TextField(null=True, blank=True)
     correct_answer = models.TextField(null=True, blank=True)
-    skills = models.ManyToManyField('Skill', blank=True)     # many to many
-    generalSkills = models.TextField(null=True, blank=True)
+    hint = models.TextField(null=True, blank=True)
+    writer = models.CharField(max_length=200, null=True, blank=True)
+    skills = models.ManyToManyField('Skill', related_name='skills', blank=True)     # many to many
+    generalSkills = models.ManyToManyField('Skill', related_name='generalSkills', blank=True)
     level = models.IntegerField(choices=level_choices, null=True, blank=True)
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
 
@@ -121,7 +123,7 @@ class QuizAnswer(models.Model):
 class QuestionAnswer(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     body = models.TextField(null=True, blank=True)
-    correct = models.BooleanField(null=True, blank=True)
+    duration = models.DurationField(null=True, blank=True)
     question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     quiz_answer = models.ForeignKey(QuizAnswer, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 

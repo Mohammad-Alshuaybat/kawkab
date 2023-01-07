@@ -41,7 +41,7 @@ class ModuleSerializer(serializers.ModelSerializer):
 class ChoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Choice
-        fields = ['body']
+        fields = ['id', 'body']
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -49,9 +49,10 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     def get_choices(self, obj):
         choices = obj.choice_set.all()
+        print(choices)
         serializer = ChoiceSerializer(choices, many=True)
         return serializer.data
 
     class Meta:
         model = Question
-        fields = ['id', 'body', 'correct_answer', 'choices']
+        fields = ['id', 'body', 'correct_answer', 'image', 'choices']
