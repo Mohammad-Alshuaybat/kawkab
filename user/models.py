@@ -17,9 +17,9 @@ class User(models.Model):
 
     firstName = models.CharField(max_length=30, null=True, blank=True)
     lastName = models.CharField(max_length=30, null=True, blank=True)
-    section = models.CharField(max_length=50, choices=section_choices, null=True, blank=True)
 
     grade = models.IntegerField(null=True, blank=True)
+    section = models.CharField(max_length=50, choices=section_choices, null=True, blank=True)
 
     def __str__(self):
         return f'{self.email}-{self.phone}'
