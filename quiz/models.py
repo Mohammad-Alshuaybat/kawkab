@@ -25,21 +25,25 @@ class Subject(models.Model):
         return f'{self.name} ف{self.semester} --{self.grade}'
 
 
-class Skill(models.Model):
-    type_choices = (
-        (1, 'normal_skill'),
-        (2, 'general_skill'),
-    )
-
+class Tag(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     name = models.CharField(max_length=200, null=True, blank=True)
-    type = models.IntegerField(choices=type_choices, null=True, blank=True)
-    dependencies = models.ManyToManyField('self', symmetrical=False, blank=True)  # symmetrical even if I follow you, you can don't follow me
-    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    category = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+
+class Skill(Tag):
+    dependencies = models.ManyToManyField('self', symmetrical=False, blank=True)  # symmetrical even if I follow you, you can don't follow me
+    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+
+class GeneralSkill(Tag):
+    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+
+class QuestionLevel(Tag):
+    pass
 
 
 class SkillInst(models.Model):
@@ -57,6 +61,11 @@ class Module(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True)
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
+    @property
+    def skills(self):
+        skills = Skill.objects.filter(lesson__module=self).distinct()
+        return skills
+
     def __str__(self):
         return self.name
 
@@ -65,92 +74,113 @@ class Lesson(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     name = models.CharField(max_length=200, null=True, blank=True)
     module = models.ForeignKey(Module, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    skills = models.ManyToManyField(Skill, symmetrical=False, blank=True)  # symmetrical even if I follow you, you can don't follow me
+    skills = models.ManyToManyField(Skill, symmetrical=False, blank=True)
 
     def __str__(self):
         return self.name
 
 
-class Question(models.Model):
-    level_choices = (
-        (0, 'easy'),
-        (1, 'normal'),
-        (2, 'difficult'),
-    )
+class Answer(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+
+    def __str__(self):
+        return str(self.id)
+
+
+class AdminAnswer(Answer):
     body = models.TextField(null=True, blank=True)
-    correct_answer = models.TextField(null=True, blank=True)
-    hint = models.TextField(null=True, blank=True)
-    writer = models.CharField(max_length=200, null=True, blank=True)
-    skills = models.ManyToManyField('Skill', related_name='skills', blank=True)     # many to many
-    generalSkills = models.ManyToManyField('Skill', related_name='generalSkills', blank=True)
-    level = models.IntegerField(choices=level_choices, null=True, blank=True)
+
+
+class UserAnswer(Answer):
+    duration = models.DurationField(null=True, blank=True)
+    question = models.ForeignKey('Question', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    quiz = models.ForeignKey('UserQuiz', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+    def __eq__(self, other):
+        if isinstance(self, UserMultipleChoiceAnswer):
+            return self.answer == other
+
+        elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):
+            return self.body.strip() == other.body.strip()
+
+        return False
+
+
+class AdminFinalAnswer(AdminAnswer):
+    pass
+
+
+class UserFinalAnswer(UserAnswer):
+    body = models.TextField(null=True, blank=True)
+
+
+class AdminMultipleChoiceAnswer(AdminAnswer):
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
+    notes = models.CharField(max_length=200, null=True, blank=True)
+
+    def __eq__(self, other):
+        if isinstance(other, UserMultipleChoiceAnswer):
+            return other.__eq__(self)
+        return self.id == other.id
+
+
+class UserMultipleChoiceAnswer(UserAnswer):
+    user_answer = models.ForeignKey(AdminMultipleChoiceAnswer, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+
+class Question(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+
+    body = models.TextField(null=True, blank=True)
+    image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
+
+    idealDuration = models.DurationField(null=True, blank=True)
+
+    tags = models.ManyToManyField(Tag, related_name='tags', blank=True)
+    skills = models.ManyToManyField(Skill, related_name='skills', blank=True)
+
+    hint = models.TextField(null=True, blank=True)
+    author = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return str(self.body)
 
 
-class Choice(models.Model):
+class FinalAnswerQuestion(Question):
+    correct_answer = models.ForeignKey(AdminFinalAnswer, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+
+class MultipleChoiceQuestion(Question):
+    correct_answer = models.ForeignKey(AdminMultipleChoiceAnswer, related_name='correct_answer', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    choices = models.ManyToManyField(AdminMultipleChoiceAnswer, related_name='choices', symmetrical=False, blank=True)
+
+
+class Solution(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     body = models.TextField(null=True, blank=True)
+    image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
     question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    info = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
-        return f'Q:{self.question}  choice:{self.body}'
+        return f'Q:{self.question}  S:{self.body}'
 
 
-class QuizAnswer(models.Model):
+class Quiz(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f'{self.user} - {self.subject}'
+        return f'{self.id}'
 
 
-class QuestionAnswer(models.Model):
-    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    body = models.TextField(null=True, blank=True)
+class AdminQuiz(Quiz):
+    name = models.CharField(max_length=100, null=True, blank=True)
     duration = models.DurationField(null=True, blank=True)
-    question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    quiz_answer = models.ForeignKey(QuizAnswer, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    questions = models.ManyToManyField(Question, symmetrical=False, blank=True)
 
     def __str__(self):
-        return f'Q:{self.question}  A:{self.body}'
+        return self.name
 
 
-# class AcademicYear(models.Model):
-#     semester_choices = (
-#         ('first', 'first semester'),
-#         ('second', 'second semester')
-#     )
-#
-#     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-#     name = models.CharField(max_length=12, null=True, blank=True)
-#     starting_date = models.DateField(null=True, blank=True)
-#     name = models.IntegerField(null=True, blank=True)
-#     school = models.ForeignKey('School', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-#     semester = models.CharField(max_length=50, choices=semester_choices, null=True, blank=True)
-#     students_set = models.ManyToManyField('Student', blank=True)     # many to many
-#     registration_info = models.OneToOneField('RegistrationInfo', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-#     scholarship = models.BooleanField(null=True, blank=True)
-#     body = models.TextField(null=True, blank=True)
-#     mark = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-#
-#     def level(self):
-#         return SkillInst.objects.get(skill=self).level  # TODO: check
-#
-#     # @property
-#     # def average(self):
-#     #     avg = self.certificate.aggregate(average=Avg(F('first')+F('second')+F('third')+F('final')))['average']
-#     #     return avg
-#
-#     @property
-#     def subject_grade(self):
-#         total = self.first + self.second + self.third + self.final
-#         return total
-#
-#     def __str__(self):
-#         return f'{self.certificate} - {self.subject}'
+class UserQuiz(Quiz):
+    user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)

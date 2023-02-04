@@ -1,4 +1,10 @@
 from django.contrib import admin
+from import_export.admin import ExportActionMixin
 from .models import User
 
-admin.site.register(User)
+
+class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
+    pass
+
+
+admin.site.register(User, ExportAllFields)

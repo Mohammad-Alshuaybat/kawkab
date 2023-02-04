@@ -1,32 +1,27 @@
 from rest_framework import serializers
-from .models import Subject, Skill, Module, Lesson, Question, Choice
+from .models import Subject, Tag, Module, Lesson, Question
 
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ['id', 'name', 'semester']
+        fields = ['id', 'name', 'semester', 'classification']
 
 
-class SkillSerializer(serializers.ModelSerializer):
+class TagSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Skill
+        model = Tag
         fields = ['id', 'name']
 
 
 class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
-        fields = ['id', 'name', 'skills']
+        fields = ['name', 'skills']
 
 
 class ModuleSerializer(serializers.ModelSerializer):
     lessons = serializers.SerializerMethodField()
-    status = serializers.SerializerMethodField('status_value')
-
-    @staticmethod
-    def status_value(obj):
-        return False
 
     def get_lessons(self, obj):
         lessons = obj.lesson_set.all()
@@ -35,24 +30,4 @@ class ModuleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Module
-        fields = ['name', 'status', 'lessons']
-
-
-class ChoiceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Choice
-        fields = ['id', 'body']
-
-
-class QuestionSerializer(serializers.ModelSerializer):
-    choices = serializers.SerializerMethodField()
-
-    def get_choices(self, obj):
-        choices = obj.choice_set.all()
-        print(choices)
-        serializer = ChoiceSerializer(choices, many=True)
-        return serializer.data
-
-    class Meta:
-        model = Question
-        fields = ['id', 'body', 'image', 'choices']
+        fields = ['name', 'lessons']

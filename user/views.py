@@ -1,29 +1,14 @@
-from django.db import IntegrityError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import User
+
+from user.utils import signup, login, check_user, get_user
 
 
 @api_view(['POST'])
 def sign_up(request):
-    # 0-->account_created  1-->account_already_exit  2-->email_is_used  3-->phone_num_is_used  4-->sth_goes_wrong
+    # 0-->account_created  1-->account_already_exit  2-->email_is_used  3-->phone_num_is_used
     data = request.data
-    try:
-        user, created = User.objects.get_or_create(**data)
-
-        if created:
-            return Response(0)
-        else:
-            return Response(1)
-
-    except IntegrityError as e:
-        print(e)
-        if e.args[0] == 'UNIQUE constraint failed: user_user.email':
-            return Response(2)
-        elif e.args[0] == 'UNIQUE constraint failed: user_user.phone':
-            return Response(3)
-
-    return Response(4)
+    return Response(signup(data))
 # {
 #     "email": "malek315@gmail.com",
 #     "phone": "0786636678",
@@ -37,14 +22,9 @@ def sign_up(request):
 
 @api_view(['POST'])
 def log_in(request):
-    # 0-->logged_in  1-->email_or_password_are_wrong
+    # 0-->logged_in  1-->password_are_wrong  2-->email_or_phone_not_exist
     data = request.data
-
-    try:
-        user = User.objects.get(**data)
-        return Response(0)
-    except:
-        return Response(1)
+    return Response(login(data))
 # {
 #     "email": "malek315@gmail.com",
 #     "password": "password"
@@ -60,11 +40,10 @@ def log_in(request):
 def user_name(request):
     # username  0-->sth_goes_wrong
     data = request.data
-
-    try:
-        user = User.objects.get(**data)
+    if check_user(data):
+        user = get_user(data)
         return Response(user.firstName)
-    except:
+    else:
         return Response(0)
 # {
 #     "email": "malek315@gmail.com",
