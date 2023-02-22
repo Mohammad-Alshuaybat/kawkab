@@ -46,6 +46,27 @@ class QuestionLevel(Tag):
     pass
 
 
+class HeadBase(Tag):
+    def get_child_headings(self):
+        return HeadLine.objects.filter(parent_headline=self)
+
+
+class H1(HeadBase):
+    lesson = models.ForeignKey('Lesson', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+
+class HeadLine(HeadBase):
+    level_choices = (
+        (2, 'H2'),
+        (3, 'H3'),
+        (4, 'H4'),
+        (5, 'H5'),
+    )
+
+    level = models.IntegerField(choices=level_choices, null=True, blank=True)
+    parent_headline = models.ForeignKey(HeadBase, related_name='child_headings', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+
 class SkillInst(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     level = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
