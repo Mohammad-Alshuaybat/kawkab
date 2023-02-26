@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from user.models import User
 from user.utils import check_user, get_user
-from .models import Subject, Module, Question, Lesson, GeneralSkill, FinalAnswerQuestion, AdminFinalAnswer, \
+from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author
 from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
@@ -120,82 +120,82 @@ def add_question_image(request):
 # >>> QuizAnswer.objects.create(duration=datetime.timedelta(seconds = 68400))
 
 
-@api_view(['GET'])
-def read_skills_from_xlsx(request):
-    df = pd.read_excel(r'G:\school\data\skills.xlsx')
+# @api_view(['GET'])
+# def read_skills_from_xlsx(request):
+#     df = pd.read_excel(r'G:\school\data\skills.xlsx')
 
-    sub, _ = Subject.objects.get_or_create(name='الرياضيات')
-    for index, row in df.iterrows():
-        row = row.to_dict()
-        if row['type'] == 2:
-            GeneralSkill.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
-        else:
-            Skill.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
+#     sub, _ = Subject.objects.get_or_create(name='الرياضيات')
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         if row['type'] == 2:
+#             GeneralSkill.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
+#         else:
+#             Skill.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
 
-    for index, row in df.iterrows():
-        row = row.to_dict()
-        dependencies = str(row['dependencies']).split(',')
-        for i in dependencies:
-            if i != 'nan':
-                dep_skill = Skill.objects.get(id=i)
-                Skill.objects.get(id=row['id']).dependencies.add(dep_skill)
-    return Response()
-
-
-@api_view(['GET'])
-def read_modules_from_xlsx(request):
-    df = pd.read_excel(r'G:\school\data\modules.xlsx')
-
-    sub, _ = Subject.objects.get_or_create(name='الرياضيات')
-    for index, row in df.iterrows():
-        row = row.to_dict()
-        Module.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
-
-    return Response()
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         dependencies = str(row['dependencies']).split(',')
+#         for i in dependencies:
+#             if i != 'nan':
+#                 dep_skill = Skill.objects.get(id=i)
+#                 Skill.objects.get(id=row['id']).dependencies.add(dep_skill)
+#     return Response()
 
 
-@api_view(['GET'])
-def read_lessons_from_xlsx(request):
-    df = pd.read_excel(r'G:\school\data\lessons.xlsx')
+# @api_view(['GET'])
+# def read_modules_from_xlsx(request):
+#     df = pd.read_excel(r'G:\school\data\modules.xlsx')
 
-    for index, row in df.iterrows():
-        row = row.to_dict()
-        module = Module.objects.get(id=row['module'])
-        lsn, _ = Lesson.objects.get_or_create(id=row['id'], name=row['name'], module=module)
-        skills = str(row['skills']).split(',')
-        for i in skills:
-            if i != 'nan':
-                skill = Skill.objects.get(id=i)
-                lsn.skills.add(skill)
-    return Response()
+#     sub, _ = Subject.objects.get_or_create(name='الرياضيات')
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         Module.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
+
+#     return Response()
 
 
-@api_view(['GET'])
-def read_questions_from_xlsx(request):
-    # images, question type final or multi, correct answer
-    df = pd.read_excel(r'G:\school\data\questions.xlsx')
-    ques_type = 0
-    for index, row in df.iterrows():
-        row = row.to_dict()
-        if ques_type % 2 == 0:
-            qes, _ = FinalAnswerQuestion.objects.get_or_create(id=row['id'], body=row['body'])
-        else:
-            qes, _ = MultipleChoiceQuestion.objects.get_or_create(id=row['id'], body=row['body'])
-        ques_type += 1
-        skills = str(row['skills']).split(',')
+# @api_view(['GET'])
+# def read_lessons_from_xlsx(request):
+#     df = pd.read_excel(r'G:\school\data\lessons.xlsx')
 
-        for i in skills:
-            if i != 'nan':
-                skill = Skill.objects.get(id=i)
-                qes.skills.add(skill)
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         module = Module.objects.get(id=row['module'])
+#         lsn, _ = Lesson.objects.get_or_create(id=row['id'], name=row['name'], module=module)
+#         skills = str(row['skills']).split(',')
+#         for i in skills:
+#             if i != 'nan':
+#                 skill = Skill.objects.get(id=i)
+#                 lsn.skills.add(skill)
+#     return Response()
 
-        gsk = str(row['generalSkills']).split(',')
-        for i in gsk:
-            if i != 'nan':
-                skill = GeneralSkill.objects.get(id=i)
-                qes.tags.add(skill)
 
-    return Response()
+# @api_view(['GET'])
+# def read_questions_from_xlsx(request):
+#     # images, question type final or multi, correct answer
+#     df = pd.read_excel(r'G:\school\data\questions.xlsx')
+#     ques_type = 0
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         if ques_type % 2 == 0:
+#             qes, _ = FinalAnswerQuestion.objects.get_or_create(id=row['id'], body=row['body'])
+#         else:
+#             qes, _ = MultipleChoiceQuestion.objects.get_or_create(id=row['id'], body=row['body'])
+#         ques_type += 1
+#         skills = str(row['skills']).split(',')
+
+#         for i in skills:
+#             if i != 'nan':
+#                 skill = Skill.objects.get(id=i)
+#                 qes.skills.add(skill)
+
+#         gsk = str(row['generalSkills']).split(',')
+#         for i in gsk:
+#             if i != 'nan':
+#                 skill = GeneralSkill.objects.get(id=i)
+#                 qes.tags.add(skill)
+
+#     return Response()
 
 
 @api_view(['POST'])
