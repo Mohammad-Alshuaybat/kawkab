@@ -25,6 +25,49 @@ class Subject(models.Model):
         return f'{self.name} ف{self.semester} --{self.grade}'
 
 
+class Module(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    name = models.CharField(max_length=200, null=True, blank=True)
+    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+    def get_main_headlines(self):
+        lessons = Lesson.objects.filter(module=self)
+        h1s = H1.objects.filter(lesson__in=lessons)
+        return h1s
+
+    def get_all_headlines(self):
+        lessons = Lesson.objects.filter(module=self)
+        h1s = H1.objects.filter(lesson__in=lessons)
+        h2s = HeadLine.objects.filter(parent_headline__in=h1s)
+        h3s = HeadLine.objects.filter(parent_headline__in=h2s)
+        h4s = HeadLine.objects.filter(parent_headline__in=h3s)
+        h5s = HeadLine.objects.filter(parent_headline__in=h4s)
+        return set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+
+    def __str__(self):
+        return self.name
+
+
+class Lesson(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    name = models.CharField(max_length=200, null=True, blank=True)
+    module = models.ForeignKey(Module, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+    def get_main_headlines(self):
+        return H1.objects.filter(lesson=self)
+
+    def get_all_headlines(self):
+        h1s = H1.objects.filter(lesson=self)
+        h2s = HeadLine.objects.filter(parent_headline__in=h1s)
+        h3s = HeadLine.objects.filter(parent_headline__in=h2s)
+        h4s = HeadLine.objects.filter(parent_headline__in=h3s)
+        h5s = HeadLine.objects.filter(parent_headline__in=h4s)
+        return set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+
+    def __str__(self):
+        return self.name
+
+
 class Tag(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     name = models.CharField(max_length=200, null=True, blank=True)
@@ -33,13 +76,8 @@ class Tag(models.Model):
         return self.name
 
 
-class Skill(Tag):
-    dependencies = models.ManyToManyField('self', symmetrical=False, blank=True)  # symmetrical even if I follow you, you can don't follow me
-    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-
-
-class GeneralSkill(Tag):
-    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+class Author(Tag):
+    pass
 
 
 class QuestionLevel(Tag):
@@ -52,7 +90,7 @@ class HeadBase(Tag):
 
 
 class H1(HeadBase):
-    lesson = models.ForeignKey('Lesson', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    lesson = models.ForeignKey(Lesson, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
 
 class HeadLine(HeadBase):
@@ -67,38 +105,14 @@ class HeadLine(HeadBase):
     parent_headline = models.ForeignKey(HeadBase, related_name='child_headings', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
 
-class SkillInst(models.Model):
+class HeadLineInst(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     level = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
-    skill = models.ForeignKey(Skill, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    headline = models.ForeignKey(HeadBase, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f'{self.skill} - {self.user}'
-
-
-class Module(models.Model):
-    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    name = models.CharField(max_length=200, null=True, blank=True)
-    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-
-    @property
-    def skills(self):
-        skills = Skill.objects.filter(lesson__module=self).distinct()
-        return skills
-
-    def __str__(self):
-        return self.name
-
-
-class Lesson(models.Model):
-    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    name = models.CharField(max_length=200, null=True, blank=True)
-    module = models.ForeignKey(Module, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    skills = models.ManyToManyField(Skill, symmetrical=False, blank=True)
-
-    def __str__(self):
-        return self.name
+        return f'{self.headline} - {self.user}'
 
 
 class Answer(models.Model):
@@ -119,9 +133,9 @@ class UserAnswer(Answer):
 
     def __eq__(self, other):
         if isinstance(self, UserMultipleChoiceAnswer):
-            return self.answer == other
+            return self.choice == other
 
-        elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):
+        elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):  # TODO
             return self.body.strip() == other.body.strip()
 
         return False
@@ -146,7 +160,7 @@ class AdminMultipleChoiceAnswer(AdminAnswer):
 
 
 class UserMultipleChoiceAnswer(UserAnswer):
-    user_answer = models.ForeignKey(AdminMultipleChoiceAnswer, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    choice = models.ForeignKey(AdminMultipleChoiceAnswer, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
 
 class Question(models.Model):
@@ -158,10 +172,8 @@ class Question(models.Model):
     idealDuration = models.DurationField(null=True, blank=True)
 
     tags = models.ManyToManyField(Tag, related_name='tags', blank=True)
-    skills = models.ManyToManyField(Skill, related_name='skills', blank=True)
 
     hint = models.TextField(null=True, blank=True)
-    author = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return str(self.body)
@@ -173,7 +185,7 @@ class FinalAnswerQuestion(Question):
 
 class MultipleChoiceQuestion(Question):
     correct_answer = models.ForeignKey(AdminMultipleChoiceAnswer, related_name='correct_answer', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    choices = models.ManyToManyField(AdminMultipleChoiceAnswer, related_name='choices', symmetrical=False, blank=True)
+choices = models.ManyToManyField(AdminMultipleChoiceAnswer, related_name='choices', symmetrical=False, blank=True)
 
 
 class Solution(models.Model):
