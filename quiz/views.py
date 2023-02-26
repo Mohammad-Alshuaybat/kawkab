@@ -13,7 +13,7 @@ from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
 
 import random
 import datetime
-import pandas as pd
+# import pandas as pd
 
 
 @api_view(['POST'])
