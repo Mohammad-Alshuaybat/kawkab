@@ -122,13 +122,13 @@ def add_question_image(request):
     return Response(1)
 # upload = Upload(file=image_file)
 # image_url = upload.file.url
-# >>> QuizAnswer.objects.create(duration=datetime.timedelta(seconds = 68400))
+# QuizAnswer.objects.create(duration=datetime.timedelta(seconds = 68400))
 
 
 # @api_view(['GET'])
 # def read_skills_from_xlsx(request):
 #     df = pd.read_excel(r'G:\school\data\skills.xlsx')
-#
+
 #     sub, _ = Subject.objects.get_or_create(name='الرياضيات')
 #     for index, row in df.iterrows():
 #         row = row.to_dict()
@@ -136,7 +136,7 @@ def add_question_image(request):
 #             GeneralSkill.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
 #         else:
 #             Skill.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
-#
+
 #     for index, row in df.iterrows():
 #         row = row.to_dict()
 #         dependencies = str(row['dependencies']).split(',')
@@ -163,12 +163,11 @@ def add_question_image(request):
 # @api_view(['GET'])
 # def read_modules_from_xlsx(request):
 #     df = pd.read_excel(r'G:\school\data\modules.xlsx')
-#
+
 #     sub, _ = Subject.objects.get_or_create(name='الرياضيات')
 #     for index, row in df.iterrows():
 #         row = row.to_dict()
 #         Module.objects.get_or_create(id=row['id'], name=row['name'], subject=sub)
-#
 #     return Response()
 #
 #
@@ -176,6 +175,13 @@ def add_question_image(request):
 # def read_lessons_from_xlsx(request):
 #     df = pd.read_excel(r'G:\school\data\lessons.xlsx')
 #
+#     return Response()
+
+
+# @api_view(['GET'])
+# def read_lessons_from_xlsx(request):
+#     df = pd.read_excel(r'G:\school\data\lessons.xlsx')
+
 #     for index, row in df.iterrows():
 #         row = row.to_dict()
 #         module = Module.objects.get(id=row['module'])
@@ -186,8 +192,7 @@ def add_question_image(request):
 #                 skill = Skill.objects.get(id=i)
 #                 lsn.skills.add(skill)
 #     return Response()
-#
-#
+
 # @api_view(['GET'])
 # def read_questions_from_xlsx(request):
 #     # images, question type final or multi, correct answer
@@ -201,20 +206,19 @@ def add_question_image(request):
 #             qes, _ = MultipleChoiceQuestion.objects.get_or_create(id=row['id'], body=row['body'])
 #         ques_type += 1
 #         skills = str(row['skills']).split(',')
-#
+
 #         for i in skills:
 #             if i != 'nan':
 #                 skill = Skill.objects.get(id=i)
 #                 qes.skills.add(skill)
-#
+
 #         gsk = str(row['generalSkills']).split(',')
 #         for i in gsk:
 #             if i != 'nan':
 #                 skill = GeneralSkill.objects.get(id=i)
 #                 qes.tags.add(skill)
-#
 #     return Response()
-#
+
 
 @api_view(['POST'])
 def build_quiz(request):

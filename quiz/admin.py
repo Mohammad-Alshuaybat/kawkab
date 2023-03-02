@@ -12,8 +12,10 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
 
 admin.site.register(Subject, ExportAllFields)
 # admin.site.register(Tag, ExportAllFields)  abstract
+
 admin.site.register(H1, ExportAllFields)
 admin.site.register(HeadLine, ExportAllFields)
+
 # admin.site.register(SkillInst, ExportAllFields)
 admin.site.register(Module, ExportAllFields)
 admin.site.register(Lesson, ExportAllFields)
