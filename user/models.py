@@ -10,6 +10,7 @@ class User(models.Model):
     )
 
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(unique=True, max_length=30, null=True, blank=True)

@@ -85,8 +85,13 @@ class QuestionLevel(Tag):
 
 
 class HeadBase(Tag):
-    def get_child_headings(self):
-        return HeadLine.objects.filter(parent_headline=self)
+    def get_all_child_headlines(self):
+        hs = set(HeadLine.objects.filter(parent_headline=self))
+        hs_level = self.level if hasattr(self, 'level') else 1
+        while hs_level < 4:
+            hs |= set(HeadLine.objects.filter(parent_headline__in=hs))
+            hs_level += 1
+        return hs
 
 
 class H1(HeadBase):
@@ -117,6 +122,7 @@ class HeadLineInst(models.Model):
 
 class Answer(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __str__(self):
         return str(self.id)
@@ -135,7 +141,7 @@ class UserAnswer(Answer):
         if isinstance(self, UserMultipleChoiceAnswer):
             return self.choice == other
 
-        elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):  # TODO
+        elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):
             return self.body.strip() == other.body.strip()
 
         return False
@@ -165,6 +171,7 @@ class UserMultipleChoiceAnswer(UserAnswer):
 
 class Question(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     body = models.TextField(null=True, blank=True)
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
@@ -185,11 +192,12 @@ class FinalAnswerQuestion(Question):
 
 class MultipleChoiceQuestion(Question):
     correct_answer = models.ForeignKey(AdminMultipleChoiceAnswer, related_name='correct_answer', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-choices = models.ManyToManyField(AdminMultipleChoiceAnswer, related_name='choices', symmetrical=False, blank=True)
+    choices = models.ManyToManyField(AdminMultipleChoiceAnswer, related_name='choices', symmetrical=False, blank=True)
 
 
 class Solution(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     body = models.TextField(null=True, blank=True)
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
     question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
@@ -200,6 +208,7 @@ class Solution(models.Model):
 
 class Quiz(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
@@ -217,3 +226,7 @@ class AdminQuiz(Quiz):
 
 class UserQuiz(Quiz):
     user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+
+class LastImageName(models.Model):
+    name = models.IntegerField(null=True, blank=True)
