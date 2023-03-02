@@ -2,7 +2,8 @@ from django.contrib import admin
 from import_export.admin import ExportActionMixin
 from .models import Subject, QuestionLevel, Module, Lesson, \
     AdminAnswer, UserAnswer, AdminFinalAnswer, UserFinalAnswer, AdminMultipleChoiceAnswer, \
-    UserMultipleChoiceAnswer, FinalAnswerQuestion, MultipleChoiceQuestion, Solution, AdminQuiz, UserQuiz, Question
+    UserMultipleChoiceAnswer, FinalAnswerQuestion, MultipleChoiceQuestion, Solution, AdminQuiz, UserQuiz, Question, \
+    HeadLine, H1
 
 
 class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
@@ -11,8 +12,8 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
 
 admin.site.register(Subject, ExportAllFields)
 # admin.site.register(Tag, ExportAllFields)  abstract
-# admin.site.register(Skill, ExportAllFields)
-admin.site.register(QuestionLevel, ExportAllFields)
+admin.site.register(H1, ExportAllFields)
+admin.site.register(HeadLine, ExportAllFields)
 # admin.site.register(SkillInst, ExportAllFields)
 admin.site.register(Module, ExportAllFields)
 admin.site.register(Lesson, ExportAllFields)
