@@ -36,4 +36,6 @@ admin.site.register(MultipleChoiceQuestion, ExportAllFields)
 admin.site.register(Solution, ExportAllFields)
 
 admin.site.register(AdminQuiz, ExportAllFields)  # abstract
+
 admin.site.register(UserQuiz, ExportAllFields)
+
