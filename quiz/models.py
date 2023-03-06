@@ -162,7 +162,8 @@ class AdminMultipleChoiceAnswer(AdminAnswer):
     def __eq__(self, other):
         if isinstance(other, UserMultipleChoiceAnswer):
             return other.__eq__(self)
-        return self.id == other.id
+        elif hasattr(other, 'id'):
+            return self.id == other.id
 
 
 class UserMultipleChoiceAnswer(UserAnswer):
