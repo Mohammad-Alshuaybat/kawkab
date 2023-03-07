@@ -90,10 +90,10 @@ def add_question(request):
         question.correct_answer = answer
 
     if str(headline_level) == '1':
-        headline, _ = H1.objects.get_or_create(name=headline)
+        headline, _ = H1.objects.get_or_create(name=headline.strip())
         question.tags.add(headline)
     else:
-        headline, _ = HeadLine.objects.get_or_create(name=headline, level=headline_level)
+        headline, _ = HeadLine.objects.get_or_create(name=headline.strip(), level=headline_level)
         question.tags.add(headline)
 
     aut, _ = Author.objects.get_or_create(name=author)
