@@ -149,16 +149,42 @@ def add_question_image(request):
 
 # @api_view(['GET'])
 # def read_headlines_from_xlsx(request):
-#     df = pd.read_excel(r'G:\school\data\headlines.xlsx')
-#
+#     df = pd.read_excel(r'G:\school\data\bio.xlsx')
+#     sub, _ = Subject.objects.get_or_create(name='الأحياء', semester=1, grade=12)
 #     for index, row in df.iterrows():
-#         lesson, _ = Lesson.objects.get_or_create(name=row['lesson'])
-#         row = row.to_dict()
-#         if row['type'] == 1:
-#             H1.objects.get_or_create(name=row['name'], lesson=lesson)
-#         else:
-#             HeadLine.objects.get_or_create(name=row['name'], parent_headline=parent_headline)
+#         if index == 21:
+#             sub, _ = Subject.objects.get_or_create(name='الأحياء', semester=2, grade=12)
+#             continue
+#         mod, _ = Module.objects.get_or_create(name=row['module'].strip(), subject=sub)
+#         les, _ = Lesson.objects.get_or_create(name=row['lesson'].strip(), module=mod)
+#         h1, _ = H1.objects.get_or_create(name=row['h1'].strip())
+#         h1.lesson = les
+#         h1.save()
+#         if (str(row['h2'])) != 'nan':
+#             h2, _ = HeadLine.objects.get_or_create(name=row['h2'].strip())
+#             h2.parent_headline = h1
+#             h2.level = 2
+#             h2.save()
+#
+#         if (str(row['h3'])) != 'nan':
+#             h3, _ = HeadLine.objects.get_or_create(name=row['h3'].strip())
+#             h3.parent_headline = h2
+#             h3.level = 3
+#             h3.save()
+#
+#         if (str(row['h4'])) != 'nan':
+#             h4, _ = HeadLine.objects.get_or_create(name=row['h4'].strip())
+#             h4.parent_headline = h3
+#             h4.level = 4
+#             h4.save()
+#
+#         # if (str(row['h5'])) != 'nan':
+#         #     h5, _ = HeadLine.objects.get_or_create(name=row['h5'].strip())
+#         #     h5.parent_headline = h4
+#         #     h5.level = 5
+#         #     h5.save()
 #     return Response()
+
 
 # @api_view(['GET'])
 # def read_modules_from_xlsx(request):
@@ -317,7 +343,7 @@ def build_quiz(request):
 
     def BQ():
         h1s_name = ['حالات خاصة من ضرب المقادير الجبرية', 'التحليل بإخراج العامل المشترك الأكبر', 'التحليل بتجميع الحدود', 'تحليل ثلاثيات الحدود',
-                       'حالات خاصة من التحليل', 'تبسيط المقادير الجبرية النسبية', 'SSS', 'SAS', 'HL', 'ASA']
+                    'حالات خاصة من التحليل', 'تبسيط المقادير الجبرية النسبية', 'SSS', 'SAS', 'HL', 'ASA']
 
         h1s = set()
         for name in h1s_name:
