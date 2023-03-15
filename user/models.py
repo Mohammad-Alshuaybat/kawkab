@@ -1,6 +1,8 @@
 from django.db import models
 import uuid
 
+from school.cdn.backends import MediaRootS3Boto3Storage
+
 
 class User(models.Model):
     section_choices = (
@@ -24,3 +26,43 @@ class User(models.Model):
 
     def __str__(self):
         return f'{self.email}-{self.phone}'
+
+
+class Report(models.Model):
+    user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    body = models.TextField(null=True, blank=True)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.user} --{self.creationDate}'
+
+
+class DailyTask(models.Model):
+    from quiz.models import Subject
+
+    user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    task = models.IntegerField(null=True, blank=True)
+    done = models.IntegerField(null=True, blank=True)
+    date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.user} --{self.date}'
+
+
+class Quote(models.Model):
+    image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
+    creationDate = models.DateField(auto_now_add=True, null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.creationDate}'
+
+
+class Advertisement(models.Model):
+    name = models.CharField(max_length=100, null=True, blank=True)
+    image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
+    active = models.BooleanField(default=False, null=True)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.name} --{self.creationDate}'

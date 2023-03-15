@@ -1,13 +1,18 @@
 from django.urls import path
 
-from .views import similar_questions, build_quiz, add_question_image, add_question
+from .views import subject_set, headline_set, module_set, build_quiz, marking, similar_questions, add_question_image, add_question
 
 urlpatterns = [
+     path('subject_set/', subject_set),
+     path('headline_set/', headline_set),
+     path('module_set/', module_set),
+     path('build_quiz/', build_quiz),
+     path('marking/', marking),
+
+
      path('add_question_image/', add_question_image),
      path('add_question/', add_question),
-     path('build_quiz/', build_quiz),
      path('similar_questions/', similar_questions),
-     # path('read_lessons_from_xlsx/', read_lessons_from_xlsx),
      # path('read_modules_from_xlsx/', read_modules_from_xlsx),
      # path('read_skills_from_xlsx/', read_skills_from_xlsx),
 

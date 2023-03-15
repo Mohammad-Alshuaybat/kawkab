@@ -24,28 +24,25 @@ def subject_set(request):
         user = get_user(data)
 
         subjects = Subject.objects.filter(grade=user.grade)
-        subjectSerializer = SubjectSerializer(subjects, many=True).data
+        subjectSerializer = SubjectSerializer(subjects, many=True)
 
-        return Response(subjectSerializer)
+        return Response(subjectSerializer.data)
 
     else:
         return Response(0)
 
 
 @api_view(['POST'])
-def skill_set(request):
+def headline_set(request):
     data = request.data
     subject_id = data.pop('subject_id', None)
 
     if check_user(data):
-        skills = Skill.objects.filter(subject__id=subject_id)
-        skillSerializer = TagSerializer(skills, many=True)
+        subject = Subject.objects.get(id=subject_id)
+        headlines = subject.get_main_headlines()
+        headlineSerializer = TagSerializer(headlines, many=True)
 
-        generalSkills = GeneralSkill.objects.filter(subject__id=subject_id)
-        generalSkillSerializer = TagSerializer(generalSkills, many=True)
-
-        skill_set = {'skills': skillSerializer.data, 'generalSkills': generalSkillSerializer.data}
-        return Response(skill_set)
+        return Response(headlineSerializer.data)
     else:
         return Response(0)
 
@@ -57,8 +54,182 @@ def module_set(request):
 
     if check_user(data):
         modules = Module.objects.filter(subject__id=subject_id)
-        moduleSerializer = ModuleSerializer(modules, many=True).data
-        return Response(moduleSerializer)
+        moduleSerializer = ModuleSerializer(modules, many=True)
+        return Response(moduleSerializer.data)
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def build_quiz(request):
+    def weight_module(h1s, question_number):
+        modules = Module.objects.filter(lesson__h1__in=h1s).distinct()
+
+        module_weights = {}
+        for module in modules:
+            module_weights[str(module.name)] = len(set(module.get_main_headlines()).intersection(h1s)) / module.get_main_headlines().count()
+
+        sum_weights = sum(module_weights.values())
+        module_weights = {module: weight / sum_weights * question_number for module, weight in module_weights.items()}
+
+        return module_weights
+
+    def weight_lessons(h1s):
+        lessons = Lesson.objects.filter(h1__in=h1s)
+
+        lesson_weights = {}
+        for lesson in lessons:
+            lesson_weights[str(lesson.name)] = len(set(lesson.get_main_headlines()).intersection(h1s)) / lesson.get_main_headlines().count()
+
+        return lesson_weights
+
+    def lesson_module(module_ques, lesson_weights):
+        modules_lessons = {}
+        modules_lessons_weights = {}
+
+        lessons = set(Lesson.objects.filter(name__in=lesson_weights.keys()))
+
+        for module in module_ques.keys():
+            modules_lessons[module] = lessons.intersection(Module.objects.get(name=module).lesson_set.all())
+
+        for module, module_lessons in modules_lessons.items():
+            modules_lessons_weights[module] = {'lessons': {str(lesson.name): lesson_weights[str(lesson.name)] for lesson in module_lessons if str(lesson.name) in lesson_weights.keys()},
+                                               'weight': module_ques[module]}
+
+        return modules_lessons_weights
+
+    def normalize_lessons_weight(modules_lessons_weights):
+        for module, lessons_weight in modules_lessons_weights.items():
+            total_lesson_weights = sum(lessons_weight['lessons'].values())
+            lessons_weight['lessons'] = {lesson: round(weight / total_lesson_weights * lessons_weight['weight']) for lesson, weight in lessons_weight['lessons'].items()}
+        return modules_lessons_weights
+
+    def lesson_headlines(lesson_weight, h1s):
+        lesson_headline = {}
+
+        for lesson in lesson_weight.keys():
+            lesson_headline[lesson] = h1s.intersection(Lesson.objects.get(name=lesson).get_main_headlines())
+
+        for lesson, h1s in lesson_headline.items():
+            h2s = HeadLine.objects.filter(parent_headline__in=h1s)
+            h3s = HeadLine.objects.filter(parent_headline__in=h2s)
+            h4s = HeadLine.objects.filter(parent_headline__in=h3s)
+            h5s = HeadLine.objects.filter(parent_headline__in=h4s)
+
+            lesson_headline[lesson] = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+
+        return lesson_headline
+
+    def quiz_level(level, number_of_question):
+        if level == 1:
+            return [QuestionLevel.objects.get(name=1)] * number_of_question
+        elif level == 2:
+            return random.shuffle([QuestionLevel.objects.get(name=2)] * number_of_question // 2 + [QuestionLevel.objects.get(name=1)] * (number_of_question - number_of_question // 2))
+        else:
+            return [QuestionLevel.objects.get(name=2)] * number_of_question
+
+    def get_questions(lesson_headline, modules_lessons_normalized_weights, quiz_level=[]):
+        question_set = set()
+
+        for module, lessons_weight in modules_lessons_normalized_weights.items():
+            for lesson, questions in lessons_weight['lessons'].items():
+                headline_counter = 0
+                temp_question_set = set()
+                while len(temp_question_set) < questions:
+                    headline = list(lesson_headline[lesson])[headline_counter % len(lesson_headline[lesson])]
+
+                    _questions = Question.objects.filter(tags=headline)#.filter(tags=quiz_level[0])
+                    #quiz_level.pop(quiz_level[0])
+                    if _questions:
+                        temp_question_set.add(random.choice(_questions))
+                    headline_counter += 1
+                    if headline_counter > questions * 5:
+                        break
+                question_set |= temp_question_set
+        serializer = QuestionSerializer(question_set, many=True)
+        return serializer.data
+
+    data = request.data
+
+    h1_ids = data.pop('headlines', None)
+    question_number = data.pop('question_num', None)
+    quiz_level = data.pop('quiz_level', None)
+    duration = data.pop('duration', None)
+
+    if check_user(data):
+        h1s = set()
+        for ID in h1_ids:
+            h1s.add(H1.objects.get(id=ID))
+
+        weighted_modules = weight_module(h1s, question_number)
+        weighted_lessons = weight_lessons(h1s)
+        lesson_headline = lesson_headlines(weighted_lessons, h1s)
+        print(lesson_headline)
+        modules_lessons_weights = lesson_module(weighted_modules, weighted_lessons)
+        modules_lessons_normalized_weights = normalize_lessons_weight(modules_lessons_weights)
+        print(modules_lessons_normalized_weights)
+        # level = quiz_level(quiz_level, question_number)
+        questions = get_questions(lesson_headline, modules_lessons_normalized_weights)
+        return Response(questions)
+
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def marking(request):
+    data = request.data
+    answers = data.pop('answers', None)
+    subject = data.pop('subject', None)
+    print(answers)
+    if check_user(data):
+        user = get_user(data)
+
+        attempt_duration = 0
+        ideal_duration = 0
+        correct_questions = 0
+        headline_set = set()
+
+        subject = Subject.objects.get(id=subject)
+        quiz = UserQuiz.objects.create(subject=subject, user=user)
+        for ID, ans in answers.items():
+            question = Question.objects.get(id=ID)
+            if hasattr(question, 'finalanswerquestion'):  # TODO: check
+                answer = UserFinalAnswer.objects.create(body=ans.get('body', None),
+                                                        duration=datetime.timedelta(seconds=ans['duration']),
+                                                        question=question, quiz=quiz)
+                correct_questions += 1 if answer == question.finalanswerquestion.correct_answer else 0
+
+            elif hasattr(question, 'multiplechoicequestion'):
+                choice = AdminMultipleChoiceAnswer.objects.filter(id=ans.get('id', None)).first()
+
+                answer = UserMultipleChoiceAnswer.objects.create(choice=choice,
+                                                                 duration=datetime.timedelta(seconds=ans['duration']),
+                                                                 question=question, quiz=quiz)
+                correct_questions += 1 if answer == question.multiplechoicequestion.correct_answer else 0
+
+            ideal_duration += question.idealDuration if question.idealDuration is not None else 0
+            attempt_duration += answer.duration.total_seconds()
+
+            # tags = question.tags.all()
+            # for tag in tags:
+            #     if hasattr(tag, 'headbase'):
+            #         tag = tag.headbase
+            #         if hasattr(tag, 'h1'):
+            #             main_headline = tag.h1
+            #             break
+            #         elif hasattr(tag, 'headline'):
+            #             main_headline = tag.headline
+            #             headline = tag
+            #             while hasattr(headline, 'headline'):
+            #                 headline = headline.headline.parent_headline
+            #             lesson = headline.h1.lesson
+            #             break
+            # headline_set.update(set(question.tags.filter(instance_of=HeadBase)))
+
+        ideal_duration = "{}".format(str(datetime.timedelta(seconds=ideal_duration)))
+        attempt_duration = "{}".format(str(datetime.timedelta(seconds=attempt_duration)))
+        return Response({'correct_questions': correct_questions, 'total_question_num': len(answers), 'attempt_duration': attempt_duration, 'ideal_duration':ideal_duration})
     else:
         return Response(0)
 
@@ -120,9 +291,6 @@ def add_question_image(request):
     last_name.save()
     question.save()
     return Response(1)
-# upload = Upload(file=image_file)
-# image_url = upload.file.url
-# QuizAnswer.objects.create(duration=datetime.timedelta(seconds = 68400))
 
 
 # @api_view(['GET'])
@@ -197,12 +365,6 @@ def add_question_image(request):
 #     return Response()
 #
 #
-# @api_view(['GET'])
-# def read_lessons_from_xlsx(request):
-#     df = pd.read_excel(r'G:\school\data\lessons.xlsx')
-#
-#     return Response()
-
 
 # @api_view(['GET'])
 # def read_lessons_from_xlsx(request):
@@ -244,159 +406,6 @@ def add_question_image(request):
 #                 skill = GeneralSkill.objects.get(id=i)
 #                 qes.tags.add(skill)
 #     return Response()
-
-
-@api_view(['POST'])
-def build_quiz(request):
-    data = request.data
-    # h1s = data.pop('h1s', None)
-    # general_skills = data.pop('general_skills', None)
-    # question_num = data.pop('question_num', None)
-    # quiz_level = data.pop('quiz_level', None)
-
-    def weight_module(h1s, question_number):
-        modules = Module.objects.filter(lesson__h1__in=h1s).distinct()
-
-        module_weights = {}
-        for module in modules:
-            module_weights[str(module.name)] = len(set(module.get_main_headlines).intersection(h1s)) / module.get_main_headlines.count()
-
-        sum_weights = sum(module_weights.values())
-        module_weights = {module: weight / sum_weights * question_number for module, weight in module_weights.items()}
-
-        return module_weights
-
-    def weight_lessons(h1s):
-        lessons = Lesson.objects.filter(h1__in=h1s)
-
-        lesson_weights = {}
-        for lesson in lessons:
-            lesson_weights[str(lesson.name)] = len(set(lesson.get_main_headlines).intersection(h1s)) / lesson.get_main_headlines.count()
-
-        return lesson_weights
-
-    def lesson_module(module_ques, lesson_weights):
-        modules_lessons = {}
-        modules_lessons_weights = {}
-
-        lessons = set(Lesson.objects.filter(name__in=lesson_weights.keys()))
-
-        for module in module_ques.keys():
-            modules_lessons[module] = lessons.intersection(Module.objects.get(name=module).lesson_set.all())
-
-        for module, module_lessons in modules_lessons.items():
-            modules_lessons_weights[module] = {'lessons': {str(lesson.name): lesson_weights[str(lesson.name)] for lesson in module_lessons if str(lesson.name) in lesson_weights.keys()},
-                                               'weight': module_ques[module]}
-
-        return modules_lessons_weights
-
-    def normalize_lessons_weight(modules_lessons_weights):
-        for module, lessons_weight in modules_lessons_weights.items():
-            total_lesson_weights = sum(lessons_weight['lessons'].values())
-            lessons_weight['lessons'] = {lesson: round(weight / total_lesson_weights * lessons_weight['weight']) for lesson, weight in lessons_weight['lessons'].items()}
-        return modules_lessons_weights
-
-    def lesson_headlines(lesson_weight, h1s):
-        lesson_headline = {}
-
-        for lesson in lesson_weight.keys():
-            lesson_headline[lesson] = h1s.intersection(Lesson.objects.get(name=lesson).get_main_headlines)
-
-        for lesson, h1s in lesson_headline.items():
-            h2s = HeadLine.objects.filter(parent_headline__in=h1s)
-            h3s = HeadLine.objects.filter(parent_headline__in=h2s)
-            h4s = HeadLine.objects.filter(parent_headline__in=h3s)
-            h5s = HeadLine.objects.filter(parent_headline__in=h4s)
-
-            lesson_headline[lesson] = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
-
-        return lesson_headline
-
-    def quiz_level(level, number_of_question):
-        if level == 1:
-            return [QuestionLevel.objects.get(name=1)] * number_of_question
-        elif level == 2:
-            return random.shuffle([QuestionLevel.objects.get(name=2)] * number_of_question // 2 + [QuestionLevel.objects.get(name=1)] * (number_of_question - number_of_question // 2))
-        else:
-            return [QuestionLevel.objects.get(name=2)] * number_of_question
-
-    def get_questions(lesson_headline, modules_lessons_normalized_weights, quiz_level):
-        question_set = set()
-
-        for module, lessons_weight in modules_lessons_normalized_weights.items():
-            for lesson, questions in lessons_weight['lessons'].items():
-                headline_counter = 0
-                temp_question_set = set()
-                while len(temp_question_set) < questions:
-                    headline = list(lesson_headline[lesson])[headline_counter % len(lesson_headline[lesson])]
-
-                    _questions = Question.objects.filter(tags=headline).filter(tags=quiz_level[0])
-                    quiz_level.pop(quiz_level[0])
-                    if _questions:
-                        temp_question_set.add(random.choice(_questions))
-                    headline_counter += 1
-                    if headline_counter > questions * 5:
-                        break
-                question_set |= temp_question_set
-        serializer = QuestionSerializer(question_set, many=True)
-        return serializer.data
-
-    def BQ():
-        h1s_name = ['حالات خاصة من ضرب المقادير الجبرية', 'التحليل بإخراج العامل المشترك الأكبر', 'التحليل بتجميع الحدود', 'تحليل ثلاثيات الحدود',
-                    'حالات خاصة من التحليل', 'تبسيط المقادير الجبرية النسبية', 'SSS', 'SAS', 'HL', 'ASA']
-
-        h1s = set()
-        for name in h1s_name:
-            h1s.add(H1.objects.get(name=name))
-
-        question_number = 100
-        weighted_modules = weight_module(h1s, question_number)
-        weighted_lessons = weight_lessons(h1s)
-        lesson_headline = lesson_headlines(weighted_lessons, h1s)
-        print(lesson_headline)
-        modules_lessons_weights = lesson_module(weighted_modules, weighted_lessons)
-        modules_lessons_normalized_weights = normalize_lessons_weight(modules_lessons_weights)
-        print(modules_lessons_normalized_weights)
-        level = quiz_level(quiz_level, question_number)
-        questions = get_questions(lesson_headline, modules_lessons_normalized_weights, level)
-        return questions
-    return Response(BQ())
-
-
-@api_view(['POST'])
-def marking(request):
-    data = request.data
-    # answers = data.pop('answers', None)
-    # subject = data.pop('subject', None)
-    # user = User.objects.get(**data)
-
-    answers = {'7ea0caad-8947-4e5b-8e78-a9deeb771ac1': {'duration': 4, 'body': 'f3692291-3e19-4548-8614-fd3fedbf321a'},
-               '9e344153-fb83-41fc-8bd1-ac86f7496d33': {'duration': 0, 'body': '3'}}
-    subject = 'الرياضيات'
-
-    attempt_duration = 0
-    correct_questions = 0
-    headline_set = set()
-
-    user = User.objects.get(email='osama@gmail.com')
-    subject = Subject.objects.get(name=subject)
-    quiz = UserQuiz.objects.create(subject=subject, user=user)
-    for ID, ans in answers.items():
-        question = Question.objects.get(id=ID)
-        if hasattr(question, 'finalanswerquestion'):
-            answer = UserFinalAnswer.objects.create(body=ans['body'],
-                                                   duration=datetime.timedelta(seconds=ans['duration']),
-                                                   question=question, quiz=quiz)
-        elif hasattr(question, 'multiplechoicequestion'):
-            choice = AdminMultipleChoiceAnswer.objects.get(id=ans['body'])
-            answer = UserMultipleChoiceAnswer.objects.create(choice=choice,
-                                                   duration=datetime.timedelta(seconds=ans['duration']),
-                                                   question=question, quiz=quiz)
-        attempt_duration += answer.duration.total_seconds()
-        correct_questions += 1 if answer == question.correct_answer else 0
-        headline_set.update(set(question.tags.filter(instance_of=HeadBase)))
-
-    return Response({'correct_questions': correct_questions, 'attempt_duration': attempt_duration, 'headline_set': headline_set})
 
 
 @api_view(['POST'])
@@ -494,10 +503,16 @@ def similar_questions(request):
 
     serializer = QuestionSerializer(questions, many=True)
     return Response(serializer.data)
-
 # {
 #         "question": "8d7d2efc-b678-496b-b705-ef91a2091c61",
 #         "by_headlines": 1,
 #         "by_author": 0,
 #         "by_level": 0
 # }
+
+
+def demo():
+    ques = MultipleChoiceQuestion.objects.all()
+    for i in ques:
+        if i.correct_answer not in i.choices.all():
+            i.choices.add(i)

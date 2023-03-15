@@ -6,29 +6,40 @@ from user.models import User
 
 
 class Subject(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
+    name = models.CharField(max_length=30, null=True, blank=True)
+    grade = models.IntegerField(null=True, blank=True)
+
+    def get_main_headlines(self):
+        modules = Module.objects.filter(subject=self)
+        lessons = Lesson.objects.filter(module__in=modules)
+        h1s = H1.objects.filter(lesson__in=lessons)
+        return h1s
+
+    def get_all_headlines(self):
+        modules = Module.objects.filter(subject=self)
+        lessons = Lesson.objects.filter(module__in=modules)
+        h1s = H1.objects.filter(lesson__in=lessons)
+        h2s = HeadLine.objects.filter(parent_headline__in=h1s)
+        h3s = HeadLine.objects.filter(parent_headline__in=h2s)
+        h4s = HeadLine.objects.filter(parent_headline__in=h3s)
+        h5s = HeadLine.objects.filter(parent_headline__in=h4s)
+        return set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+
+    def __str__(self):
+        return f'{self.name} --{self.grade}'
+
+
+class Module(models.Model):
     semester_choices = (
         (1, 'الفصل الأول'),
         (2, 'الفصل الثاني'),
     )
-    classification_choices = (
-        (0, 'مادة علمية'),
-        (1, 'مادة أدبية'),
-    )
 
-    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    name = models.CharField(max_length=30, null=True, blank=True)
-    semester = models.IntegerField(choices=semester_choices, null=True, blank=True)
-    grade = models.IntegerField(null=True, blank=True)
-    classification = models.IntegerField(choices=classification_choices, null=True, blank=True)
-
-    def __str__(self):
-        return f'{self.name} ف{self.semester} --{self.grade}'
-
-
-class Module(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     name = models.CharField(max_length=200, null=True, blank=True)
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    semester = models.IntegerField(choices=semester_choices, null=True, blank=True)
 
     def get_main_headlines(self):
         lessons = Lesson.objects.filter(module=self)
@@ -137,6 +148,9 @@ class UserAnswer(Answer):
     question = models.ForeignKey('Question', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     quiz = models.ForeignKey('UserQuiz', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
+    def __hash__(self):
+        return super().__hash__()
+
     def __eq__(self, other):
         if isinstance(self, UserMultipleChoiceAnswer):
             return self.choice == other
@@ -158,6 +172,9 @@ class UserFinalAnswer(UserAnswer):
 class AdminMultipleChoiceAnswer(AdminAnswer):
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
     notes = models.CharField(max_length=200, null=True, blank=True)
+
+    def __hash__(self):
+        return super().__hash__()
 
     def __eq__(self, other):
         if isinstance(other, UserMultipleChoiceAnswer):

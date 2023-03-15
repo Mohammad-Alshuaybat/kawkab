@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
-    AdminMultipleChoiceAnswer
+    AdminMultipleChoiceAnswer, H1
 
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ['id', 'name', 'semester', 'classification']
+        fields = ['id', 'name']
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -16,34 +16,35 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class LessonSerializer(serializers.ModelSerializer):
+    h1s = serializers.SerializerMethodField()
+
+    def get_h1s(self, obj):
+        h1s = H1.objects.filter(lesson=obj).values_list('id', flat=True)
+        # serializer = TagSerializer(h1s, many=True)
+        return h1s
+
     class Meta:
         model = Lesson
-        fields = ['name', 'skills']
+        fields = ['name', 'h1s']
 
 
 class ModuleSerializer(serializers.ModelSerializer):
     lessons = serializers.SerializerMethodField()
 
     def get_lessons(self, obj):
-        lessons = obj.lesson_set.all()
+        lessons = Lesson.objects.filter(module=obj)
         serializer = LessonSerializer(lessons, many=True)
         return serializer.data
 
     class Meta:
         model = Module
-        fields = ['name', 'lessons']
-
-
-class SkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Question
-        fields = ['body', 'skills']
+        fields = ['name', 'lessons', 'semester']
 
 
 class AdminMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdminMultipleChoiceAnswer
-        fields = '__all__'
+        fields = ['id', 'body', 'image']
 
 
 class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
@@ -53,9 +54,12 @@ class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
 
 
 class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
+    correct_answer = AdminMultipleChoiceAnswerSerializer(many=False)
+    choices = AdminMultipleChoiceAnswerSerializer(many=True)
+
     class Meta:
         model = MultipleChoiceQuestion
-        fields = '__all__'
+        fields = ['id', 'body', 'image', 'hint', 'correct_answer', 'choices']
 
 
 class QuestionSerializer(serializers.ModelSerializer):

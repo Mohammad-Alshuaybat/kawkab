@@ -1,6 +1,10 @@
+from datetime import date
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from user.models import Quote, Advertisement, DailyTask
+from user.serializers import DailyTaskSerializer
 from user.utils import signup, login, check_user, get_user
 
 
@@ -37,12 +41,26 @@ def log_in(request):
 
 
 @api_view(['POST'])
-def user_name(request):
-    # username  0-->sth_goes_wrong
+def dashboard(request):
     data = request.data
+
     if check_user(data):
         user = get_user(data)
-        return Response(user.firstName)
+
+        quote = Quote.objects.order_by('creationDate').first().image.url
+
+        _advertisements = Advertisement.objects.order_by('creationDate').filter(active=True)
+        advertisements = []
+        for advertisement in _advertisements:
+            advertisements.append(advertisement.image.url)
+
+        today_date = date.today()
+        formatted_date = today_date.strftime("%d-%m-%Y")
+
+        tasks = DailyTask.objects.filter(user=user, date=today_date)
+        serializer = DailyTaskSerializer(tasks, many=True)
+        print(tasks)
+        return Response({'user_name': user.firstName, 'quote': quote, 'advertisements': advertisements, 'today_date': formatted_date, 'tasks': serializer.data})
     else:
         return Response(0)
 # {
