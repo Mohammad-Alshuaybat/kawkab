@@ -1,5 +1,6 @@
 from django.contrib import admin
 from import_export.admin import ExportActionMixin
+
 from .models import Subject, QuestionLevel, Module, Lesson, \
     AdminAnswer, UserAnswer, AdminFinalAnswer, UserFinalAnswer, AdminMultipleChoiceAnswer, \
     UserMultipleChoiceAnswer, FinalAnswerQuestion, MultipleChoiceQuestion, Solution, AdminQuiz, UserQuiz, Question, \
@@ -38,4 +39,3 @@ admin.site.register(Solution, ExportAllFields)
 admin.site.register(AdminQuiz, ExportAllFields)  # abstract
 
 admin.site.register(UserQuiz, ExportAllFields)
-

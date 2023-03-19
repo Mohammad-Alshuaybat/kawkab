@@ -7,7 +7,7 @@ from user.models import User
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
-    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName
+    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion
 from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
     QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer
 
@@ -230,6 +230,50 @@ def marking(request):
         ideal_duration = "{}".format(str(datetime.timedelta(seconds=ideal_duration)))
         attempt_duration = "{}".format(str(datetime.timedelta(seconds=attempt_duration)))
         return Response({'correct_questions': correct_questions, 'total_question_num': len(answers), 'attempt_duration': attempt_duration, 'ideal_duration':ideal_duration})
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def save_question(request):
+    data = request.data
+    question_id = data.pop('question_id', None)
+
+    if check_user(data):
+        user = get_user(data)
+        question = Question.objects.get(id=question_id)
+        SavedQuestion.objects.create(user=user, question=question)
+        return Response()
+
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def unsave_question(request):
+    data = request.data
+    question_id = data.pop('question_id', None)
+
+    if check_user(data):
+        user = get_user(data)
+        question = Question.objects.get(id=question_id)
+        SavedQuestion.objects.get(user=user, question=question).delete()
+        return Response()
+
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def report(request):
+    data = request.data
+    body = data.pop('body', None)
+
+    if check_user(data):
+        user = get_user(data)
+        Report.objects.create(user=user, body=body)
+        return Response()
+
     else:
         return Response(0)
 

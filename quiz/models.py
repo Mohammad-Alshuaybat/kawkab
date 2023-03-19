@@ -224,6 +224,24 @@ class Solution(models.Model):
         return f'Q:{self.question}  S:{self.body}'
 
 
+class SavedQuestion(models.Model):
+    user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.user} --{self.creationDate}'
+
+
+class Report(models.Model):
+    user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    body = models.TextField(null=True, blank=True)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.user} --{self.creationDate}'
+
+
 class Quiz(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)

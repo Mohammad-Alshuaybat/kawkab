@@ -3,6 +3,7 @@ from datetime import date
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from quiz.models import Subject
 from user.models import Quote, Advertisement, DailyTask
 from user.serializers import DailyTaskSerializer
 from user.utils import signup, login, check_user, get_user
@@ -59,16 +60,29 @@ def dashboard(request):
 
         tasks = DailyTask.objects.filter(user=user, date=today_date)
         serializer = DailyTaskSerializer(tasks, many=True)
-        print(tasks)
+
         return Response({'user_name': user.firstName, 'quote': quote, 'advertisements': advertisements, 'today_date': formatted_date, 'tasks': serializer.data})
     else:
         return Response(0)
-# {
-#     "email": "malek315@gmail.com",
-#     "password": "password"
-# }
-# or
-# {
-#     "phone": "0786636678",
-#     "password": "password"
-# }
+
+
+@api_view(['POST'])
+def edit_tasks(request):
+    data = request.data
+    subject_id = data.pop('subject_id', None)
+    tasks = data.pop('tasks', None)
+
+    if check_user(data):
+        user = get_user(data)
+        subject = Subject.objects.get(id=subject_id)
+        today_date = date.today()
+
+        for task in tasks:
+            daily_task, _ = DailyTask.objects.get_or_create(user=user, subject=subject, date=today_date)
+            daily_task.task = task
+            daily_task.save()
+
+        return Response()
+    else:
+        return Response(0)
+

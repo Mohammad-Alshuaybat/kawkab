@@ -28,15 +28,6 @@ class User(models.Model):
         return f'{self.email}-{self.phone}'
 
 
-class Report(models.Model):
-    user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    body = models.TextField(null=True, blank=True)
-    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-
-    def __str__(self):
-        return f'{self.user} --{self.creationDate}'
-
-
 class DailyTask(models.Model):
     from quiz.models import Subject
 
