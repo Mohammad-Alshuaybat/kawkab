@@ -1,12 +1,18 @@
 from rest_framework import serializers
 
-from user.models import User, DailyTask
+from user.models import User, DailyTask, Advertisement
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+
+
+class AdvertisementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Advertisement
+        fields = ['image']
 
 
 class DailyTaskSerializer(serializers.ModelSerializer):

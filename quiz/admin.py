@@ -4,7 +4,7 @@ from import_export.admin import ExportActionMixin
 from .models import Subject, QuestionLevel, Module, Lesson, \
     AdminAnswer, UserAnswer, AdminFinalAnswer, UserFinalAnswer, AdminMultipleChoiceAnswer, \
     UserMultipleChoiceAnswer, FinalAnswerQuestion, MultipleChoiceQuestion, Solution, AdminQuiz, UserQuiz, Question, \
-    HeadLine, H1, LastImageName, Author, HeadLineInst
+    HeadLine, H1, LastImageName, Author, HeadLineInst, SavedQuestion
 
 
 class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
@@ -39,3 +39,4 @@ admin.site.register(Solution, ExportAllFields)
 admin.site.register(AdminQuiz, ExportAllFields)  # abstract
 
 admin.site.register(UserQuiz, ExportAllFields)
+admin.site.register(SavedQuestion, ExportAllFields)

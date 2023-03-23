@@ -1,6 +1,8 @@
 from django.db import models
 import uuid
 
+from django.db.models import Count
+
 from school.cdn.backends import MediaRootS3Boto3Storage
 from user.models import User
 
@@ -11,9 +13,7 @@ class Subject(models.Model):
     grade = models.IntegerField(null=True, blank=True)
 
     def get_main_headlines(self):
-        modules = Module.objects.filter(subject=self)
-        lessons = Lesson.objects.filter(module__in=modules)
-        h1s = H1.objects.filter(lesson__in=lessons)
+        h1s = H1.objects.filter(lesson__module__subject=self)
         return h1s
 
     def get_all_headlines(self):
@@ -41,9 +41,13 @@ class Module(models.Model):
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     semester = models.IntegerField(choices=semester_choices, null=True, blank=True)
 
+    # def get_main_headlines(self):
+    #     lessons = Lesson.objects.filter(module=self)
+    #     h1s = H1.objects.filter(lesson__in=lessons)
+    #     return h1s
+
     def get_main_headlines(self):
-        lessons = Lesson.objects.filter(module=self)
-        h1s = H1.objects.filter(lesson__in=lessons)
+        h1s = H1.objects.filter(lesson__module=self)
         return h1s
 
     def get_all_headlines(self):
@@ -119,6 +123,10 @@ class HeadLine(HeadBase):
 
     level = models.IntegerField(choices=level_choices, null=True, blank=True)
     parent_headline = models.ForeignKey(HeadBase, related_name='child_headings', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+    # def get_h1(self):
+    #
+    #     return H1.objects.filter(lesson=self)
 
 
 class HeadLineInst(models.Model):

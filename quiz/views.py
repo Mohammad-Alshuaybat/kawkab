@@ -1,3 +1,4 @@
+import time
 from math import ceil
 
 from rest_framework.decorators import api_view
@@ -11,9 +12,11 @@ from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, Admi
 from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
     QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer
 
+from django.db.models import Count, Q, Sum
+
 import random
 import datetime
-# import pandas as pd
+import pandas as pd
 
 
 @api_view(['POST'])
@@ -22,11 +25,8 @@ def subject_set(request):
 
     if check_user(data):
         user = get_user(data)
-
-        subjects = Subject.objects.filter(grade=user.grade)
-        subjectSerializer = SubjectSerializer(subjects, many=True)
-
-        return Response(subjectSerializer.data)
+        subjects = Subject.objects.filter(grade=user.grade).values('id', 'name')
+        return Response(subjects)
 
     else:
         return Response(0)
@@ -39,35 +39,53 @@ def headline_set(request):
 
     if check_user(data):
         subject = Subject.objects.get(id=subject_id)
-        headlines = subject.get_main_headlines()
-        headlineSerializer = TagSerializer(headlines, many=True)
+        headlines = subject.get_main_headlines().values('id', 'name')
 
-        return Response(headlineSerializer.data)
-    else:
-        return Response(0)
-
-
-@api_view(['POST'])
-def module_set(request):
-    data = request.data
-    subject_id = data.pop('subject_id', None)
-
-    if check_user(data):
-        modules = Module.objects.filter(subject__id=subject_id)
-        moduleSerializer = ModuleSerializer(modules, many=True)
-        return Response(moduleSerializer.data)
+        modules = Module.objects.filter(subject=subject)
+        module_serializer = ModuleSerializer(modules, many=True).data
+        return Response({'modules': module_serializer, 'headlines': headlines})
     else:
         return Response(0)
 
 
 @api_view(['POST'])
 def build_quiz(request):
+    import time
+    startf = time.perf_counter()
+
+    # def weight_module(h1s, question_number):
+    #
+    #     modules = Module.objects.filter(lesson__h1__in=h1s).distinct()
+    #
+    #     module_weights = {}
+    #     for module in modules:
+    #         main_headlines = module.get_main_headlines()
+    #         module_weights[str(module.name)] = len(set(main_headlines).intersection(h1s)) / main_headlines.count()
+    #
+    #     sum_weights = sum(module_weights.values())
+    #     module_weights = {module: weight / sum_weights * question_number for module, weight in module_weights.items()}
+    #
+    #     return module_weights
+    #
+    # def weight_lessons(h1s):
+    #     lessons = Lesson.objects.filter(h1__in=h1s)
+    #
+    #     lesson_weights = {}
+    #     for lesson in lessons:
+    #         lesson_weights[str(lesson.name)] = len(set(lesson.get_main_headlines()).intersection(h1s)) / lesson.get_main_headlines().count()
+    #
+    #     return lesson_weights
+
     def weight_module(h1s, question_number):
-        modules = Module.objects.filter(lesson__h1__in=h1s).distinct()
+        modules = Module.objects.annotate(
+            num_h1s=Count('lesson__h1', distinct=True),
+            num_common_h1s=Count('lesson__h1', filter=Q(lesson__h1__in=h1s), distinct=True)
+        ).filter(num_h1s__gt=0)
 
         module_weights = {}
         for module in modules:
-            module_weights[str(module.name)] = len(set(module.get_main_headlines()).intersection(h1s)) / module.get_main_headlines().count()
+            if module.num_common_h1s > 0:
+                module_weights[module.name] = module.num_common_h1s / module.num_h1s
 
         sum_weights = sum(module_weights.values())
         module_weights = {module: weight / sum_weights * question_number for module, weight in module_weights.items()}
@@ -75,11 +93,15 @@ def build_quiz(request):
         return module_weights
 
     def weight_lessons(h1s):
-        lessons = Lesson.objects.filter(h1__in=h1s)
+        lessons = Lesson.objects.annotate(
+                num_h1s=Count('h1', distinct=True),
+                num_common_h1s=Count('h1', filter=Q(h1__in=h1s), distinct=True)
+            ).filter(num_h1s__gt=0)
 
         lesson_weights = {}
         for lesson in lessons:
-            lesson_weights[str(lesson.name)] = len(set(lesson.get_main_headlines()).intersection(h1s)) / lesson.get_main_headlines().count()
+            if lesson.num_common_h1s > 0:
+                lesson_weights[str(lesson.name)] = lesson.num_common_h1s / lesson.num_h1s
 
         return lesson_weights
 
@@ -108,14 +130,13 @@ def build_quiz(request):
         lesson_headline = {}
 
         for lesson in lesson_weight.keys():
-            lesson_headline[lesson] = h1s.intersection(Lesson.objects.get(name=lesson).get_main_headlines())
+            lesson_headline[lesson] = h1s.intersection(Lesson.objects.get(name=lesson).get_main_headlines()).values_list('id', flat=True)
 
         for lesson, h1s in lesson_headline.items():
-            h2s = HeadLine.objects.filter(parent_headline__in=h1s)
-            h3s = HeadLine.objects.filter(parent_headline__in=h2s)
-            h4s = HeadLine.objects.filter(parent_headline__in=h3s)
-            h5s = HeadLine.objects.filter(parent_headline__in=h4s)
-
+            h2s = HeadLine.objects.filter(parent_headline__in=h1s).values_list('id', flat=True)
+            h3s = HeadLine.objects.filter(parent_headline__in=h2s).values_list('id', flat=True)
+            h4s = HeadLine.objects.filter(parent_headline__in=h3s).values_list('id', flat=True)
+            h5s = HeadLine.objects.filter(parent_headline__in=h4s).values_list('id', flat=True)
             lesson_headline[lesson] = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
 
         return lesson_headline
@@ -150,27 +171,50 @@ def build_quiz(request):
         return serializer.data
 
     data = request.data
-
     h1_ids = data.pop('headlines', None)
     question_number = data.pop('question_num', None)
     quiz_level = data.pop('quiz_level', None)
     duration = data.pop('duration', None)
 
     if check_user(data):
-        h1s = set()
-        for ID in h1_ids:
-            h1s.add(H1.objects.get(id=ID))
+        h1s = H1.objects.filter(id__in=h1_ids)
 
+        start = time.perf_counter()
         weighted_modules = weight_module(h1s, question_number)
+        end = time.perf_counter()
+        print(end - start)
+
+        start = time.perf_counter()
         weighted_lessons = weight_lessons(h1s)
+        end = time.perf_counter()
+        print(end - start)
+
+        print('------------------------------------------------')
+        print(weighted_lessons)
+        start = time.perf_counter()
         lesson_headline = lesson_headlines(weighted_lessons, h1s)
-        print(lesson_headline)
+        # print(lesson_headline)
+        end = time.perf_counter()
+        print(end - start)
+
+        start = time.perf_counter()
         modules_lessons_weights = lesson_module(weighted_modules, weighted_lessons)
+        end = time.perf_counter()
+        print(end - start)
+        start = time.perf_counter()
         modules_lessons_normalized_weights = normalize_lessons_weight(modules_lessons_weights)
-        print(modules_lessons_normalized_weights)
+        end = time.perf_counter()
+        print(end - start)
+        # print(modules_lessons_normalized_weights)
         # level = quiz_level(quiz_level, question_number)
+        start = time.perf_counter()
         questions = get_questions(lesson_headline, modules_lessons_normalized_weights)
+        end = time.perf_counter()
+        print(end - start)
+        endf = time.perf_counter()
+        print(endf - startf)
         return Response(questions)
+
 
     else:
         return Response(0)
@@ -181,7 +225,7 @@ def marking(request):
     data = request.data
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
-    print(answers)
+    # print(answers)
     if check_user(data):
         user = get_user(data)
 
@@ -234,6 +278,17 @@ def marking(request):
         return Response(0)
 
 
+# @api_view(['POST'])
+# def retake_quiz(request):
+#     data = request.data
+#     question_id = data.pop('question_id', None)
+#
+#     if check_user(data):
+#         user = get_user(data)
+#         UserQuiz.objects.filter(user=user).order_by('creationDate');
+#         QuestionSerializer(question_set, many=True)
+
+
 @api_view(['POST'])
 def save_question(request):
     data = request.data
@@ -242,8 +297,8 @@ def save_question(request):
     if check_user(data):
         user = get_user(data)
         question = Question.objects.get(id=question_id)
-        SavedQuestion.objects.create(user=user, question=question)
-        return Response()
+        SavedQuestion.objects.get_or_create(user=user, question=question)
+        return Response(1)
 
     else:
         return Response(0)
@@ -258,7 +313,7 @@ def unsave_question(request):
         user = get_user(data)
         question = Question.objects.get(id=question_id)
         SavedQuestion.objects.get(user=user, question=question).delete()
-        return Response()
+        return Response(1)
 
     else:
         return Response(0)
@@ -359,43 +414,39 @@ def add_question_image(request):
 #     return Response()
 #
 
-# @api_view(['GET'])
-# def read_headlines_from_xlsx(request):
-#     df = pd.read_excel(r'G:\school\data\bio.xlsx')
-#     sub, _ = Subject.objects.get_or_create(name='الأحياء', semester=1, grade=12)
-#     for index, row in df.iterrows():
-#         if index == 21:
-#             sub, _ = Subject.objects.get_or_create(name='الأحياء', semester=2, grade=12)
-#             continue
-#         mod, _ = Module.objects.get_or_create(name=row['module'].strip(), subject=sub)
-#         les, _ = Lesson.objects.get_or_create(name=row['lesson'].strip(), module=mod)
-#         h1, _ = H1.objects.get_or_create(name=row['h1'].strip())
-#         h1.lesson = les
-#         h1.save()
-#         if (str(row['h2'])) != 'nan':
-#             h2, _ = HeadLine.objects.get_or_create(name=row['h2'].strip())
-#             h2.parent_headline = h1
-#             h2.level = 2
-#             h2.save()
-#
-#         if (str(row['h3'])) != 'nan':
-#             h3, _ = HeadLine.objects.get_or_create(name=row['h3'].strip())
-#             h3.parent_headline = h2
-#             h3.level = 3
-#             h3.save()
-#
-#         if (str(row['h4'])) != 'nan':
-#             h4, _ = HeadLine.objects.get_or_create(name=row['h4'].strip())
-#             h4.parent_headline = h3
-#             h4.level = 4
-#             h4.save()
-#
-#         # if (str(row['h5'])) != 'nan':
-#         #     h5, _ = HeadLine.objects.get_or_create(name=row['h5'].strip())
-#         #     h5.parent_headline = h4
-#         #     h5.level = 5
-#         #     h5.save()
-#     return Response()
+@api_view(['GET'])
+def read_headlines_from_xlsx(request):
+    df = pd.read_excel(r'G:\school\data\che.xlsx')
+    sub, _ = Subject.objects.get_or_create(name='الكيمياء', grade=12)
+    semester = 1
+    for index, row in df.iterrows():
+        if index == 39:
+            semester = 2
+            continue
+        mod, _ = Module.objects.get_or_create(name=row['module'].strip(), subject=sub, semester=semester)
+        les, _ = Lesson.objects.get_or_create(name=row['lesson'].strip(), module=mod)
+        h1, _ = H1.objects.get_or_create(name=row['h1'].strip())
+        h1.lesson = les
+        h1.save()
+        if (str(row['h2'])) != 'nan':
+            h2, _ = HeadLine.objects.get_or_create(name=row['h2'].strip())
+            h2.parent_headline = h1
+            h2.level = 2
+            h2.save()
+
+        if (str(row['h3'])) != 'nan':
+            h3, _ = HeadLine.objects.get_or_create(name=row['h3'].strip())
+            h3.parent_headline = h2
+            h3.level = 3
+            h3.save()
+
+        if (str(row['h4'])) != 'nan':
+            h4, _ = HeadLine.objects.get_or_create(name=row['h4'].strip())
+            h4.parent_headline = h3
+            h4.level = 4
+            h4.save()
+
+    return Response()
 
 
 # @api_view(['GET'])
@@ -497,7 +548,7 @@ def similar_questions(request):
                 wastes_headlines |= weighted_headlines[levels_weight[similarity_level + 1]]
             similarity_level += 1
         weighted_headlines[levels_weight[similarity_level + 1]] = set(lesson.get_all_headlines()) - wastes_headlines
-        print(weighted_headlines)
+        # print(weighted_headlines)
 
         # add question weight
         for weight, headlines in weighted_headlines.items():

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from quiz.models import Subject
 from user.models import Quote, Advertisement, DailyTask
-from user.serializers import DailyTaskSerializer
+from user.serializers import DailyTaskSerializer, AdvertisementSerializer
 from user.utils import signup, login, check_user, get_user
 
 
@@ -50,18 +50,22 @@ def dashboard(request):
 
         quote = Quote.objects.order_by('creationDate').first().image.url
 
-        _advertisements = Advertisement.objects.order_by('creationDate').filter(active=True)
-        advertisements = []
-        for advertisement in _advertisements:
-            advertisements.append(advertisement.image.url)
+        _advertisements = Advertisement.objects.filter(active=True)
+        advertisements_serializer = AdvertisementSerializer(_advertisements, many=True)
+
+        # _advertisements = Advertisement.objects.order_by('creationDate').filter(active=True)
+        # advertisements = []
+        # for advertisement in _advertisements:
+        #     advertisements.append(advertisement.image.url)
 
         today_date = date.today()
-        formatted_date = today_date.strftime("%d-%m-%Y")
+        formated_date = today_date.strftime("%d-%m-%Y")
 
         tasks = DailyTask.objects.filter(user=user, date=today_date)
-        serializer = DailyTaskSerializer(tasks, many=True)
+        task_serializer = DailyTaskSerializer(tasks, many=True)
 
-        return Response({'user_name': user.firstName, 'quote': quote, 'advertisements': advertisements, 'today_date': formatted_date, 'tasks': serializer.data})
+        return Response({'user_name': user.firstName, 'quote': quote, 'advertisements': advertisements_serializer.data,
+                         'today_date': formated_date, 'tasks': task_serializer.data})
     else:
         return Response(0)
 
