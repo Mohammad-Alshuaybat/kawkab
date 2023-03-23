@@ -16,7 +16,7 @@ from django.db.models import Count, Q, Sum
 
 import random
 import datetime
-import pandas as pd
+# import pandas as pd
 
 
 @api_view(['POST'])
@@ -414,39 +414,39 @@ def add_question_image(request):
 #     return Response()
 #
 
-@api_view(['GET'])
-def read_headlines_from_xlsx(request):
-    df = pd.read_excel(r'G:\school\data\che.xlsx')
-    sub, _ = Subject.objects.get_or_create(name='الكيمياء', grade=12)
-    semester = 1
-    for index, row in df.iterrows():
-        if index == 39:
-            semester = 2
-            continue
-        mod, _ = Module.objects.get_or_create(name=row['module'].strip(), subject=sub, semester=semester)
-        les, _ = Lesson.objects.get_or_create(name=row['lesson'].strip(), module=mod)
-        h1, _ = H1.objects.get_or_create(name=row['h1'].strip())
-        h1.lesson = les
-        h1.save()
-        if (str(row['h2'])) != 'nan':
-            h2, _ = HeadLine.objects.get_or_create(name=row['h2'].strip())
-            h2.parent_headline = h1
-            h2.level = 2
-            h2.save()
-
-        if (str(row['h3'])) != 'nan':
-            h3, _ = HeadLine.objects.get_or_create(name=row['h3'].strip())
-            h3.parent_headline = h2
-            h3.level = 3
-            h3.save()
-
-        if (str(row['h4'])) != 'nan':
-            h4, _ = HeadLine.objects.get_or_create(name=row['h4'].strip())
-            h4.parent_headline = h3
-            h4.level = 4
-            h4.save()
-
-    return Response()
+# @api_view(['GET'])
+# def read_headlines_from_xlsx(request):
+#     df = pd.read_excel(r'G:\school\data\che.xlsx')
+#     sub, _ = Subject.objects.get_or_create(name='الكيمياء', grade=12)
+#     semester = 1
+#     for index, row in df.iterrows():
+#         if index == 39:
+#             semester = 2
+#             continue
+#         mod, _ = Module.objects.get_or_create(name=row['module'].strip(), subject=sub, semester=semester)
+#         les, _ = Lesson.objects.get_or_create(name=row['lesson'].strip(), module=mod)
+#         h1, _ = H1.objects.get_or_create(name=row['h1'].strip())
+#         h1.lesson = les
+#         h1.save()
+#         if (str(row['h2'])) != 'nan':
+#             h2, _ = HeadLine.objects.get_or_create(name=row['h2'].strip())
+#             h2.parent_headline = h1
+#             h2.level = 2
+#             h2.save()
+#
+#         if (str(row['h3'])) != 'nan':
+#             h3, _ = HeadLine.objects.get_or_create(name=row['h3'].strip())
+#             h3.parent_headline = h2
+#             h3.level = 3
+#             h3.save()
+#
+#         if (str(row['h4'])) != 'nan':
+#             h4, _ = HeadLine.objects.get_or_create(name=row['h4'].strip())
+#             h4.parent_headline = h3
+#             h4.level = 4
+#             h4.save()
+#
+#     return Response()
 
 
 # @api_view(['GET'])
