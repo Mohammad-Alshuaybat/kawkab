@@ -1,13 +1,14 @@
 from django.urls import path
 
 from .views import subject_set, headline_set, build_quiz, marking, similar_questions, add_question_image, \
-     add_question, report, save_question, unsave_question
+     add_question, report, save_question, unsave_question, quiz_review
 
 urlpatterns = [
      path('subject_set/', subject_set),
      path('headline_set/', headline_set),
      path('build_quiz/', build_quiz),
      path('marking/', marking),
+     path('quiz_review/', quiz_review),
      path('report/', report),
 
      path('add_question_image/', add_question_image),

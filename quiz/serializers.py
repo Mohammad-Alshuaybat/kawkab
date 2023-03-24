@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
-    AdminMultipleChoiceAnswer, H1
+    AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -41,6 +41,12 @@ class ModuleSerializer(serializers.ModelSerializer):
         fields = ['name', 'lessons', 'semester']
 
 
+class AdminFinalAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AdminFinalAnswer
+        fields = ['id', 'body']
+
+
 class AdminMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdminMultipleChoiceAnswer
@@ -48,9 +54,11 @@ class AdminMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
 
 
 class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
+    correct_answer = AdminFinalAnswerSerializer(many=False)
+
     class Meta:
         model = FinalAnswerQuestion
-        fields = '__all__'
+        fields = ['id', 'body', 'image', 'idealDuration', 'hint', 'correct_answer']
 
 
 class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
@@ -59,7 +67,7 @@ class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MultipleChoiceQuestion
-        fields = ['id', 'body', 'image', 'hint', 'correct_answer', 'choices']
+        fields = ['id', 'body', 'image', 'idealDuration', 'hint', 'correct_answer', 'choices']
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -72,6 +80,39 @@ class QuestionSerializer(serializers.ModelSerializer):
             serializer = FinalAnswerQuestionSerializer(obj.finalanswerquestion).data
         elif hasattr(obj, 'multiplechoicequestion'):
             serializer = MultipleChoiceQuestionSerializer(obj.multiplechoicequestion).data
+        else:
+            serializer = super().to_representation(obj)
+        return serializer
+
+
+class UserFinalAnswerSerializer(serializers.ModelSerializer):
+    question = QuestionSerializer(many=False)
+
+    class Meta:
+        model = UserFinalAnswer
+        fields = ['body', 'duration', 'question']
+
+
+class UserMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
+    choice = AdminMultipleChoiceAnswerSerializer(many=False)
+    question = QuestionSerializer(many=False)
+
+    class Meta:
+        model = UserMultipleChoiceAnswer
+        fields = ['choice', 'duration', 'question']
+
+
+class UserAnswerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserAnswer
+        fields = '__all__'
+
+    def to_representation(self, obj):
+        if hasattr(obj, 'usermultiplechoiceanswer'):
+            serializer = UserMultipleChoiceAnswerSerializer(obj.usermultiplechoiceanswer).data
+        elif hasattr(obj, 'userfinalanswer'):
+            serializer = UserFinalAnswerSerializer(obj.userfinalanswer).data
         else:
             serializer = super().to_representation(obj)
         return serializer

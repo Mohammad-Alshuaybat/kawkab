@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 import uuid
 
@@ -152,7 +154,7 @@ class AdminAnswer(Answer):
 
 
 class UserAnswer(Answer):
-    duration = models.DurationField(null=True, blank=True)
+    duration = models.DurationField(default=timedelta(), blank=True)
     question = models.ForeignKey('Question', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     quiz = models.ForeignKey('UserQuiz', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
@@ -202,7 +204,7 @@ class Question(models.Model):
     body = models.TextField(null=True, blank=True)
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
 
-    idealDuration = models.DurationField(null=True, blank=True)
+    idealDuration = models.DurationField(default=timedelta(), blank=True)
 
     tags = models.ManyToManyField(Tag, related_name='tags', blank=True)
 
@@ -254,6 +256,7 @@ class Quiz(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    duration = models.DurationField(default=timedelta(), blank=True)
 
     def __str__(self):
         return f'{self.id}'
@@ -261,7 +264,6 @@ class Quiz(models.Model):
 
 class AdminQuiz(Quiz):
     name = models.CharField(max_length=100, null=True, blank=True)
-    duration = models.DurationField(null=True, blank=True)
     questions = models.ManyToManyField(Question, symmetrical=False, blank=True)
 
     def __str__(self):

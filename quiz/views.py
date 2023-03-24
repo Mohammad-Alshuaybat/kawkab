@@ -8,9 +8,9 @@ from user.models import User
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
-    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion
+    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer
 from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
-    QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer
+    QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer, UserAnswerSerializer
 
 from django.db.models import Count, Q, Sum
 
@@ -230,12 +230,13 @@ def marking(request):
         user = get_user(data)
 
         attempt_duration = 0
-        ideal_duration = 0
+        ideal_duration = datetime.timedelta(seconds=0)
         correct_questions = 0
         headline_set = set()
 
         subject = Subject.objects.get(id=subject)
         quiz = UserQuiz.objects.create(subject=subject, user=user)
+        print(quiz.id)
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):  # TODO: check
@@ -252,7 +253,7 @@ def marking(request):
                                                                  question=question, quiz=quiz)
                 correct_questions += 1 if answer == question.multiplechoicequestion.correct_answer else 0
 
-            ideal_duration += question.idealDuration if question.idealDuration is not None else 0
+            ideal_duration += question.idealDuration if question.idealDuration is not None else datetime.timedelta(seconds=0)
             attempt_duration += answer.duration.total_seconds()
 
             # tags = question.tags.all()
@@ -271,7 +272,6 @@ def marking(request):
             #             break
             # headline_set.update(set(question.tags.filter(instance_of=HeadBase)))
 
-        ideal_duration = "{}".format(str(datetime.timedelta(seconds=ideal_duration)))
         attempt_duration = "{}".format(str(datetime.timedelta(seconds=attempt_duration)))
         return Response({'correct_questions': correct_questions, 'total_question_num': len(answers), 'attempt_duration': attempt_duration, 'ideal_duration':ideal_duration})
     else:
@@ -288,6 +288,25 @@ def marking(request):
 #         UserQuiz.objects.filter(user=user).order_by('creationDate');
 #         QuestionSerializer(question_set, many=True)
 
+
+@api_view(['POST'])
+def quiz_review(request):
+    data = request.data
+    quiz_id = data.pop('quiz_id', None)
+
+    if check_user(data):
+        quiz = UserQuiz.objects.get(id=quiz_id)
+        answers = UserAnswer.objects.filter(quiz=quiz)
+        answers_serializer = UserAnswerSerializer(answers, many=True).data
+        return Response({'answers': answers_serializer, 'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name})
+
+    else:
+        return Response(0)
+# {
+#     "quiz_id": "e5fdfd58-56b4-48e2-a18c-c9b90c11c3ee",
+#     "email": "abood@gmail.com",
+#     "password": "123"
+# }
 
 @api_view(['POST'])
 def save_question(request):
