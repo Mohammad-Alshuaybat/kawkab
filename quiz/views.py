@@ -273,7 +273,7 @@ def marking(request):
             # headline_set.update(set(question.tags.filter(instance_of=HeadBase)))
 
         attempt_duration = "{}".format(str(datetime.timedelta(seconds=attempt_duration)))
-        return Response({'correct_questions': correct_questions, 'total_question_num': len(answers), 'attempt_duration': attempt_duration, 'ideal_duration':ideal_duration, 'quiz_id':UserQuiz.id})
+        return Response({'correct_questions': correct_questions, 'total_question_num': len(answers), 'attempt_duration': attempt_duration, 'ideal_duration':ideal_duration, 'quiz_id':quiz.id})
     else:
         return Response(0)
 
