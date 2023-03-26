@@ -64,8 +64,9 @@ def dashboard(request):
         tasks = DailyTask.objects.filter(user=user, date=today_date)
         task_serializer = DailyTaskSerializer(tasks, many=True)
 
+        subjects = Subject.objects.filter(grade=user.grade).values('id', 'name')
         return Response({'user_name': user.firstName, 'quote': quote, 'advertisements': advertisements_serializer.data,
-                         'today_date': formated_date, 'tasks': task_serializer.data})
+                         'today_date': formated_date, 'tasks': task_serializer.data, 'subjects': subjects})
     else:
         return Response(0)
 
