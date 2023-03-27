@@ -240,13 +240,13 @@ def marking(request):
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):  # TODO: check
-                answer = UserFinalAnswer.objects.create(body=ans.get('body', None),
+                answer = UserFinalAnswer.objects.create(body=ans.get('answer', None),
                                                         duration=datetime.timedelta(seconds=ans['duration']),
                                                         question=question, quiz=quiz)
                 correct_questions += 1 if answer == question.finalanswerquestion.correct_answer else 0
 
             elif hasattr(question, 'multiplechoicequestion'):
-                choice = AdminMultipleChoiceAnswer.objects.filter(id=ans.get('id', None)).first()
+                choice = AdminMultipleChoiceAnswer.objects.filter(id=ans.get('answer', None)).first()
 
                 answer = UserMultipleChoiceAnswer.objects.create(choice=choice,
                                                                  duration=datetime.timedelta(seconds=ans['duration']),
