@@ -230,13 +230,13 @@ def marking(request):
     if check_user(data):
         user = get_user(data)
 
-        attempt_duration = datetime.timedelta(seconds=0)
-        ideal_duration = datetime.timedelta(seconds=0)
+        attempt_duration = 0
+        ideal_duration = 0
         correct_questions = 0
         headline_set = set()
 
         subject = Subject.objects.get(id=subject)
-        quiz = UserQuiz.objects.create(subject=subject, user=user, duration=datetime.timedelta(seconds=quiz_duration))
+        quiz = UserQuiz.objects.create(subject=subject, user=user, duration=datetime.timedelta(seconds=int(quiz_duration)))
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):  # TODO: check
@@ -253,7 +253,7 @@ def marking(request):
                                                                  question=question, quiz=quiz)
                 correct_questions += 1 if answer == question.multiplechoicequestion.correct_answer else 0
 
-            ideal_duration += question.idealDuration if question.idealDuration is not None else datetime.timedelta(seconds=0)
+            ideal_duration += question.idealDuration.total_seconds()
             attempt_duration += answer.duration.total_seconds()
 
             # tags = question.tags.all()

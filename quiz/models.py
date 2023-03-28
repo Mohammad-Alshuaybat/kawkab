@@ -204,7 +204,7 @@ class Question(models.Model):
     body = models.TextField(null=True, blank=True)
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
 
-    idealDuration = models.DurationField(default=timedelta(seconds=120), blank=True)
+    idealDuration = models.DurationField(default=timedelta(seconds=30), blank=True)
 
     tags = models.ManyToManyField(Tag, related_name='tags', blank=True)
 
