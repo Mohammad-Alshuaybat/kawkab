@@ -225,6 +225,7 @@ def marking(request):
     data = request.data
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
+    quiz_duration = data.pop('quiz_duration', None)
     # print(answers)
     if check_user(data):
         user = get_user(data)
@@ -235,8 +236,7 @@ def marking(request):
         headline_set = set()
 
         subject = Subject.objects.get(id=subject)
-        quiz = UserQuiz.objects.create(subject=subject, user=user)
-        print(quiz.id)
+        quiz = UserQuiz.objects.create(subject=subject, user=user, duration=quiz_duration)
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):  # TODO: check
