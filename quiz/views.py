@@ -230,13 +230,13 @@ def marking(request):
     if check_user(data):
         user = get_user(data)
 
-        attempt_duration = 0
+        attempt_duration = datetime.timedelta(seconds=0)
         ideal_duration = datetime.timedelta(seconds=0)
         correct_questions = 0
         headline_set = set()
 
         subject = Subject.objects.get(id=subject)
-        quiz = UserQuiz.objects.create(subject=subject, user=user, duration=quiz_duration)
+        quiz = UserQuiz.objects.create(subject=subject, user=user, duration=datetime.timedelta(seconds=quiz_duration))
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):  # TODO: check
@@ -272,8 +272,9 @@ def marking(request):
             #             break
             # headline_set.update(set(question.tags.filter(instance_of=HeadBase)))
 
+        ideal_duration = "{}".format(str(datetime.timedelta(seconds=ideal_duration)))
         attempt_duration = "{}".format(str(datetime.timedelta(seconds=attempt_duration)))
-        return Response({'correct_questions': correct_questions, 'total_question_num': len(answers), 'attempt_duration': attempt_duration, 'ideal_duration':ideal_duration, 'quiz_id':quiz.id})
+        return Response({'correct_questions': correct_questions, 'total_question_num': len(answers), 'attempt_duration': attempt_duration, 'ideal_duration': ideal_duration, 'quiz_id':quiz.id})
     else:
         return Response(0)
 
