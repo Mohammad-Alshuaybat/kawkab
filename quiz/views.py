@@ -1,9 +1,11 @@
 import time
 from math import ceil
 
+from django.core.mail import send_mail
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from school import settings
 from user.models import User
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
@@ -343,11 +345,23 @@ def unsave_question(request):
 def report(request):
     data = request.data
     body = data.pop('body', None)
+    question = data.pop('question_id', None)
 
     if check_user(data):
         user = get_user(data)
-        Report.objects.create(user=user, body=body)
-        return Response()
+        question = Question.objects.get(id=question)
+        Report.objects.create(user=user, body=body, question=question)
+
+        subject = 'Report from user'
+        message = f'{user.firstName} {user.lastName} said there is this issue {body} in this question {question.body}\nplease check it as soon as possible'
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            ['malek315@gmail.com'],
+            fail_silently=False,
+        )
+        return Response(1)
 
     else:
         return Response(0)

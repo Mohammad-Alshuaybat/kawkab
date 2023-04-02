@@ -183,6 +183,14 @@ class AdminMultipleChoiceAnswer(AdminAnswer):
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
     notes = models.CharField(max_length=200, null=True, blank=True)
 
+    # class Meta:
+    #     ordering = ['creationDate']
+    #
+    # def save(self, *args, **kwargs):
+    #     if self.body == 'جميع ما ذكر':
+    #         self.creationDate += timedelta(seconds=3)
+    #     super().save(*args, **kwargs)
+
     def __hash__(self):
         return super().__hash__()
 
@@ -246,7 +254,9 @@ class SavedQuestion(models.Model):
 class Report(models.Model):
     user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     body = models.TextField(null=True, blank=True)
+    question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    solved = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
         return f'{self.user} --{self.creationDate}'
