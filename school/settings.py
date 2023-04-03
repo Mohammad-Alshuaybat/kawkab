@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = os.getenv("DEBUG", "False") == "False"
 
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
@@ -140,8 +140,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'sarmadi.tech.ai@gmail.com'
-EMAIL_HOST_PASSWORD = 'SaRmAdI_AI'
+EMAIL_HOST_USER = 'osamafitiani2001@gmail.com'
+EMAIL_HOST_PASSWORD = 'jsghpbwrlwkxqcdo'
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
