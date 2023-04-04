@@ -1,6 +1,9 @@
+from datetime import timedelta
+
+from django.db.models import Sum
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
-    AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer
+    AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer, UserQuiz
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -116,3 +119,26 @@ class UserAnswerSerializer(serializers.ModelSerializer):
         else:
             serializer = super().to_representation(obj)
         return serializer
+
+
+class UserQuizSerializer(serializers.ModelSerializer):
+    subject = serializers.SerializerMethodField()
+    creationDate = serializers.DateTimeField(format='%I:%M %p • %d/%m/%Y %A')
+    duration = serializers.SerializerMethodField()
+    attempt_duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserQuiz
+        fields = ['id', 'subject', 'creationDate', 'duration', 'attempt_duration']
+
+    def get_subject(self, obj):
+        return obj.subject.name
+
+    def get_duration(self, obj):
+        return obj.duration.total_seconds()
+
+    def get_attempt_duration(self, obj):
+        total_duration = obj.useranswer_set.aggregate(Sum('duration'))['duration__sum']
+        total_duration_seconds = total_duration.total_seconds() if total_duration else 0
+        return total_duration_seconds
+

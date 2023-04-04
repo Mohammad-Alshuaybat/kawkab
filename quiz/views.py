@@ -12,7 +12,8 @@ from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, Admi
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer
 from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
-    QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer, UserAnswerSerializer
+    QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer, UserAnswerSerializer, \
+    UserQuizSerializer
 
 from django.db.models import Count, Q, Sum
 
@@ -240,30 +241,27 @@ def marking(request):
 
             correct_questions += 1 if answer == question.correct_answer else 0
 
-            for tag in question.tags.all():
-                if hasattr(tag, 'headbase'):
-                    tag = tag.headbase
-                    if hasattr(tag, 'headline'):
-                        while hasattr(tag, 'headline'):
-                            tag = tag.headline.parent_headline
-                    tag = tag.h1
+            tag = question.tags.exclude(headbase=None).first().headbase
+            if hasattr(tag, 'headline'):
+                while hasattr(tag, 'headline'):
+                    tag = tag.headline.parent_headline
+            tag = tag.h1
 
-                    h1 = h1s.get(tag.name, {})
-                    lesson = lessons.get(tag.lesson.name, {})
+            h1 = h1s.get(tag.name, {})
+            lesson = lessons.get(tag.lesson.name, {})
 
-                    if answer == question.correct_answer:
-                        h1['correct'] = h1.get('correct', 0) + 1
-                        lesson['correct'] = lesson.get('correct', 0) + 1
-                    else:
-                        h1['correct'] = h1.get('correct', 0)
-                        lesson['correct'] = lesson.get('correct', 0)
+            if answer == question.correct_answer:
+                h1['correct'] = h1.get('correct', 0) + 1
+                lesson['correct'] = lesson.get('correct', 0) + 1
+            else:
+                h1['correct'] = h1.get('correct', 0)
+                lesson['correct'] = lesson.get('correct', 0)
 
-                    h1['all'] = h1.get('all', 0) + 1
-                    lesson['all'] = lesson.get('all', 0) + 1
+            h1['all'] = h1.get('all', 0) + 1
+            lesson['all'] = lesson.get('all', 0) + 1
 
-                    h1s[tag.name] = h1
-                    lessons[tag.lesson.name] = lesson
-                    break
+            h1s[tag.name] = h1
+            lessons[tag.lesson.name] = lesson
 
             ideal_duration += question.idealDuration.total_seconds()
             attempt_duration += answer.duration.total_seconds()
@@ -292,6 +290,7 @@ def retake_quiz(request):
         return Response(serializer.data)
     else:
         return Response(0)
+
 
 @api_view(['POST'])
 def quiz_review(request):
@@ -365,6 +364,59 @@ def report(request):
             fail_silently=False,
         )
         return Response(1)
+
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def quiz_history(request):
+    data = request.data
+
+    if check_user(data):
+        user = get_user(data)
+
+        days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
+        quizes = list(UserQuiz.objects.all())[-5:]
+
+        quiz_dic = {}
+        for quiz in quizes:
+            date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
+            date = date[:22] + days[date[22:]]
+            attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
+            attempt_duration = attempt_duration.total_seconds() if attempt_duration else 0
+
+            user_answers = UserAnswer.objects.filter(quiz=quiz)
+
+            question_num = 0
+            correct_question_num = 0
+            for answer in user_answers:
+                question_num += 1
+                if answer == answer.question.multiplechoicequestion.correct_answer if hasattr(answer.question, 'multiplechoicequestion')else answer.question.finalanswerquestion.correct_answer:
+                    correct_question_num += 1
+
+            tags_ids = user_answers.values_list('question__tags__id', flat=True).distinct()
+            headbases = HeadBase.objects.filter(id__in=tags_ids)
+            h1s = set()
+            lessons = set()
+            for tag in headbases:
+                if hasattr(tag, 'headline'):
+                    while hasattr(tag, 'headline'):
+                        tag = tag.headline.parent_headline
+                h1s.add(tag.h1.name)
+                lessons.add(tag.h1.lesson.name)
+
+            quiz_dic[str(quiz.id)] = {
+                    'subject': quiz.subject.name,
+                    'date': date,
+                    'quiz_duration': quiz.duration.total_seconds(),
+                    'attempt_duration': attempt_duration,
+                    'question_num': question_num,
+                    'correct_question_num': correct_question_num,
+                    'skills': lessons if len(lessons) > 5 else h1s,
+                }
+
+        return Response(quiz_dic)
 
     else:
         return Response(0)
@@ -546,21 +598,20 @@ def similar_questions(request):
     def similar_by_headlines(question, question_weight):
         levels_weight = [15, 10, 6, 3, 1, 0]
         # get lesson
-        tags = question.tags.all()
-        for tag in tags:
-            if hasattr(tag, 'headbase'):
-                tag = tag.headbase
-                if hasattr(tag, 'h1'):
-                    main_headline = tag.h1
-                    lesson = main_headline.lesson
-                    break
-                elif hasattr(tag, 'headline'):
-                    main_headline = tag.headline
-                    headline = tag
-                    while hasattr(headline, 'headline'):
-                        headline = headline.headline.parent_headline
-                    lesson = headline.h1.lesson
-                    break
+
+        tag = question.tags.exclude(headbase=None).first().headbase
+
+        if hasattr(tag, 'h1'):
+            main_headline = tag.h1
+            lesson = main_headline.lesson
+
+        elif hasattr(tag, 'headline'):
+            main_headline = tag.headline
+            headline = tag
+            while hasattr(headline, 'headline'):
+                headline = headline.headline.parent_headline
+            lesson = headline.h1.lesson
+
         # add headlines questions
         headlines = lesson.get_all_headlines()
         questions = Question.objects.filter(tags__in=headlines)

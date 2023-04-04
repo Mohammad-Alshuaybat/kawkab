@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import subject_set, headline_set, build_quiz, marking, similar_questions, add_question_image, \
-     add_question, report, save_question, unsave_question, quiz_review, retake_quiz
+     add_question, report, save_question, unsave_question, quiz_review, retake_quiz, quiz_history
 
 urlpatterns = [
      path('subject_set/', subject_set),
@@ -16,4 +16,5 @@ urlpatterns = [
      path('similar_questions/', similar_questions),
      path('save_question/', save_question),
      path('unsave_question/', unsave_question),
+     path('quiz_history/', quiz_history),
 ]
