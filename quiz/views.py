@@ -406,7 +406,8 @@ def quiz_history(request):
                 h1s.add(tag.h1.name)
                 lessons.add(tag.h1.lesson.name)
 
-            quiz_dic[str(quiz.id)] = {
+            quiz_dic = {
+                    'id': str(quiz.id),
                     'subject': quiz.subject.name,
                     'date': date,
                     'quiz_duration': quiz.duration.total_seconds(),
