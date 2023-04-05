@@ -381,6 +381,7 @@ def quiz_history(request):
 
         quiz_list = []
         for quiz in quizzes:
+
             date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
             date = date[:22] + days[date[22:]]
             attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
@@ -392,7 +393,7 @@ def quiz_history(request):
             correct_question_num = 0
             for answer in user_answers:
                 question_num += 1
-                if answer == answer.question.multiplechoicequestion.correct_answer if hasattr(answer.question, 'multiplechoicequestion')else answer.question.finalanswerquestion.correct_answer:
+                if (answer.usermultiplechoiceanswer if hasattr(answer, 'usermultiplechoiceanswer') else answer.userfinalanswer) == (answer.question.multiplechoicequestion.correct_answer if hasattr(answer.question, 'multiplechoicequestion') else answer.question.finalanswerquestion.correct_answer):
                     correct_question_num += 1
 
             tags_ids = user_answers.values_list('question__tags__id', flat=True).distinct()
