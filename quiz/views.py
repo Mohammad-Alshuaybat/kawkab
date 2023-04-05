@@ -377,10 +377,10 @@ def quiz_history(request):
         user = get_user(data)
 
         days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
-        quizes = list(UserQuiz.objects.all())[-5:]
+        quizzes = list(UserQuiz.objects.all())[-5:]
 
-        quiz_dic = {}
-        for quiz in quizes:
+        quiz_list = []
+        for quiz in quizzes:
             date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
             date = date[:22] + days[date[22:]]
             attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
@@ -406,7 +406,7 @@ def quiz_history(request):
                 h1s.add(tag.h1.name)
                 lessons.add(tag.h1.lesson.name)
 
-            quiz_dic = {
+            quiz_list.append({
                     'id': str(quiz.id),
                     'subject': quiz.subject.name,
                     'date': date,
@@ -415,9 +415,9 @@ def quiz_history(request):
                     'question_num': question_num,
                     'correct_question_num': correct_question_num,
                     'skills': lessons if len(lessons) > 5 else h1s,
-                }
+                })
 
-        return Response(quiz_dic)
+        return Response(quiz_list)
 
     else:
         return Response(0)
