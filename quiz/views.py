@@ -377,7 +377,7 @@ def quiz_history(request):
         user = get_user(data)
 
         days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
-        quizzes = UserQuiz.objects.all()
+        quizzes = UserQuiz.objects.filter(user=user)
 
         quiz_list = []
         for quiz in quizzes:
