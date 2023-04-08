@@ -720,7 +720,7 @@ def similar_questions(request):
     if by_level:
         question_weight = similar_by_level(question, question_weight)
 
-    sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x])
+    sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x], reverse=True)
     questions = []
     for question_id in sorted_question:
         questions.append(Question.objects.get(id=question_id))
