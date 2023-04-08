@@ -823,6 +823,7 @@ def similar_questions(request):
 
     data = request.data
     questions_id = data.pop('questions_id', None)
+    is_single_question = data.pop('is_single_question', False)
     by_headlines = data.pop('by_headlines', False)
     by_author = data.pop('by_author', False)
     by_level = data.pop('by_level', False)
@@ -845,14 +846,15 @@ def similar_questions(request):
     sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x], reverse=True)
 
     questions = []
-    for question_id in sorted_question[:len(questions_id)]:
+    for question_id in (sorted_question[:len(questions_id)]if not is_single_question else sorted_question):
         questions.append(Question.objects.get(id=question_id))
 
     serializer = QuestionSerializer(questions, many=True)
     return Response(serializer.data)
 # {
 #         "questions_id": ["000c37e8-0635-49a7-9e94-2cfcc57602e8"],
+#         "is_single_question": 1,
 #         "by_headlines": 1,
-#         "by_author": 0,
-#         "by_level": 0
+#         "by_author": 1,
+#         "by_level": 1
 # }
