@@ -105,7 +105,7 @@ class HeadBase(Tag):
     def get_all_child_headlines(self):
         hs = set(HeadLine.objects.filter(parent_headline=self))
         hs_level = self.level if hasattr(self, 'level') else 1
-        while hs_level < 4:
+        while hs_level <= 5:
             hs |= set(HeadLine.objects.filter(parent_headline__in=hs))
             hs_level += 1
         return hs
