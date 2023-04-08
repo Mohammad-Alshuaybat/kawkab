@@ -300,10 +300,49 @@ def quiz_review(request):
     if check_user(data):
         quiz = UserQuiz.objects.get(id=quiz_id)
         answers = UserAnswer.objects.filter(quiz=quiz)
+
+        correct_questions = 0
+        lessons = {}
+        h1s = {}
+
+        for answer in answers:
+            if hasattr(answer, 'userfinalanswer'):
+                answer = answer.userfinalanswer
+                question = answer.question.finalanswerquestion
+            elif hasattr(answer, 'usermultiplechoiceanswer'):
+                answer = answer.usermultiplechoiceanswer
+                question = answer.question.multiplechoicequestion
+
+            tag = question.tags.exclude(headbase=None).first().headbase
+            if hasattr(tag, 'headline'):
+                while hasattr(tag, 'headline'):
+                    tag = tag.headline.parent_headline
+            tag = tag.h1
+
+            h1 = h1s.get(tag.name, {})
+            lesson = lessons.get(tag.lesson.name, {})
+
+            if answer == question.correct_answer:
+                correct_questions += 1
+                h1['correct'] = h1.get('correct', 0) + 1
+                lesson['correct'] = lesson.get('correct', 0) + 1
+            else:
+                h1['correct'] = h1.get('correct', 0)
+                lesson['correct'] = lesson.get('correct', 0)
+
+            h1['all'] = h1.get('all', 0) + 1
+            lesson['all'] = lesson.get('all', 0) + 1
+
+            h1s[tag.name] = h1
+            lessons[tag.lesson.name] = lesson
+
+        skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(),
+                        key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
+        best_worst_skills = dict(list(skills[:3]) + list(skills[-2:]))
+
         answers_serializer = UserAnswerSerializer(answers, many=True).data
         return Response(
-            {'answers': answers_serializer, 'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name})
-
+            {'answers': answers_serializer, 'correct_questions_num': correct_questions, 'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name, 'best_worst_skills': best_worst_skills})
     else:
         return Response(0)
 # {
@@ -643,7 +682,6 @@ def similar_questions(request):
                 wastes_headlines |= weighted_headlines[levels_weight[similarity_level + 1]]
             similarity_level += 1
         weighted_headlines[levels_weight[similarity_level + 1]] = set(lesson.get_all_headlines()) - wastes_headlines
-        # print(weighted_headlines)
 
         # add question weight
         for weight, headlines in weighted_headlines.items():
@@ -654,25 +692,21 @@ def similar_questions(request):
         return question_weight
 
     def similar_by_author(question, question_weight):
-        author_name = question.author
-        questions = Question.objects.filter(author=author_name)
+        author = question.tags.exclude(author=None).first().author
+        questions = Question.objects.filter(tags=author)
         for question in questions:
             question_weight[question.id] = question_weight.get(question.id, 0) + 2
         return question_weight
 
     def similar_by_level(question, question_weight):
-        tags = question.tags.all()
-        for tag in tags:
-            if hasattr(tag, 'questionlevel'):
-                level = tag.questionlevel
-                break
+        level = question.tags.exclude(questionlevel=None).first().questionlevel
         questions = Question.objects.filter(tags=level)
         for question in questions:
             question_weight[question.id] = question_weight.get(question.id, 0) + 3
         return question_weight
 
     data = request.data
-    question = data.pop('question', None)
+    question = data.pop('question_id', None)
     by_headlines = data.pop('by_headlines', False)
     by_author = data.pop('by_author', False)
     by_level = data.pop('by_level', False)
@@ -693,10 +727,8 @@ def similar_questions(request):
 
     serializer = QuestionSerializer(questions, many=True)
     return Response(serializer.data)
-
-
 # {
-#         "question": "8d7d2efc-b678-496b-b705-ef91a2091c61",
+#         "question_id": "000c37e8-0635-49a7-9e94-2cfcc57602e8",
 #         "by_headlines": 1,
 #         "by_author": 0,
 #         "by_level": 0
