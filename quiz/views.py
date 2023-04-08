@@ -372,12 +372,13 @@ def report(request):
 @api_view(['POST'])
 def quiz_history(request):
     data = request.data
+    quiz_index = data.pop('quiz_index', 0)
 
     if check_user(data):
         user = get_user(data)
 
         days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
-        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')
+        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index+10]
 
         quiz_list = []
         for quiz in quizzes:
@@ -597,10 +598,9 @@ def add_question_image(request):
 
 @api_view(['POST'])
 def similar_questions(request):
-    def similar_by_headlines(question, question_weight):
+    def similar_by_headline(question, question_weight):
         levels_weight = [15, 10, 6, 3, 1, 0]
         # get lesson
-
         tag = question.tags.exclude(headbase=None).first().headbase
 
         if hasattr(tag, 'h1'):
@@ -679,7 +679,7 @@ def similar_questions(request):
     question = Question.objects.get(id=question)
     question_weight = {}
     if by_headlines:
-        question_weight = similar_by_headlines(question, question_weight)
+        question_weight = similar_by_headline(question, question_weight)
     if by_author:
         question_weight = similar_by_author(question, question_weight)
     if by_level:
