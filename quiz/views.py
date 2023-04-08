@@ -823,13 +823,13 @@ def similar_quiz(request):
         return question_weight
 
     data = request.data
-    questions = data.pop('questions_id', None)
+    questions_id = data.pop('questions_id', None)
     by_headlines = data.pop('by_headlines', False)
     by_author = data.pop('by_author', False)
     by_level = data.pop('by_level', False)
 
     question_weight = {}
-    for question in questions:
+    for question in questions_id:
         question = Question.objects.get(id=question)
         if by_headlines:
             question_weight = similar_by_headline(question, question_weight)
@@ -840,13 +840,13 @@ def similar_quiz(request):
 
     sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x], reverse=True)
     questions = []
-    for question_id in sorted_question[:len(questions)]:
+    for question_id in sorted_question[:len(questions_id)]:
         questions.append(Question.objects.get(id=question_id))
 
     serializer = QuestionSerializer(questions, many=True)
     return Response(serializer.data)
 # {
-#         "question_id": "000c37e8-0635-49a7-9e94-2cfcc57602e8",
+#         "question_id": ["000c37e8-0635-49a7-9e94-2cfcc57602e8"],
 #         "by_headlines": 1,
 #         "by_author": 0,
 #         "by_level": 0
