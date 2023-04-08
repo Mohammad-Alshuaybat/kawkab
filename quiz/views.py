@@ -336,9 +336,8 @@ def quiz_review(request):
             h1s[tag.name] = h1
             lessons[tag.lesson.name] = lesson
 
-        skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(),
+        best_worst_skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(),
                         key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
-        best_worst_skills = dict(list(skills[:3]) + list(skills[-2:]))
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
         return Response(
