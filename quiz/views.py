@@ -839,6 +839,7 @@ def similar_quiz(request):
             question_weight = similar_by_level(question, question_weight)
 
     sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x], reverse=True)
+    sorted_question = list(set(sorted_question)-set(questions_id))
     questions = []
     for question_id in sorted_question[:len(questions_id)]:
         questions.append(Question.objects.get(id=question_id))
