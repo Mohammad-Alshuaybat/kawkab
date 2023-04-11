@@ -309,7 +309,7 @@ def retake_quiz(request):
 @api_view(['POST'])
 def similar_questions(request):
     def similar_by_headline(question, question_weight):
-        levels_weight = [15, 10, 6, 3, 1, 0]
+        levels_weight = [21, 15, 10, 6, 3, 1, 0]
         # get lesson
         tag = question.tags.exclude(headbase=None).first().headbase
 
@@ -350,7 +350,10 @@ def similar_questions(request):
                                                                                   main_headline}) - wastes_headlines
                 wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
             similarity_level += 1
-        weighted_headlines[levels_weight[similarity_level]] = set(lesson.get_all_headlines()) - wastes_headlines
+        weighted_headlines[levels_weight[similarity_level]] = lesson.get_all_headlines() - wastes_headlines
+        wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
+        similarity_level += 1
+        weighted_headlines[levels_weight[similarity_level]] = lesson.module.get_all_headlines() - wastes_headlines
 
         # add question weight
         for weight, headlines in weighted_headlines.items():
@@ -443,7 +446,7 @@ def quiz_review(request):
 
             h1 = h1s.get(tag.name, {})
             lesson = lessons.get(tag.lesson.name, {})
-            module = modules.get(tag.lesson.module.name)
+            module = modules.get(tag.lesson.module.name, {})
 
             if answer == question.correct_answer:
                 correct_questions += 1
