@@ -419,6 +419,7 @@ def similar_questions(request):
 @api_view(['POST'])
 def quiz_review(request):
     data = request.data
+    print(data)
     quiz_id = data.pop('quiz_id', None)
 
     if check_user(data):
@@ -466,6 +467,10 @@ def quiz_review(request):
                 h1['duration'] = h1.get('duration', 0) + 1
                 lesson['duration'] = lesson.get('duration', 0) + 1
                 module['duration'] = module.get('duration', 0) + 1
+            else:
+                h1['duration'] = h1.get('duration', 0)
+                lesson['duration'] = lesson.get('duration', 0)
+                module['duration'] = module.get('duration', 0)
 
             h1s[tag.name] = h1
             lessons[tag.lesson.name] = lesson
