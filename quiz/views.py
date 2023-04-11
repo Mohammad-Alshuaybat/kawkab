@@ -490,16 +490,27 @@ def quiz_review(request):
         time_based_modules = sorted(modules.items(),
                                     key=lambda x: x[1]['duration'], reverse=True)
 
-        statements = [f'تقييم بشكل عام : أظهرت بطأ في تقديمك للامتحان حيث كان معدل حلك لكل سؤال 4 دقائق مما مكنك من حل 6 اسئلة من أصل {len(answers)} في الوقت المحدد',
-                      f'اكثر اخطاءك كانت في درس {mark_based_lessons[-1]}',
-                      f'اكثر اخطاءك كانت في وحدة {mark_based_modules[-1]}',
-                      f'ركز أكثر في دراسة {mark_based_h1s[-1]}',
-                      f'أجبت على جميع أسئلة درس {mark_based_lessons[0]} بنجاح',
-                      f'أجبت على جميع أسئلة وحدة {mark_based_modules[0]} بنجاح',
-                      f'لاحظنا قضاءك الوقت الأكبر على اسئلة درس {time_based_lessons[0]}',
-                      f'لاحظنا قضاءك الوقت الأكبر على اسئلة وحدة {time_based_modules[0]}',
-                      f'لاحظنا قضاءك الوقت الأكبر على اسئلة {time_based_h1s[0]}',
+        statements = [
+                    f'تقييم بشكل عام : أظهرت بطأ في تقديمك للامتحان حيث كان معدل حلك لكل سؤال 4 دقائق مما مكنك من حل 6 اسئلة من أصل {len(answers)} في الوقت المحدد',
                       ]
+        if mark_based_modules[-1][1]['correct'] < mark_based_modules[-1][1]['all']:
+            statements.append(f'اكثر اخطاءك كانت في وحدة {mark_based_modules[-1][0]}')
+        if mark_based_lessons[-1][1]['correct'] < mark_based_lessons[-1][1]['all']:
+            statements.append(f'اكثر اخطاءك كانت في درس {mark_based_lessons[-1][0]}')
+        if mark_based_h1s[-1][1]['correct'] < mark_based_h1s[-1][1]['all']:
+            statements.append(f'ركز أكثر في دراسة موضوع {mark_based_h1s[-1][0]}')
+
+        if mark_based_modules[-1][1]['correct'] == mark_based_modules[-1][1]['all']:
+            statements.append(f'أجبت على جميع أسئلة وحدة {mark_based_modules[0][0]} بنجاح')
+        if mark_based_lessons[-1][1]['correct'] == mark_based_lessons[-1][1]['all']:
+            statements.append(f'أجبت على جميع أسئلة درس {mark_based_lessons[0][0]} بنجاح')
+
+        if time_based_modules[0][1]['duration'] > 0:
+            statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة وحدة {time_based_modules[0][0]}')
+        if time_based_lessons[0][1]['duration'] > 0:
+            statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة درس {time_based_lessons[0][0]}')
+        if time_based_h1s[0][1]['duration'] > 0:
+            statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة {time_based_h1s[0][0]}')
         print(mark_based_modules)
         print(time_based_modules)
         print(mark_based_lessons)
