@@ -55,29 +55,6 @@ def headline_set(request):
 
 @api_view(['POST'])
 def build_quiz(request):
-    # def weight_module(h1s, question_number):
-    #
-    #     modules = Module.objects.filter(lesson__h1__in=h1s).distinct()
-    #
-    #     module_weights = {}
-    #     for module in modules:
-    #         main_headlines = module.get_main_headlines()
-    #         module_weights[str(module.name)] = len(set(main_headlines).intersection(h1s)) / main_headlines.count()
-    #
-    #     sum_weights = sum(module_weights.values())
-    #     module_weights = {module: weight / sum_weights * question_number for module, weight in module_weights.items()}
-    #
-    #     return module_weights
-    #
-    # def weight_lessons(h1s):
-    #     lessons = Lesson.objects.filter(h1__in=h1s)
-    #
-    #     lesson_weights = {}
-    #     for lesson in lessons:
-    #         lesson_weights[str(lesson.name)] = len(set(lesson.get_main_headlines()).intersection(h1s)) / lesson.get_main_headlines().count()
-    #
-    #     return lesson_weights
-
     def weight_module(h1s, question_number):
         modules = Module.objects.annotate(
             num_h1s=Count('lesson__h1', distinct=True),
@@ -87,10 +64,10 @@ def build_quiz(request):
         module_weights = {}
         for module in modules:
             if module.num_common_h1s > 0:
-                module_weights[module.name] = module.num_common_h1s / module.num_h1s
+                module_weights[module.id] = module.num_common_h1s / module.num_h1s
 
         sum_weights = sum(module_weights.values())
-        module_weights = {module: weight / sum_weights * question_number for module, weight in module_weights.items()}
+        module_weights = {module: round(weight / sum_weights * question_number) for module, weight in module_weights.items()}
 
         return module_weights
 
@@ -103,7 +80,7 @@ def build_quiz(request):
         lesson_weights = {}
         for lesson in lessons:
             if lesson.num_common_h1s > 0:
-                lesson_weights[str(lesson.name)] = lesson.num_common_h1s / lesson.num_h1s
+                lesson_weights[str(lesson.id)] = lesson.num_common_h1s / lesson.num_h1s
 
         return lesson_weights
 
@@ -111,15 +88,15 @@ def build_quiz(request):
         modules_lessons = {}
         modules_lessons_weights = {}
 
-        lessons = set(Lesson.objects.filter(name__in=lesson_weights.keys()))
+        lessons = set(Lesson.objects.filter(id__in=lesson_weights.keys()))
 
         for module in module_ques.keys():
-            modules_lessons[module] = lessons.intersection(Module.objects.get(name=module).lesson_set.all())
+            modules_lessons[module] = lessons.intersection(Module.objects.get(id=module).lesson_set.all())
 
         for module, module_lessons in modules_lessons.items():
             modules_lessons_weights[module] = {
-                'lessons': {str(lesson.name): lesson_weights[str(lesson.name)] for lesson in module_lessons if
-                            str(lesson.name) in lesson_weights.keys()},
+                'lessons': {str(lesson.id): lesson_weights[str(lesson.id)] for lesson in module_lessons if
+                            str(lesson.id) in lesson_weights.keys()},
                 'weight': module_ques[module]}
 
         return modules_lessons_weights
@@ -136,14 +113,16 @@ def build_quiz(request):
 
         for lesson in lesson_weight.keys():
             lesson_headline[lesson] = h1s.intersection(
-                Lesson.objects.get(name=lesson).get_main_headlines()).values_list('id', flat=True)
+                Lesson.objects.get(id=lesson).get_main_headlines()).values_list('id', flat=True)
 
         for lesson, h1s in lesson_headline.items():
             h2s = HeadLine.objects.filter(parent_headline__in=h1s).values_list('id', flat=True)
             h3s = HeadLine.objects.filter(parent_headline__in=h2s).values_list('id', flat=True)
             h4s = HeadLine.objects.filter(parent_headline__in=h3s).values_list('id', flat=True)
             h5s = HeadLine.objects.filter(parent_headline__in=h4s).values_list('id', flat=True)
-            lesson_headline[lesson] = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+            headlines = list(set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s))
+            random.shuffle(headlines)
+            lesson_headline[lesson] = headlines
 
         return lesson_headline
 
@@ -158,13 +137,25 @@ def build_quiz(request):
             return [QuestionLevel.objects.get(name=2)] * number_of_question
 
     def get_questions(lesson_headline, modules_lessons_normalized_weights, quiz_level=[]):
+        """ lesson_headline = {    # here headlines are from all levels 1-5
+        'lesson1': {h1, h2, h3},
+        'lesson2': {h1},
+        'lesson3': {h1, h2, h3, h4},
+        'lesson4': {h1, h2, h3, h4}
+        } """
+
+        """ modules_lessons_normalized_weights = {    # all weights and question num here depend on quiz consist of 20 question
+        'module1': {'lessons': {'lesson1': 10, 'lesson2': 5}, 'weight': 14.285714285714286}, 
+        'module2': {'lessons': {'lesson1': 3, 'lesson2': 2}, 'weight': 5.714285714285715}
+        } """
+
         question_set = set()
 
         for module, lessons_weight in modules_lessons_normalized_weights.items():
-            for lesson, questions in lessons_weight['lessons'].items():
+            for lesson, question_num in lessons_weight['lessons'].items():
                 headline_counter = 0
                 temp_question_set = set()
-                while len(temp_question_set) < questions:
+                while len(temp_question_set) < question_num:
                     headline = list(lesson_headline[lesson])[headline_counter % len(lesson_headline[lesson])]
 
                     _questions = Question.objects.filter(tags=headline)  # .filter(tags=quiz_level[0])
@@ -172,7 +163,7 @@ def build_quiz(request):
                     if _questions:
                         temp_question_set.add(random.choice(_questions))
                     headline_counter += 1
-                    if headline_counter > questions * 5:
+                    if headline_counter > question_num * 8:
                         break
                 question_set |= temp_question_set
         serializer = QuestionSerializer(question_set, many=True)
@@ -182,7 +173,6 @@ def build_quiz(request):
     h1_ids = data.pop('headlines', None)
     question_number = data.pop('question_num', None)
     quiz_level = data.pop('quiz_level', None)
-    duration = data.pop('duration', None)
 
     if check_user(data):
         h1s = H1.objects.filter(id__in=h1_ids)
@@ -247,7 +237,7 @@ def mark_quiz(request):
             tag = tag.h1
 
             h1 = h1s.get(tag.name, {})
-            lesson = lessons.get(tag.lesson.name, {})
+            lesson = lessons.get(tag.lesson.id, {})
 
             if answer == question.correct_answer:
                 h1['correct'] = h1.get('correct', 0) + 1
@@ -317,6 +307,113 @@ def retake_quiz(request):
 
 
 @api_view(['POST'])
+def similar_questions(request):
+    def similar_by_headline(question, question_weight):
+        levels_weight = [15, 10, 6, 3, 1, 0]
+        # get lesson
+        tag = question.tags.exclude(headbase=None).first().headbase
+
+        if hasattr(tag, 'h1'):
+            main_headline = tag.h1
+
+        elif hasattr(tag, 'headline'):
+            main_headline = tag.headline
+            while hasattr(tag, 'headline'):
+                tag = tag.headline.parent_headline
+
+        lesson = tag.h1.lesson
+
+        # add headlines questions
+        headlines = lesson.get_all_headlines()
+        questions = Question.objects.filter(tags__in=headlines)
+        for question in questions:
+            question_weight[str(question.id)] = question_weight.get(str(question.id), 0)
+
+        # weight the headlines
+        wastes_headlines = {main_headline}
+        weighted_headlines = {levels_weight[0]: {main_headline}}
+        wastes_headlines |= set(main_headline.get_all_child_headlines())
+        weighted_headlines[levels_weight[1]] = set(main_headline.get_all_child_headlines())
+        similarity_level = 2
+        while hasattr(main_headline, 'parent_headline'):
+            main_headline = main_headline.parent_headline
+            if hasattr(main_headline, 'headline'):
+                main_headline = main_headline.headline
+                weighted_headlines[levels_weight[similarity_level]] = (
+                                                                                      set(main_headline.get_all_child_headlines()) | {
+                                                                                  main_headline}) - wastes_headlines
+                wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
+            elif hasattr(main_headline, 'h1'):
+                main_headline = main_headline.h1
+                weighted_headlines[levels_weight[similarity_level]] = (
+                                                                                      set(main_headline.get_all_child_headlines()) | {
+                                                                                  main_headline}) - wastes_headlines
+                wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
+            similarity_level += 1
+        weighted_headlines[levels_weight[similarity_level]] = set(lesson.get_all_headlines()) - wastes_headlines
+
+        # add question weight
+        for weight, headlines in weighted_headlines.items():
+            questions = Question.objects.filter(tags__in=headlines)
+            for question in questions:
+                question_weight[str(question.id)] = question_weight.get(str(question.id), 0) + weight
+
+        return question_weight
+
+    def similar_by_author(question, question_weight):
+        author = question.tags.exclude(author=None).first().author
+        questions = Question.objects.filter(tags=author, id__in=question_weight.keys())
+        for question in questions:
+            question_weight[str(question.id)] += 2
+        return question_weight
+
+    def similar_by_level(question, question_weight):
+        level = question.tags.exclude(questionlevel=None).first().questionlevel
+        questions = Question.objects.filter(tags=level, id__in=question_weight.keys())
+        for question in questions:
+            question_weight[str(question.id)] += 3
+        return question_weight
+
+    data = request.data
+    questions_id = data.pop('questions_id', None)
+    is_single_question = data.pop('is_single_question', False)
+    by_headlines = data.pop('by_headlines', False)
+    by_author = data.pop('by_author', False)
+    by_level = data.pop('by_level', False)
+
+    question_weight = {}
+    for question in questions_id:
+        question = Question.objects.get(id=question)
+        if by_headlines:
+            question_weight = similar_by_headline(question, question_weight)
+
+        if by_author:
+            question_weight = similar_by_author(question, question_weight)
+
+        if by_level:
+            question_weight = similar_by_level(question, question_weight)
+
+    for ID in questions_id:
+        question_weight.pop(ID)
+
+    sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x], reverse=True)
+
+    questions = []
+    for question_id in (sorted_question[:len(questions_id)]if not is_single_question else sorted_question):
+        questions.append(Question.objects.get(id=question_id))
+
+    serializer = QuestionSerializer(questions, many=True)
+    return Response(serializer.data)
+# {
+#         "questions_id": ["000c37e8-0635-49a7-9e94-2cfcc57602e8"],
+#         "is_single_question": 1,
+#         "by_headlines": 1,
+#         "by_author": 1,
+#         "by_level": 1
+# }
+
+
+@api_view(['POST'])
 def quiz_review(request):
     data = request.data
     quiz_id = data.pop('quiz_id', None)
@@ -326,6 +423,7 @@ def quiz_review(request):
         answers = UserAnswer.objects.filter(quiz=quiz)
 
         correct_questions = 0
+        modules = {}
         lessons = {}
         h1s = {}
 
@@ -345,24 +443,68 @@ def quiz_review(request):
 
             h1 = h1s.get(tag.name, {})
             lesson = lessons.get(tag.lesson.name, {})
+            module = modules.get(tag.lesson.module.name)
 
             if answer == question.correct_answer:
                 correct_questions += 1
                 h1['correct'] = h1.get('correct', 0) + 1
                 lesson['correct'] = lesson.get('correct', 0) + 1
+                module['correct'] = module.get('correct', 0) + 1
             else:
                 h1['correct'] = h1.get('correct', 0)
                 lesson['correct'] = lesson.get('correct', 0)
+                module['correct'] = module.get('correct', 0)
 
             h1['all'] = h1.get('all', 0) + 1
             lesson['all'] = lesson.get('all', 0) + 1
+            module['all'] = module.get('all', 0) + 1
+
+            if answer.duration > answer.question.idealDuration:
+                h1['duration'] = h1.get('duration', 0) + 1
+                lesson['duration'] = lesson.get('duration', 0) + 1
+                module['duration'] = module.get('duration', 0) + 1
 
             h1s[tag.name] = h1
             lessons[tag.lesson.name] = lesson
+            modules[tag.lesson.module.name] = module
 
-        best_worst_skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(),
-                        key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
-        best_worst_skills = dict(best_worst_skills)
+        mark_based_h1s = sorted(h1s.items(),
+                                key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
+        mark_based_lessons = sorted(lessons.items(),
+                                    key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
+        mark_based_modules = sorted(modules.items(),
+                                    key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
+
+        time_based_h1s = sorted(h1s.items(),
+                                key=lambda x: x[1]['duration'], reverse=True)
+        time_based_lessons = sorted(lessons.items(),
+                                    key=lambda x: x[1]['duration'], reverse=True)
+        time_based_modules = sorted(modules.items(),
+                                    key=lambda x: x[1]['duration'], reverse=True)
+
+        statements = [f'تقييم بشكل عام : أظهرت بطأ في تقديمك للامتحان حيث كان معدل حلك لكل سؤال 4 دقائق مما مكنك من حل 6 اسئلة من أصل {len(answers)} في الوقت المحدد',
+                      f'اكثر اخطاءك كانت في درس {mark_based_lessons[-1]}',
+                      f'اكثر اخطاءك كانت في وحدة {mark_based_modules[-1]}',
+                      f'ركز أكثر في دراسة {mark_based_h1s[-1]}',
+                      f'أجبت على جميع أسئلة درس {mark_based_lessons[0]} بنجاح',
+                      f'أجبت على جميع أسئلة وحدة {mark_based_modules[0]} بنجاح',
+                      f'لاحظنا قضاءك الوقت الأكبر على اسئلة درس {time_based_lessons[0]}',
+                      f'لاحظنا قضاءك الوقت الأكبر على اسئلة وحدة {time_based_modules[0]}',
+                      f'لاحظنا قضاءك الوقت الأكبر على اسئلة {time_based_h1s[0]}',
+                      ]
+        print(mark_based_modules)
+        print(time_based_modules)
+        print(mark_based_lessons)
+        print(time_based_lessons)
+        print(mark_based_h1s)
+        print(time_based_h1s)
+        print(statements)
+
+        best_worst_skills = dict(mark_based_lessons if len(mark_based_lessons) > 5 else mark_based_h1s)
+
+        # best_worst_skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(),
+        #                 key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
+        # best_worst_skills = dict(best_worst_skills)
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
         return Response(
@@ -547,6 +689,25 @@ def add_question_image(request):
     last_name.save()
     question.save()
     return Response(1)
+
+
+@api_view(['POST'])
+def subject_question_num(request):
+    data = request.data
+    subject = data['subject']
+    subject = Subject.objects.get(name=subject)
+    modules = Module.objects.filter(subject=subject)
+    lessons = Lesson.objects.filter(module__in=modules)
+    h1s = H1.objects.filter(lesson__in=lessons)
+    h2s = HeadLine.objects.filter(parent_headline__in=h1s)
+    h3s = HeadLine.objects.filter(parent_headline__in=h2s)
+    h4s = HeadLine.objects.filter(parent_headline__in=h3s)
+    h5s = HeadLine.objects.filter(parent_headline__in=h4s)
+    headlines = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+    return Response(Question.objects.filter(tags__in=headlines).count())
+# {
+#         "subject": "التاريخ"
+# }
 
 
 # @api_view(['GET'])
@@ -753,108 +914,6 @@ def add_question_image(request):
 #     return Response(serializer.data)
 
 
-@api_view(['POST'])
-def similar_questions(request):
-    def similar_by_headline(question, question_weight):
-        levels_weight = [15, 10, 6, 3, 1, 0]
-        # get lesson
-        tag = question.tags.exclude(headbase=None).first().headbase
 
-        if hasattr(tag, 'h1'):
-            main_headline = tag.h1
 
-        elif hasattr(tag, 'headline'):
-            main_headline = tag.headline
-            while hasattr(tag, 'headline'):
-                tag = tag.headline.parent_headline
 
-        lesson = tag.h1.lesson
-
-        # add headlines questions
-        headlines = lesson.get_all_headlines()
-        questions = Question.objects.filter(tags__in=headlines)
-        for question in questions:
-            question_weight[str(question.id)] = question_weight.get(str(question.id), 0)
-
-        # weight the headlines
-        wastes_headlines = {main_headline}
-        weighted_headlines = {levels_weight[0]: {main_headline}}
-        wastes_headlines |= set(main_headline.get_all_child_headlines())
-        weighted_headlines[levels_weight[1]] = set(main_headline.get_all_child_headlines())
-        similarity_level = 2
-        while hasattr(main_headline, 'parent_headline'):
-            main_headline = main_headline.parent_headline
-            if hasattr(main_headline, 'headline'):
-                main_headline = main_headline.headline
-                weighted_headlines[levels_weight[similarity_level]] = (
-                                                                                      set(main_headline.get_all_child_headlines()) | {
-                                                                                  main_headline}) - wastes_headlines
-                wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
-            elif hasattr(main_headline, 'h1'):
-                main_headline = main_headline.h1
-                weighted_headlines[levels_weight[similarity_level]] = (
-                                                                                      set(main_headline.get_all_child_headlines()) | {
-                                                                                  main_headline}) - wastes_headlines
-                wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
-            similarity_level += 1
-        weighted_headlines[levels_weight[similarity_level]] = set(lesson.get_all_headlines()) - wastes_headlines
-
-        # add question weight
-        for weight, headlines in weighted_headlines.items():
-            questions = Question.objects.filter(tags__in=headlines)
-            for question in questions:
-                question_weight[str(question.id)] = question_weight.get(str(question.id), 0) + weight
-
-        return question_weight
-
-    def similar_by_author(question, question_weight):
-        author = question.tags.exclude(author=None).first().author
-        questions = Question.objects.filter(tags=author, id__in=question_weight.keys())
-        for question in questions:
-            question_weight[str(question.id)] += 2
-        return question_weight
-
-    def similar_by_level(question, question_weight):
-        level = question.tags.exclude(questionlevel=None).first().questionlevel
-        questions = Question.objects.filter(tags=level, id__in=question_weight.keys())
-        for question in questions:
-            question_weight[str(question.id)] += 3
-        return question_weight
-
-    data = request.data
-    questions_id = data.pop('questions_id', None)
-    is_single_question = data.pop('is_single_question', False)
-    by_headlines = data.pop('by_headlines', False)
-    by_author = data.pop('by_author', False)
-    by_level = data.pop('by_level', False)
-
-    question_weight = {}
-    for question in questions_id:
-        question = Question.objects.get(id=question)
-        if by_headlines:
-            question_weight = similar_by_headline(question, question_weight)
-
-        if by_author:
-            question_weight = similar_by_author(question, question_weight)
-
-        if by_level:
-            question_weight = similar_by_level(question, question_weight)
-
-    for ID in questions_id:
-        question_weight.pop(ID)
-
-    sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x], reverse=True)
-
-    questions = []
-    for question_id in (sorted_question[:len(questions_id)]if not is_single_question else sorted_question):
-        questions.append(Question.objects.get(id=question_id))
-
-    serializer = QuestionSerializer(questions, many=True)
-    return Response(serializer.data)
-# {
-#         "questions_id": ["000c37e8-0635-49a7-9e94-2cfcc57602e8"],
-#         "is_single_question": 1,
-#         "by_headlines": 1,
-#         "by_author": 1,
-#         "by_level": 1
-# }

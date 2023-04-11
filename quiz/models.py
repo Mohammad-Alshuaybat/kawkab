@@ -245,7 +245,7 @@ class Solution(models.Model):
 class SavedQuestion(models.Model):
     user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    creationDate = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def __str__(self):
         return f'{self.user} --{self.creationDate}'

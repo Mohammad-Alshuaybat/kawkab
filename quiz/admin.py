@@ -25,7 +25,7 @@ admin.site.register(HeadLineInst, ExportAllFields)
 admin.site.register(AdminFinalAnswer, ExportAllFields)
 
 
-# admin.site.register(SkillInst, ExportAllFields)
+# admin.site.register(LastImageName, ExportAllFields)
 # admin.site.register(Answer, ExportAllFields)  abstract
 admin.site.register(UserFinalAnswer, ExportAllFields)
 admin.site.register(AdminMultipleChoiceAnswer, ExportAllFields)
