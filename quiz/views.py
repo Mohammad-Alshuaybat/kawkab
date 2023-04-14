@@ -1,6 +1,8 @@
+import base64
 import time
 from math import ceil
 
+from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -10,7 +12,7 @@ from user.models import User
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
-    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer
+    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion
 from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
     QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer, UserAnswerSerializer, \
     UserQuizSerializer
@@ -19,7 +21,6 @@ from django.db.models import Count, Q, Sum
 
 import random
 import datetime
-
 
 # import pandas as pd
 
@@ -67,7 +68,8 @@ def build_quiz(request):
                 module_weights[module.id] = module.num_common_h1s / module.num_h1s
 
         sum_weights = sum(module_weights.values())
-        module_weights = {module: round(weight / sum_weights * question_number) for module, weight in module_weights.items()}
+        module_weights = {module: round(weight / sum_weights * question_number) for module, weight in
+                          module_weights.items()}
 
         return module_weights
 
@@ -132,7 +134,7 @@ def build_quiz(request):
         elif level == 2:
             return random.shuffle(
                 [QuestionLevel.objects.get(name=2)] * number_of_question // 2 + [QuestionLevel.objects.get(name=1)] * (
-                            number_of_question - number_of_question // 2))
+                        number_of_question - number_of_question // 2))
         else:
             return [QuestionLevel.objects.get(name=2)] * number_of_question
 
@@ -255,7 +257,8 @@ def mark_quiz(request):
             ideal_duration += question.idealDuration.total_seconds()
             attempt_duration += answer.duration.total_seconds()
 
-        skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(), key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
+        skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(),
+                        key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
         best_worst_skills = dict(list(skills[:3]) + list(skills[-2:]))
 
         ideal_duration = "{}".format(str(datetime.timedelta(seconds=ideal_duration)))
@@ -277,15 +280,15 @@ def mark_question(request):
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):
                 UserFinalAnswer.objects.create(body=ans.get('answer', None),
-                                                        duration=datetime.timedelta(seconds=ans['duration']),
-                                                        question=question)
+                                               duration=datetime.timedelta(seconds=ans['duration']),
+                                               question=question)
 
             elif hasattr(question, 'multiplechoicequestion'):
                 choice = AdminMultipleChoiceAnswer.objects.filter(id=ans.get('answer', None)).first()
 
                 UserMultipleChoiceAnswer.objects.create(choice=choice,
-                                                                 duration=datetime.timedelta(seconds=ans['duration']),
-                                                                 question=question)
+                                                        duration=datetime.timedelta(seconds=ans['duration']),
+                                                        question=question)
 
         return Response(1)
     else:
@@ -340,20 +343,22 @@ def similar_questions(request):
             if hasattr(main_headline, 'headline'):
                 main_headline = main_headline.headline
                 weighted_headlines[levels_weight[similarity_level]] = (
-                                                                                      set(main_headline.get_all_child_headlines()) | {
-                                                                                  main_headline}) - wastes_headlines
+                                                                              set(main_headline.get_all_child_headlines()) | {
+                                                                          main_headline}) - wastes_headlines
                 wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
             elif hasattr(main_headline, 'h1'):
                 main_headline = main_headline.h1
                 weighted_headlines[levels_weight[similarity_level]] = (
-                                                                                      set(main_headline.get_all_child_headlines()) | {
-                                                                                  main_headline}) - wastes_headlines
+                                                                              set(main_headline.get_all_child_headlines()) | {
+                                                                          main_headline}) - wastes_headlines
                 wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
             similarity_level += 1
         weighted_headlines[levels_weight[similarity_level]] = lesson.get_all_headlines() - wastes_headlines
+        print(weighted_headlines)
         wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
         similarity_level += 1
         weighted_headlines[levels_weight[similarity_level]] = lesson.module.get_all_headlines() - wastes_headlines
+        print(weighted_headlines)
 
         # add question weight
         for weight, headlines in weighted_headlines.items():
@@ -402,11 +407,13 @@ def similar_questions(request):
     sorted_question = sorted(question_weight.keys(), key=lambda x: question_weight[x], reverse=True)
 
     questions = []
-    for question_id in (sorted_question[:len(questions_id)]if not is_single_question else sorted_question):
+    for question_id in (sorted_question[:len(questions_id)] if not is_single_question else sorted_question):
         questions.append(Question.objects.get(id=question_id))
 
     serializer = QuestionSerializer(questions, many=True)
     return Response(serializer.data)
+
+
 # {
 #         "questions_id": ["000c37e8-0635-49a7-9e94-2cfcc57602e8"],
 #         "is_single_question": 1,
@@ -427,6 +434,9 @@ def quiz_review(request):
         answers = UserAnswer.objects.filter(quiz=quiz)
 
         correct_questions = 0
+        solved_questions = 0
+        ideal_duration = 0
+        taken_duration = 0
         modules = {}
         lessons = {}
         h1s = {}
@@ -435,10 +445,13 @@ def quiz_review(request):
             if hasattr(answer, 'userfinalanswer'):
                 answer = answer.userfinalanswer
                 question = answer.question.finalanswerquestion
+                if answer.body != '' or answer.body is not None:
+                    solved_questions += 1
             elif hasattr(answer, 'usermultiplechoiceanswer'):
                 answer = answer.usermultiplechoiceanswer
                 question = answer.question.multiplechoicequestion
-
+                if answer.choice is not None:
+                    solved_questions += 1
             tag = question.tags.exclude(headbase=None).first().headbase
             if hasattr(tag, 'headline'):
                 while hasattr(tag, 'headline'):
@@ -463,7 +476,7 @@ def quiz_review(request):
             lesson['all'] = lesson.get('all', 0) + 1
             module['all'] = module.get('all', 0) + 1
 
-            if answer.duration > answer.question.idealDuration:
+            if answer.duration.total_seconds() > answer.question.idealDuration.total_seconds():
                 h1['duration'] = h1.get('duration', 0) + 1
                 lesson['duration'] = lesson.get('duration', 0) + 1
                 module['duration'] = module.get('duration', 0) + 1
@@ -475,6 +488,9 @@ def quiz_review(request):
             h1s[tag.name] = h1
             lessons[tag.lesson.name] = lesson
             modules[tag.lesson.module.name] = module
+
+            ideal_duration += answer.question.idealDuration.total_seconds()
+            taken_duration += answer.duration.total_seconds()
 
         mark_based_h1s = sorted(h1s.items(),
                                 key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
@@ -490,9 +506,7 @@ def quiz_review(request):
         time_based_modules = sorted(modules.items(),
                                     key=lambda x: x[1]['duration'], reverse=True)
 
-        statements = [
-                    f'تقييم بشكل عام : أظهرت بطأ في تقديمك للامتحان حيث كان معدل حلك لكل سؤال 4 دقائق مما مكنك من حل 6 اسئلة من أصل {len(answers)} في الوقت المحدد',
-                      ]
+        statements = []
         if mark_based_modules[-1][1]['correct'] < mark_based_modules[-1][1]['all']:
             statements.append(f'اكثر اخطاءك كانت في وحدة {mark_based_modules[-1][0]}')
         if mark_based_lessons[-1][1]['correct'] < mark_based_lessons[-1][1]['all']:
@@ -510,7 +524,12 @@ def quiz_review(request):
         if time_based_lessons[0][1]['duration'] > 0:
             statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة درس {time_based_lessons[0][0]}')
         if time_based_h1s[0][1]['duration'] > 0:
-            statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة {time_based_h1s[0][0]}')
+            statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة موضوع {time_based_h1s[0][0]}')
+
+        if taken_duration > ideal_duration and solved_questions < len(answers):
+            statements.append(
+                f'تقييم بشكل عام : أظهرت بطأ في تقديمك للامتحان حيث كان معدل حلك لكل سؤال {(taken_duration / 60) / len(answers)} دقائق مما مكنك من حل {solved_questions} اسئلة من أصل {len(answers)} في الوقت المحدد', )
+
         print(mark_based_modules)
         print(time_based_modules)
         print(mark_based_lessons)
@@ -527,9 +546,13 @@ def quiz_review(request):
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
         return Response(
-            {'answers': answers_serializer, 'correct_questions_num': correct_questions, 'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name, 'best_worst_skills': best_worst_skills})
+            {'answers': answers_serializer, 'correct_questions_num': correct_questions,
+             'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name,
+             'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
         return Response(0)
+
+
 # {
 #     "quiz_id": "e5fdfd58-56b4-48e2-a18c-c9b90c11c3ee",
 #     "email": "abood@gmail.com",
@@ -601,8 +624,9 @@ def quiz_history(request):
     if check_user(data):
         user = get_user(data)
 
-        days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
-        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index+10]
+        days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
+                'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
+        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index + 10]
         if not quizzes.exists():
             return Response(1)
         quiz_list = []
@@ -619,7 +643,10 @@ def quiz_history(request):
             correct_question_num = 0
             for answer in user_answers:
                 question_num += 1
-                if (answer.usermultiplechoiceanswer if hasattr(answer, 'usermultiplechoiceanswer') else answer.userfinalanswer) == (answer.question.multiplechoicequestion.correct_answer if hasattr(answer.question, 'multiplechoicequestion') else answer.question.finalanswerquestion.correct_answer):
+                if (answer.usermultiplechoiceanswer if hasattr(answer,
+                                                               'usermultiplechoiceanswer') else answer.userfinalanswer) == (
+                answer.question.multiplechoicequestion.correct_answer if hasattr(answer.question,
+                                                                                 'multiplechoicequestion') else answer.question.finalanswerquestion.correct_answer):
                     correct_question_num += 1
 
             tags_ids = user_answers.values_list('question__tags__id', flat=True).distinct()
@@ -634,15 +661,15 @@ def quiz_history(request):
                 lessons.add(tag.h1.lesson.name)
 
             quiz_list.append({
-                    'id': str(quiz.id),
-                    'subject': quiz.subject.name,
-                    'date': date,
-                    'quiz_duration': quiz.duration.total_seconds(),
-                    'attempt_duration': attempt_duration,
-                    'question_num': question_num,
-                    'correct_question_num': correct_question_num,
-                    'skills': lessons if len(lessons) > 5 else h1s,
-                })
+                'id': str(quiz.id),
+                'subject': quiz.subject.name,
+                'date': date,
+                'quiz_duration': quiz.duration.total_seconds(),
+                'attempt_duration': attempt_duration,
+                'question_num': question_num,
+                'correct_question_num': correct_question_num,
+                'skills': lessons if len(lessons) > 5 else h1s,
+            })
 
         return Response(quiz_list)
 
@@ -651,63 +678,225 @@ def quiz_history(request):
 
 
 @api_view(['POST'])
-def add_question(request):
+def add_multiple_choice_question(request):
     data = request.data
-    body = data.pop('body', None)
-    correct_answer = data.pop('correct_answer', None)
+
+    question = data.pop('question', None)
+    image = data.pop('image', None)
+
+    choices = data.pop('choices', None)
+    notes = data.pop('notes', None)
+
     headline = data.pop('headline', None)
     headline_level = data.pop('headline_level', None)
-    choices = data.pop('choices', None)
-    author = data.pop('author', None)
+
+    source = data.pop('source', None)
+
     level = data.pop('level', None)
-    levels = {'0': 'easy', '1': 'inAverage', '2': 'hard'}
+    levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
 
-    if len(choices) == 0:
-        question, _ = FinalAnswerQuestion.objects.get_or_create(body=body)
-        answer, _ = AdminFinalAnswer.objects.get_or_create(body=correct_answer)
-        question.correct_answer = answer
-    else:
-        question, _ = MultipleChoiceQuestion.objects.get_or_create(body=body)
+    question, _ = MultipleChoiceQuestion.objects.get_or_create(body=question)
 
-        for choice in choices:
-            cho, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=list(choice.keys())[0],
-                                                                     notes=list(choice.values())[0])
-            question.choices.add(cho)
+    if image is not None:
+        image = base64.b64decode(image)
+        image_name = LastImageName.objects.first()
+        question.image = ContentFile(image, str(image_name.name)+'.png')
+        image_name.name += 1
+        image_name.save()
 
-        answer, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=correct_answer)
-        question.correct_answer = answer
+    correct_answer, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=choices[0])
+    question.choices.add(correct_answer)
+    question.correct_answer = correct_answer
 
-    if str(headline_level) == '1':
+    for i in range(1, len(choices)):
+        choice, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=choices[i], notes=notes[i])
+        question.choices.add(choice)
+
+    if headline_level == 1:
         headline, _ = H1.objects.get_or_create(name=headline.strip())
         question.tags.add(headline)
     else:
         headline, _ = HeadLine.objects.get_or_create(name=headline.strip(), level=headline_level)
         question.tags.add(headline)
 
-    aut, _ = Author.objects.get_or_create(name=author)
-    question.tags.add(aut)
+    author, _ = Author.objects.get_or_create(name=source)
+    question.tags.add(author)
 
-    lvl, _ = QuestionLevel.objects.get_or_create(name=levels[str(level)])
-    question.tags.add(lvl)
+    level, _ = QuestionLevel.objects.get_or_create(name=levels[level])
+    question.tags.add(level)
 
     question.save()
-    return Response({'questionId': question.id})
+    return Response(1)
 
 
 @api_view(['POST'])
-def add_question_image(request):
+def add_final_answer_question(request):
     data = request.data
-    questionId = data.pop('questionId', None)[0]
 
-    question = Question.objects.get(id=questionId)
-    question.image = data['image']
+    question = data.pop('question', None)
+    image = data.pop('image', None)
 
-    last_name = LastImageName.objects.all().first()
-    question.image.name = str(last_name.name)
-    last_name.name += 1
-    last_name.save()
+    answer = data.pop('answer', None)
+
+    headline = data.pop('headline', None)
+    headline_level = data.pop('headline_level', None)
+
+    source = data.pop('source', None)
+
+    level = data.pop('level', None)
+    levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
+
+    correct_answer, _ = AdminFinalAnswer.objects.get_or_create(body=answer)
+    question, _ = FinalAnswerQuestion.objects.get_or_create(body=question, correct_answer=correct_answer)
+
+    if image is not None:
+        image = base64.b64decode(image)
+        image_name = LastImageName.objects.first()
+        question.image = ContentFile(image, str(image_name.name)+'.png')
+        image_name.name += 1
+        image_name.save()
+
+    if headline_level == 1:
+        headline, _ = H1.objects.get_or_create(name=headline.strip())
+        question.tags.add(headline)
+    else:
+        headline, _ = HeadLine.objects.get_or_create(name=headline.strip(), level=headline_level)
+        question.tags.add(headline)
+
+    author, _ = Author.objects.get_or_create(name=source)
+    question.tags.add(author)
+
+    level, _ = QuestionLevel.objects.get_or_create(name=levels[level])
+    question.tags.add(level)
+
     question.save()
     return Response(1)
+
+
+@api_view(['POST'])
+def add_multi_section_question(request):
+    data = request.data
+
+    question = data.pop('question', None)
+    image = data.pop('image', None)
+
+    sub_questions = data.pop('subQuestions', None)
+
+    source = data.pop('source', None)
+
+    level = 1
+    levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
+
+    question, _ = MultiSectionQuestion.objects.get_or_create(body=question)
+
+    if image is not None:
+        image = base64.b64decode(image)
+        image_name = LastImageName.objects.first()
+        question.image = ContentFile(image, str(image_name.name)+'.png')
+        image_name.name += 1
+        image_name.save()
+
+    for ques in sub_questions:
+        if ques['type'] == 'finalAnswerQuestion':
+            correct_answer, _ = AdminFinalAnswer.objects.get_or_create(body=ques['answer'])
+            sub_question, _ = FinalAnswerQuestion.objects.get_or_create(body=ques['question'],
+                                                                        correct_answer=correct_answer)
+
+        elif ques['type'] == 'multipleChoiceQuestion':
+            correct_answer, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=ques['choices'][0])
+            sub_question, _ = MultipleChoiceQuestion.objects.get_or_create(body=ques['question'],
+                                                                           correct_answer=correct_answer)
+            sub_question.choices.add(correct_answer)
+
+            for choiceIndex in range(1, len(ques['choices'])):
+                choice, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=ques['choices'][choiceIndex],
+                                                                            notes=ques['choicesNotes'][choiceIndex])
+                sub_question.choices.add(choice)
+
+        if ques['headlineLevel'] == 1:
+            headline, _ = H1.objects.get_or_create(name=ques['headline'].strip())
+
+        else:
+            headline, _ = HeadLine.objects.get_or_create(name=ques['headline'].strip(), level=ques['headlineLevel'])
+
+        sub_question.tags.add(headline)
+        question.tags.add(headline)
+
+        sub_question_level, _ = QuestionLevel.objects.get_or_create(name=levels[ques['questionLevel']])
+        sub_question.tags.add(sub_question_level)
+        level += ques['questionLevel']
+
+        sub_question.save()
+
+        question.sub_questions.add(sub_question)
+
+    author, _ = Author.objects.get_or_create(name=source)
+    question.tags.add(author)
+
+    question_level, _ = QuestionLevel.objects.get_or_create(name=levels[round(level/len(sub_questions))])
+    question.tags.add(question_level)
+
+    question.save()
+    return Response(1)
+
+# @api_view(['POST'])
+# def add_question(request):
+#     data = request.data
+#     body = data.pop('body', None)
+#     correct_answer = data.pop('correct_answer', None)
+#     headline = data.pop('headline', None)
+#     headline_level = data.pop('headline_level', None)
+#     choices = data.pop('choices', None)
+#     author = data.pop('author', None)
+#     level = data.pop('level', None)
+#     levels = {'0': 'easy', '1': 'inAverage', '2': 'hard'}
+#
+#     if len(choices) == 0:
+#         question, _ = FinalAnswerQuestion.objects.get_or_create(body=body)
+#         answer, _ = AdminFinalAnswer.objects.get_or_create(body=correct_answer)
+#         question.correct_answer = answer
+#     else:
+#         question, _ = MultipleChoiceQuestion.objects.get_or_create(body=body)
+#
+#         for choice in choices:
+#             cho, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=list(choice.keys())[0],
+#                                                                      notes=list(choice.values())[0])
+#             question.choices.add(cho)
+#
+#         answer, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=correct_answer)
+#         question.correct_answer = answer
+#
+#     if str(headline_level) == '1':
+#         headline, _ = H1.objects.get_or_create(name=headline.strip())
+#         question.tags.add(headline)
+#     else:
+#         headline, _ = HeadLine.objects.get_or_create(name=headline.strip(), level=headline_level)
+#         question.tags.add(headline)
+#
+#     aut, _ = Author.objects.get_or_create(name=author)
+#     question.tags.add(aut)
+#
+#     lvl, _ = QuestionLevel.objects.get_or_create(name=levels[str(level)])
+#     question.tags.add(lvl)
+#
+#     question.save()
+#     return Response({'questionId': question.id})
+#
+#
+# @api_view(['POST'])
+# def add_question_image(request):
+#     data = request.data
+#     questionId = data.pop('questionId', None)[0]
+#
+#     question = Question.objects.get(id=questionId)
+#     question.image = data['image']
+#
+#     last_name = LastImageName.objects.all().first()
+#     question.image.name = str(last_name.name)
+#     last_name.name += 1
+#     last_name.save()
+#     question.save()
+#     return Response(1)
 
 
 @api_view(['POST'])
@@ -753,11 +942,11 @@ def subject_question_num(request):
 
 # @api_view(['GET'])
 # def read_headlines_from_xlsx(request):
-#     df = pd.read_excel(r'G:\school\data\che.xlsx')
-#     sub, _ = Subject.objects.get_or_create(name='الكيمياء', grade=12)
+#     df = pd.read_excel(r'G:\school\data\dee.xlsx')
+#     sub, _ = Subject.objects.get_or_create(name='التربية الإسلامية', grade=12)
 #     semester = 1
 #     for index, row in df.iterrows():
-#         if index == 39:
+#         if index == 20:
 #             semester = 2
 #             continue
 #         mod, _ = Module.objects.get_or_create(name=row['module'].strip(), subject=sub, semester=semester)
@@ -765,24 +954,7 @@ def subject_question_num(request):
 #         h1, _ = H1.objects.get_or_create(name=row['h1'].strip())
 #         h1.lesson = les
 #         h1.save()
-#         if (str(row['h2'])) != 'nan':
-#             h2, _ = HeadLine.objects.get_or_create(name=row['h2'].strip())
-#             h2.parent_headline = h1
-#             h2.level = 2
-#             h2.save()
-#
-#         if (str(row['h3'])) != 'nan':
-#             h3, _ = HeadLine.objects.get_or_create(name=row['h3'].strip())
-#             h3.parent_headline = h2
-#             h3.level = 3
-#             h3.save()
-#
-#         if (str(row['h4'])) != 'nan':
-#             h4, _ = HeadLine.objects.get_or_create(name=row['h4'].strip())
-#             h4.parent_headline = h3
-#             h4.level = 4
-#             h4.save()
-#
+#         if i != 'nan':
 #     return Response()
 
 
@@ -931,8 +1103,3 @@ def subject_question_num(request):
 #
 #     serializer = QuestionSerializer(questions, many=True)
 #     return Response(serializer.data)
-
-
-
-
-

@@ -43,11 +43,6 @@ class Module(models.Model):
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     semester = models.IntegerField(choices=semester_choices, null=True, blank=True)
 
-    # def get_main_headlines(self):
-    #     lessons = Lesson.objects.filter(module=self)
-    #     h1s = H1.objects.filter(lesson__in=lessons)
-    #     return h1s
-
     def get_main_headlines(self):
         h1s = H1.objects.filter(lesson__module=self)
         return h1s
@@ -229,6 +224,10 @@ class FinalAnswerQuestion(Question):
 class MultipleChoiceQuestion(Question):
     correct_answer = models.ForeignKey(AdminMultipleChoiceAnswer, related_name='correct_answer', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     choices = models.ManyToManyField(AdminMultipleChoiceAnswer, related_name='choices', symmetrical=False, blank=True)
+
+
+class MultiSectionQuestion(Question):
+    sub_questions = models.ManyToManyField(Question, related_name='sections', symmetrical=False, blank=True)
 
 
 class Solution(models.Model):
