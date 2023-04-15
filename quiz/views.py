@@ -14,8 +14,7 @@ from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, Admi
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion
 from .serializers import SubjectSerializer, TagSerializer, ModuleSerializer, \
-    QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer, UserAnswerSerializer, \
-    UserQuizSerializer
+    QuestionSerializer, FinalAnswerQuestionSerializer, MultipleChoiceQuestionSerializer, UserAnswerSerializer, MultiSectionQuestionSerializer
 
 from django.db.models import Count, Q, Sum
 
@@ -839,6 +838,11 @@ def add_multi_section_question(request):
     question.save()
     return Response(1)
 
+
+@api_view(['GET'])
+def test(request):
+    q = MultiSectionQuestion.objects.all()
+    return Response(MultiSectionQuestionSerializer(q, many=True).data)
 # @api_view(['POST'])
 # def add_question(request):
 #     data = request.data

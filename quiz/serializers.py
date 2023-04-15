@@ -3,7 +3,8 @@ from datetime import timedelta
 from django.db.models import Sum
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
-    AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer, UserQuiz
+    AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer, UserQuiz, \
+    MultiSectionQuestion
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -58,19 +59,49 @@ class AdminMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
 
 class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
     correct_answer = AdminFinalAnswerSerializer(many=False)
+    type = serializers.SerializerMethodField()
 
     class Meta:
         model = FinalAnswerQuestion
-        fields = ['id', 'body', 'image', 'idealDuration', 'hint', 'correct_answer']
+        fields = ['id', 'body', 'image', 'idealDuration', 'hint', 'correct_answer', 'type']
+
+    def get_type(self, obj):
+        return 'finalAnswerQuestion'
 
 
 class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
     correct_answer = AdminMultipleChoiceAnswerSerializer(many=False)
     choices = AdminMultipleChoiceAnswerSerializer(many=True)
+    type = serializers.SerializerMethodField()
 
     class Meta:
         model = MultipleChoiceQuestion
-        fields = ['id', 'body', 'image', 'idealDuration', 'hint', 'correct_answer', 'choices']
+        fields = ['id', 'body', 'image', 'idealDuration', 'hint', 'correct_answer', 'choices', 'type']
+
+    def get_type(self, obj):
+        return 'multipleChoiceQuestion'
+
+
+class MultiSectionQuestionSerializer(serializers.ModelSerializer):
+    sub_questions = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MultiSectionQuestion
+        fields = ['id', 'body', 'image', 'idealDuration', 'hint', 'sub_questions', 'type']
+
+    def get_sub_questions(self, obj):
+        sub_questions = []
+        for question in obj.sub_questions.all():
+            if hasattr(question, 'finalanswerquestion'):
+                sub_questions.append(FinalAnswerQuestionSerializer(question.finalanswerquestion).data)
+            elif hasattr(question, 'multiplechoicequestion'):
+                sub_questions.append(MultipleChoiceQuestionSerializer(question.multiplechoicequestion).data)
+        return sub_questions
+
+
+    def get_type(self, obj):
+        return 'multiSectionQuestion'
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -83,11 +114,13 @@ class QuestionSerializer(serializers.ModelSerializer):
             serializer = FinalAnswerQuestionSerializer(obj.finalanswerquestion).data
         elif hasattr(obj, 'multiplechoicequestion'):
             serializer = MultipleChoiceQuestionSerializer(obj.multiplechoicequestion).data
+        elif hasattr(obj, 'multisectionquestion'):
+            serializer = MultiSectionQuestionSerializer(obj.multisectionquestion).data
         else:
             serializer = super().to_representation(obj)
         return serializer
 
-
+##########################
 class UserFinalAnswerSerializer(serializers.ModelSerializer):
     question = QuestionSerializer(many=False)
 
@@ -119,26 +152,4 @@ class UserAnswerSerializer(serializers.ModelSerializer):
         else:
             serializer = super().to_representation(obj)
         return serializer
-
-
-class UserQuizSerializer(serializers.ModelSerializer):
-    subject = serializers.SerializerMethodField()
-    creationDate = serializers.DateTimeField(format='%I:%M %p • %d/%m/%Y %A')
-    duration = serializers.SerializerMethodField()
-    attempt_duration = serializers.SerializerMethodField()
-
-    class Meta:
-        model = UserQuiz
-        fields = ['id', 'subject', 'creationDate', 'duration', 'attempt_duration']
-
-    def get_subject(self, obj):
-        return obj.subject.name
-
-    def get_duration(self, obj):
-        return obj.duration.total_seconds()
-
-    def get_attempt_duration(self, obj):
-        total_duration = obj.useranswer_set.aggregate(Sum('duration'))['duration__sum']
-        total_duration_seconds = total_duration.total_seconds() if total_duration else 0
-        return total_duration_seconds
-
+###########################
