@@ -235,6 +235,7 @@ def mark_quiz(request):
 
 
     data = request.data
+    print(data)
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
     quiz_duration = data.pop('quiz_duration', None)
