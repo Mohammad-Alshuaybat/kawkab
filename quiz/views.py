@@ -197,6 +197,43 @@ def build_quiz(request):
 
 @api_view(['POST'])
 def mark_quiz(request):
+
+    def mark_multiple_choice_question(quiz, ques, ans):
+        global correct_questions, attempt_duration, ideal_duration, lessons, h1s
+        choice = AdminMultipleChoiceAnswer.objects.filter(id=ans.get('answer', None)).first()
+
+        answer = UserMultipleChoiceAnswer.objects.create(choice=choice,
+                                                         duration=datetime.timedelta(seconds=ans['duration']),
+                                                         question=ques, quiz=quiz)
+        question = ques.multiplechoicequestion
+        correct_questions += 1 if answer == question.correct_answer else 0
+
+        tag = question.tags.exclude(headbase=None).first().headbase
+        if hasattr(tag, 'headline'):
+            while hasattr(tag, 'headline'):
+                tag = tag.headline.parent_headline
+        tag = tag.h1
+
+        h1 = h1s.get(tag.name, {})
+        lesson = lessons.get(tag.lesson.id, {})
+
+        if answer == question.correct_answer:
+            h1['correct'] = h1.get('correct', 0) + 1
+            lesson['correct'] = lesson.get('correct', 0) + 1
+        else:
+            h1['correct'] = h1.get('correct', 0)
+            lesson['correct'] = lesson.get('correct', 0)
+
+        h1['all'] = h1.get('all', 0) + 1
+        lesson['all'] = lesson.get('all', 0) + 1
+
+        h1s[tag.name] = h1
+        lessons[tag.lesson.name] = lesson
+
+        ideal_duration += question.idealDuration.total_seconds()
+        attempt_duration += answer.duration.total_seconds()
+
+
     data = request.data
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
@@ -221,41 +258,108 @@ def mark_quiz(request):
                                                         duration=datetime.timedelta(seconds=ans['duration']),
                                                         question=question, quiz=quiz)
                 question = question.finalanswerquestion
+
+                correct_questions += 1 if answer == question.correct_answer else 0
+
+                tag = question.tags.exclude(headbase=None).first().headbase
+                if hasattr(tag, 'headline'):
+                    while hasattr(tag, 'headline'):
+                        tag = tag.headline.parent_headline
+                tag = tag.h1
+
+                h1 = h1s.get(tag.name, {})
+                lesson = lessons.get(tag.lesson.id, {})
+
+                if answer == question.correct_answer:
+                    h1['correct'] = h1.get('correct', 0) + 1
+                    lesson['correct'] = lesson.get('correct', 0) + 1
+                else:
+                    h1['correct'] = h1.get('correct', 0)
+                    lesson['correct'] = lesson.get('correct', 0)
+
+                h1['all'] = h1.get('all', 0) + 1
+                lesson['all'] = lesson.get('all', 0) + 1
+
+                h1s[tag.name] = h1
+                lessons[tag.lesson.name] = lesson
+
+                ideal_duration += question.idealDuration.total_seconds()
+                attempt_duration += answer.duration.total_seconds()
+
             elif hasattr(question, 'multiplechoicequestion'):
-                choice = AdminMultipleChoiceAnswer.objects.filter(id=ans.get('answer', None)).first()
+                mark_multiple_choice_question(quiz, question, ans)
+                # choice = AdminMultipleChoiceAnswer.objects.filter(id=ans.get('answer', None)).first()
+                #
+                # answer = UserMultipleChoiceAnswer.objects.create(choice=choice,
+                #                                                  duration=datetime.timedelta(seconds=ans['duration']),
+                #                                                  question=question, quiz=quiz)
+                # question = question.multiplechoicequestion
+                # correct_questions += 1 if answer == question.correct_answer else 0
+                #
+                # tag = question.tags.exclude(headbase=None).first().headbase
+                # if hasattr(tag, 'headline'):
+                #     while hasattr(tag, 'headline'):
+                #         tag = tag.headline.parent_headline
+                # tag = tag.h1
+                #
+                # h1 = h1s.get(tag.name, {})
+                # lesson = lessons.get(tag.lesson.id, {})
+                #
+                # if answer == question.correct_answer:
+                #     h1['correct'] = h1.get('correct', 0) + 1
+                #     lesson['correct'] = lesson.get('correct', 0) + 1
+                # else:
+                #     h1['correct'] = h1.get('correct', 0)
+                #     lesson['correct'] = lesson.get('correct', 0)
+                #
+                # h1['all'] = h1.get('all', 0) + 1
+                # lesson['all'] = lesson.get('all', 0) + 1
+                #
+                # h1s[tag.name] = h1
+                # lessons[tag.lesson.name] = lesson
+                #
+                # ideal_duration += question.idealDuration.total_seconds()
+                # attempt_duration += answer.duration.total_seconds()
 
-                answer = UserMultipleChoiceAnswer.objects.create(choice=choice,
-                                                                 duration=datetime.timedelta(seconds=ans['duration']),
-                                                                 question=question, quiz=quiz)
-                question = question.multiplechoicequestion
+            elif hasattr(question, 'multisectionquestion'):
+                ans = {'duration': 0, 'saved': False, 'answer': {'subQuesID': answer}}
 
-            correct_questions += 1 if answer == question.correct_answer else 0
+                for sub_question_id, sub_question_answer in ans.get(answer, {}):
+                    sub_question = Question.objects.get(id=sub_question_id)
+                    if hasattr(sub_question, 'multiplechoicequestion'):
+                        choice = AdminMultipleChoiceAnswer.objects.filter(id=sub_question_answer).first()
 
-            tag = question.tags.exclude(headbase=None).first().headbase
-            if hasattr(tag, 'headline'):
-                while hasattr(tag, 'headline'):
-                    tag = tag.headline.parent_headline
-            tag = tag.h1
+                        answer = UserMultipleChoiceAnswer.objects.create(choice=choice,
+                                                                         duration=datetime.timedelta(seconds=ans['duration']),
+                                                                         question=sub_question, quiz=quiz)
+                        sub_question = sub_question.multiplechoicequestion
+                        correct_questions += 1 if answer == sub_question.correct_answer else 0
 
-            h1 = h1s.get(tag.name, {})
-            lesson = lessons.get(tag.lesson.id, {})
+                        tag = sub_question.tags.exclude(headbase=None).first().headbase
+                        if hasattr(tag, 'headline'):
+                            while hasattr(tag, 'headline'):
+                                tag = tag.headline.parent_headline
+                        tag = tag.h1
 
-            if answer == question.correct_answer:
-                h1['correct'] = h1.get('correct', 0) + 1
-                lesson['correct'] = lesson.get('correct', 0) + 1
-            else:
-                h1['correct'] = h1.get('correct', 0)
-                lesson['correct'] = lesson.get('correct', 0)
+                        h1 = h1s.get(tag.name, {})
+                        lesson = lessons.get(tag.lesson.id, {})
 
-            h1['all'] = h1.get('all', 0) + 1
-            lesson['all'] = lesson.get('all', 0) + 1
+                        if answer == sub_question.correct_answer:
+                            h1['correct'] = h1.get('correct', 0) + 1
+                            lesson['correct'] = lesson.get('correct', 0) + 1
+                        else:
+                            h1['correct'] = h1.get('correct', 0)
+                            lesson['correct'] = lesson.get('correct', 0)
 
-            h1s[tag.name] = h1
-            lessons[tag.lesson.name] = lesson
+                        h1['all'] = h1.get('all', 0) + 1
+                        lesson['all'] = lesson.get('all', 0) + 1
 
-            ideal_duration += question.idealDuration.total_seconds()
-            attempt_duration += answer.duration.total_seconds()
+                        h1s[tag.name] = h1
+                        lessons[tag.lesson.name] = lesson
 
+                        ideal_duration += sub_question.idealDuration.total_seconds()
+                        attempt_duration += answer.duration.total_seconds()
+        ####################################
         skills = sorted(lessons.items() if len(lessons) > 5 else h1s.items(),
                         key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
         best_worst_skills = dict(list(skills[:3]) + list(skills[-2:]))
