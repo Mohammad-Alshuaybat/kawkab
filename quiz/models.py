@@ -200,6 +200,10 @@ class UserMultipleChoiceAnswer(UserAnswer):
     choice = models.ForeignKey(AdminMultipleChoiceAnswer, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
 
+class UserMultiSectionAnswer(UserAnswer):
+    sub_questions_answers = models.ManyToManyField(UserAnswer, related_name='sections_answers', symmetrical=False, blank=True)
+
+
 class Question(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)

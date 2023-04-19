@@ -4,7 +4,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
     AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer, UserQuiz, \
-    MultiSectionQuestion
+    MultiSectionQuestion, UserMultiSectionAnswer
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -120,7 +120,7 @@ class QuestionSerializer(serializers.ModelSerializer):
             serializer = super().to_representation(obj)
         return serializer
 
-##########################
+
 class UserFinalAnswerSerializer(serializers.ModelSerializer):
     question = QuestionSerializer(many=False)
 
@@ -138,6 +138,24 @@ class UserMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
         fields = ['choice', 'duration', 'question']
 
 
+class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
+    question = QuestionSerializer(many=False)
+    sub_questions_answers = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserMultiSectionAnswer
+        fields = ['sub_questions_answers', 'duration', 'question']
+
+    def get_sub_questions_answers(self, obj):
+        sub_questions_answers = []
+        for answer in obj.sub_questions_answers.all():
+            if hasattr(answer, 'userfinalanswer'):
+                sub_questions_answers.append(UserFinalAnswerSerializer(answer.userfinalanswer).data)
+            elif hasattr(answer, 'usermultiplechoiceanswer'):
+                sub_questions_answers.append(UserMultipleChoiceAnswerSerializer(answer.usermultiplechoiceanswer).data)
+        return sub_questions_answers
+
+
 class UserAnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -149,7 +167,8 @@ class UserAnswerSerializer(serializers.ModelSerializer):
             serializer = UserMultipleChoiceAnswerSerializer(obj.usermultiplechoiceanswer).data
         elif hasattr(obj, 'userfinalanswer'):
             serializer = UserFinalAnswerSerializer(obj.userfinalanswer).data
+        elif hasattr(obj, 'usermultisectionanswer'):
+            serializer = UserMultiSectionAnswerSerializer(obj.usermultisectionanswer).data
         else:
             serializer = super().to_representation(obj)
         return serializer
-###########################
