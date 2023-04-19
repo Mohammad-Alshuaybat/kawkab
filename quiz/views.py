@@ -263,6 +263,7 @@ def mark_quiz(request):
         return attempt_duration, ideal_duration, correct_questions, lessons, h1s
 
     data = request.data
+    print(data)
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
     quiz_duration = data.pop('quiz_duration', None)
