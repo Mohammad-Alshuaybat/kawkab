@@ -806,7 +806,7 @@ def add_multiple_choice_question(request):
     author, _ = Author.objects.get_or_create(name=source)
     question.tags.add(author)
 
-    level, _ = QuestionLevel.objects.get_or_create(name=levels[level])
+    level = QuestionLevel.objects.create(name=levels[level], level=level)
     question.tags.add(level)
 
     question.save()
@@ -850,7 +850,7 @@ def add_final_answer_question(request):
     author, _ = Author.objects.get_or_create(name=source)
     question.tags.add(author)
 
-    level, _ = QuestionLevel.objects.get_or_create(name=levels[level])
+    level = QuestionLevel.objects.create(name=levels[level], level=level)
     question.tags.add(level)
 
     question.save()
@@ -906,7 +906,7 @@ def add_multi_section_question(request):
         sub_question.tags.add(headline)
         question.tags.add(headline)
 
-        sub_question_level, _ = QuestionLevel.objects.get_or_create(name=levels[ques['questionLevel']])
+        sub_question_level = QuestionLevel.objects.create(name=levels[ques['questionLevel']], level=ques['questionLevel'])
         sub_question.tags.add(sub_question_level)
         level += ques['questionLevel']
 
@@ -917,7 +917,7 @@ def add_multi_section_question(request):
     author, _ = Author.objects.get_or_create(name=source)
     question.tags.add(author)
 
-    question_level, _ = QuestionLevel.objects.get_or_create(name=levels[round(level/len(sub_questions))])
+    question_level = QuestionLevel.objects.create(name=levels[round(level/len(sub_questions))], level=level/len(sub_questions))
     question.tags.add(question_level)
 
     question.save()
@@ -926,8 +926,13 @@ def add_multi_section_question(request):
 
 @api_view(['GET'])
 def test(request):
-    q = MultiSectionQuestion.objects.all()
-    return Response(MultiSectionQuestionSerializer(q, many=True).data)
+    questions = Question.objects.all()
+    for question in questions:
+        question.idealDuration = datetime.timedelta(seconds=120)
+        level = QuestionLevel.objects.create(name='inAverage', level=2)
+        question.tags.add(level)
+        question.save()
+    return Response(0)
 # @api_view(['POST'])
 # def add_question(request):
 #     data = request.data
