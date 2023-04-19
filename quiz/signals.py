@@ -7,7 +7,7 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
         answer = instance.usermultiplechoiceanswer
         question = answer.question.multiplechoicequestion
         answers_num = UserAnswer.objects.filter(question=question).count()
-        level = question.tags.exclude(QuestionLevel=None).first()
+        level = question.tags.exclude(questionlevel=None).first()
         # 1-->easy   2-->inAverage   3-->hard
         if answer == question.correct_answer:
             if answer.duration < question.idealDuration:
@@ -28,7 +28,7 @@ def create_user_final_answer_answer(sender, instance, created, **kwargs):
         answer = instance.userfinalanswer
         question = answer.question.finalanswerquestion
         answers_num = UserAnswer.objects.filter(question=question).count()
-        level = question.tags.exclude(QuestionLevel=None).first()
+        level = question.tags.exclude(questionlevel=None).first()
         # 1-->easy   2-->inAverage   3-->hard
         if answer == question.correct_answer:
             if answer.duration < question.idealDuration:

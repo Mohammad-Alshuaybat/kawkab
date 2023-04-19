@@ -264,6 +264,19 @@ def mark_quiz(request):
 
     data = request.data
     print(data)
+    """
+    {
+        "email": "abood@gmail.com", 
+        "password": "123", 
+        "subject": "8c932220-8ef1-4f9e-a730-377cedae1cc4", 
+        "answers": {
+            "2399c20d-756f-41fc-839b-4d705040960b": {"duration": 11, "answer": {"849aafba-6264-4385-89d0-b81a45f2bfe8": "e8b4ff42-f106-41df-8284-1b80661a02ae", "86ee4141-2d52-4665-ade0-a057ed16140e": "002863fc-bee4-49ae-9171-a96e21957169"}}, 
+            "bf406450-33dd-41b6-9fd6-3513572c2d79": {"duration": 8, "answer": "38b7d47f-35fa-425d-9ec1-a249a3f1e358"}, 
+            "4f872a59-af7b-4880-9aaf-e3c70016bb7d": {"duration": 4, "answer": "a0ad3801-6f87-470b-be4d-fddb7805020d"}
+        },
+         "quiz_duration": 300
+    }
+    """
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
     quiz_duration = data.pop('quiz_duration', None)
@@ -499,7 +512,7 @@ def quiz_review(request):
     def review_multi_section_question(answer, correct_questions, solved_questions, ideal_duration, taken_duration, modules, lessons, h1s):
         answer = answer.usermultisectionanswer
 
-        for sub_answer in answer.sub_questions_answers:
+        for sub_answer in answer.sub_questions_answers.all():
             if hasattr(sub_answer, 'userfinalanswer'):
                 correct_questions, solved_questions, ideal_duration, taken_duration, modules, lessons, h1s = review_final_answer_question(sub_answer, correct_questions, solved_questions, ideal_duration, taken_duration, modules, lessons, h1s)
             elif hasattr(sub_answer, 'usermultiplechoiceanswer'):
