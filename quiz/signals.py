@@ -4,10 +4,12 @@ from .models import UserMultipleChoiceAnswer, UserAnswer, UserMultiSectionAnswer
 
 def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # sender: which model  instance: which project or profile or etc in the model  created: is the update was create new instance
     if created:
+        levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
+
         answer = instance.usermultiplechoiceanswer
         question = answer.question.multiplechoicequestion
         answers_num = UserAnswer.objects.filter(question=question).count()
-        level = question.tags.exclude(questionlevel=None).first()
+        level = question.tags.exclude(questionlevel=None).first().questionlevel
         # 1-->easy   2-->inAverage   3-->hard
         if answer == question.correct_answer:
             if answer.duration < question.idealDuration:
@@ -17,7 +19,8 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
         else:
             answerLevel = 3
 
-        level.questionlevel.level = (level.questionlevel.level * (answers_num - 1) + answerLevel) / answers_num
+        level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
+        level.name = levels[round(level.level)]
         question.idealDuration = (question.idealDuration * (answers_num - 1) + answer.duration) / answers_num
         level.save()
         question.save()
@@ -25,10 +28,12 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
 
 def create_user_final_answer_answer(sender, instance, created, **kwargs):
     if created:
+        levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
+
         answer = instance.userfinalanswer
         question = answer.question.finalanswerquestion
         answers_num = UserAnswer.objects.filter(question=question).count()
-        level = question.tags.exclude(questionlevel=None).first()
+        level = question.tags.exclude(questionlevel=None).first().questionlevel
         # 1-->easy   2-->inAverage   3-->hard
         if answer == question.correct_answer:
             if answer.duration < question.idealDuration:
@@ -38,7 +43,8 @@ def create_user_final_answer_answer(sender, instance, created, **kwargs):
         else:
             answerLevel = 3
 
-        level.questionlevel.level = (level.questionlevel.level * (answers_num - 1) + answerLevel) / answers_num
+        level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
+        level.name = levels[round(level.level)]
         question.idealDuration = (question.idealDuration * (answers_num - 1) + answer.duration) / answers_num
 
         level.save()
