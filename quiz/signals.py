@@ -20,6 +20,7 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
             answerLevel = 3
         print(answerLevel)
         print(level.level)
+        print(answers_num)
         level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
         print(level.level)
         print(level.name)

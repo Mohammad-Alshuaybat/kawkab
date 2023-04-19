@@ -948,6 +948,11 @@ def test(request):
         question.tags.add(level)
         question.save()
     return Response(0)
+
+@api_view(['GET'])
+def test1(request):
+    UserAnswer.objects.all().delete()
+    return Response(0)
 # @api_view(['POST'])
 # def add_question(request):
 #     data = request.data
