@@ -93,7 +93,7 @@ class Author(Tag):
 
 
 class QuestionLevel(Tag):
-    pass
+    level = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
 
 
 class HeadBase(Tag):
