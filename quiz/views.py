@@ -308,8 +308,9 @@ def mark_quiz(request):
                         key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
         best_worst_skills = dict(list(skills[:3]) + list(skills[-2:]))
 
-        ideal_duration = "{}".format(str(datetime.timedelta(seconds=ideal_duration)))
-        attempt_duration = "{}".format(str(datetime.timedelta(seconds=attempt_duration)))
+        ideal_duration = "{}".format(str(datetime.timedelta(seconds=round(ideal_duration))))
+
+        attempt_duration = "{}".format(str(datetime.timedelta(seconds=round(attempt_duration))))
         return Response({'correct_questions': correct_questions, 'total_question_num': len(answers),
                          'attempt_duration': attempt_duration, 'ideal_duration': ideal_duration,
                          'quiz_id': quiz.id, 'best_worst_skills': best_worst_skills})
