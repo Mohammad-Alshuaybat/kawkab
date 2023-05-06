@@ -777,6 +777,74 @@ def quiz_history(request):
 
 
 @api_view(['POST'])
+def get_admin_question(request):
+    data = request.data
+
+    question_id = data.pop('ID', None)
+
+    question_obj = Question.objects.get(id=question_id)
+    serializer = QuestionSerializer(question_obj, many=False).data
+
+    return Response(serializer)
+
+
+@api_view(['POST'])
+def edit_multiple_choice_question(request):
+    data = request.data
+
+    question_id = data.pop('ID', None)
+
+    question = data.pop('question', None)
+    image = data.pop('image', None)
+
+    choices = data.pop('choices', None)
+    notes = data.pop('notes', None)
+
+    headline = data.pop('headline', None)
+    headline_level = data.pop('headline_level', None)
+
+    source = data.pop('source', None)
+
+    level = data.pop('level', None)
+    levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
+
+    question_obj = Question.objects.get(id=question_id).multiplechoicequestion
+    question_obj.choices.clear()
+    question_obj.tags.clear()
+
+    question_obj.body = question
+
+    if image is not None:
+        image = base64.b64decode(image)
+        image_name = question_obj.image.name
+        question_obj.image = ContentFile(image, str(image_name) + '.png')
+
+    correct_answer, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=choices[0])
+    question_obj.choices.add(correct_answer)
+    question_obj.correct_answer = correct_answer
+
+    for i in range(1, len(choices)):
+        choice, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=choices[i], notes=notes[i])
+        question_obj.choices.add(choice)
+
+    if headline_level == 1:
+        headline, _ = H1.objects.get_or_create(name=headline.strip())
+        question_obj.tags.add(headline)
+    else:
+        headline, _ = HeadLine.objects.get_or_create(name=headline.strip(), level=headline_level)
+        question_obj.tags.add(headline)
+
+    author, _ = Author.objects.get_or_create(name=source)
+    question_obj.tags.add(author)
+
+    level = QuestionLevel.objects.create(name=levels[level], level=level)
+    question_obj.tags.add(level)
+
+    question_obj.save()
+    return Response(1)
+
+
+@api_view(['POST'])
 def add_multiple_choice_question(request):
     data = request.data
 
@@ -825,6 +893,57 @@ def add_multiple_choice_question(request):
     question.tags.add(level)
 
     question.save()
+    return Response(1)
+
+
+@api_view(['POST'])
+def edit_final_answer_question(request):
+    data = request.data
+
+    question_id = data.pop('ID', None)
+
+    question = data.pop('question', None)
+    image = data.pop('image', None)
+
+    answer = data.pop('answer', None)
+
+    headline = data.pop('headline', None)
+    headline_level = data.pop('headline_level', None)
+
+    source = data.pop('source', None)
+
+    level = data.pop('level', None)
+    levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
+
+
+    question_obj = Question.objects.get(id=question_id).finalanswerquestion
+    question_obj.tags.clear()
+
+    question_obj.body = question
+
+    if image is not None:
+        image = base64.b64decode(image)
+        image_name = question_obj.image.name
+        question_obj.image = ContentFile(image, str(image_name) + '.png')
+
+    correct_answer, _ = AdminFinalAnswer.objects.get_or_create(body=answer)
+    question_obj.correct_answer = correct_answer
+
+
+    if headline_level == 1:
+        headline, _ = H1.objects.get_or_create(name=headline.strip())
+        question_obj.tags.add(headline)
+    else:
+        headline, _ = HeadLine.objects.get_or_create(name=headline.strip(), level=headline_level)
+        question_obj.tags.add(headline)
+
+    author, _ = Author.objects.get_or_create(name=source)
+    question_obj.tags.add(author)
+
+    level = QuestionLevel.objects.create(name=levels[level], level=level)
+    question_obj.tags.add(level)
+
+    question_obj.save()
     return Response(1)
 
 
@@ -939,6 +1058,78 @@ def add_multi_section_question(request):
     return Response(1)
 
 
+@api_view(['POST'])
+def edit_multi_section_question(request):
+    data = request.data
+
+    question_id = data.pop('ID', None)
+
+    question = data.pop('question', None)
+    image = data.pop('image', None)
+
+    sub_questions = data.pop('subQuestions', None)
+
+    source = data.pop('source', None)
+
+    level = 1
+    levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
+
+    question_obj = Question.objects.get(id=question_id).multisectionquestion
+    question_obj.sub_questions.clear()
+    question_obj.tags.clear()
+
+    question_obj.body = question
+
+    if image is not None:
+        image = base64.b64decode(image)
+        image_name = question_obj.image.name
+        question_obj.image = ContentFile(image, str(image_name) + '.png')
+####################################
+    for ques in sub_questions:
+        if ques['type'] == 'finalAnswerQuestion':
+            correct_answer, _ = AdminFinalAnswer.objects.get_or_create(body=ques['answer'])
+            sub_question, _ = FinalAnswerQuestion.objects.get_or_create(body=ques['question'],
+                                                                        correct_answer=correct_answer)
+
+        elif ques['type'] == 'multipleChoiceQuestion':
+            correct_answer, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=ques['choices'][0])
+            sub_question, _ = MultipleChoiceQuestion.objects.get_or_create(body=ques['question'],
+                                                                           correct_answer=correct_answer)
+            sub_question.choices.add(correct_answer)
+
+            for choiceIndex in range(1, len(ques['choices'])):
+                choice, _ = AdminMultipleChoiceAnswer.objects.get_or_create(body=ques['choices'][choiceIndex],
+                                                                            notes=ques['choicesNotes'][choiceIndex])
+                sub_question.choices.add(choice)
+
+        if ques['headlineLevel'] == 1:
+            headline, _ = H1.objects.get_or_create(name=ques['headline'].strip())
+
+        else:
+            headline, _ = HeadLine.objects.get_or_create(name=ques['headline'].strip(), level=ques['headlineLevel'])
+
+        sub_question.tags.add(headline)
+        question.tags.add(headline)
+
+        sub_question_level = QuestionLevel.objects.create(name=levels[ques['questionLevel']],
+                                                          level=ques['questionLevel'])
+        sub_question.tags.add(sub_question_level)
+        level += ques['questionLevel']
+
+        sub_question.save()
+
+        question.sub_questions.add(sub_question)
+##########################################
+    author, _ = Author.objects.get_or_create(name=source)
+    question_obj.tags.add(author)
+
+    level = QuestionLevel.objects.create(name=levels[level], level=level)
+    question_obj.tags.add(level)
+
+    question_obj.save()
+    return Response(1)
+
+
 @api_view(['GET'])
 def test(request):
     questions = Question.objects.all()
@@ -948,6 +1139,7 @@ def test(request):
         question.tags.add(level)
         question.save()
     return Response(0)
+
 
 @api_view(['GET'])
 def test1(request):
@@ -1027,6 +1219,22 @@ def subject_question_num(request):
     h5s = HeadLine.objects.filter(parent_headline__in=h4s)
     headlines = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
     return Response(Question.objects.filter(tags__in=headlines).count())
+
+
+@api_view(['POST'])
+def subject_question_ids(request):
+    data = request.data
+    subject = data['subject']
+    subject = Subject.objects.get(name=subject)
+    modules = Module.objects.filter(subject=subject)
+    lessons = Lesson.objects.filter(module__in=modules)
+    h1s = H1.objects.filter(lesson__in=lessons)
+    h2s = HeadLine.objects.filter(parent_headline__in=h1s)
+    h3s = HeadLine.objects.filter(parent_headline__in=h2s)
+    h4s = HeadLine.objects.filter(parent_headline__in=h3s)
+    h5s = HeadLine.objects.filter(parent_headline__in=h4s)
+    headlines = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+    return Response(Question.objects.filter(tags__in=headlines).values_list('id', flat=True))
 # {
 #         "subject": "التاريخ"
 # }
