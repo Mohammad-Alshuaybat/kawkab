@@ -634,6 +634,7 @@ def add_or_edit_multiple_choice_question(request):
         question.choices.all().delete()
         question.tags.exclude(questionlevel=None).delete()
         question.tags.clear()
+        question.save()
 
         question.body = question_body
 
@@ -701,8 +702,10 @@ def add_or_edit_final_answer_question(request):
         question = Question.objects.get(id=question_id).finalanswerquestion
 
         question.correct_answer.delete()
+        question.correct_answer = None
         question.tags.exclude(questionlevel=None).delete()
         question.tags.clear()
+        question.save()
 
         question.body = question_body
 
@@ -741,6 +744,7 @@ def add_or_edit_final_answer_question(request):
 @api_view(['POST'])
 def add_or_edit_multi_section_question(request):
     data = request.data
+    print(data)
 
     edit = data.pop('edit', False)
 
@@ -764,6 +768,7 @@ def add_or_edit_multi_section_question(request):
         question.sub_questions.all().delete()
         question.tags.exclude(questionlevel=None).delete()
         question.tags.clear()
+        question.save()
 
         question.body = question_body
 
@@ -778,6 +783,9 @@ def add_or_edit_multi_section_question(request):
         image = base64.b64decode(image)
         image_name = question.image.name
         question.image = ContentFile(image, str(image_name) + '.png')
+
+    author, _ = Author.objects.get_or_create(name=source)
+    question.tags.add(author)
 
     for ques in sub_questions:
         if ques['type'] == 'finalAnswerQuestion':
@@ -802,6 +810,8 @@ def add_or_edit_multi_section_question(request):
             sub_question.tags.add(headline)
             question.tags.add(headline)
 
+        sub_question.tags.add(author)
+
         sub_question_level = QuestionLevel.objects.create(name=levels[ques['questionLevel']], level=ques['questionLevel'])
         sub_question.tags.add(sub_question_level)
         level += ques['questionLevel']
@@ -809,9 +819,6 @@ def add_or_edit_multi_section_question(request):
         sub_question.save()
 
         question.sub_questions.add(sub_question)
-
-    author, _ = Author.objects.get_or_create(name=source)
-    question.tags.add(author)
 
     question_level = QuestionLevel.objects.create(name=levels[round(level/len(sub_questions))], level=level/len(sub_questions))
 

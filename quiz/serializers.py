@@ -24,7 +24,6 @@ class LessonSerializer(serializers.ModelSerializer):
 
     def get_h1s(self, obj):
         h1s = H1.objects.filter(lesson=obj).values_list('id', flat=True)
-        # serializer = TagSerializer(h1s, many=True)
         return h1s
 
     class Meta:
@@ -61,28 +60,33 @@ class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
     correct_answer = AdminFinalAnswerSerializer(many=False)
     level = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
-    headline = serializers.SerializerMethodField()
+    headlines = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
 
     class Meta:
         model = FinalAnswerQuestion
-        fields = ['id', 'body', 'image', 'level', 'author', 'headline', 'idealDuration', 'hint', 'correct_answer', 'type']
+        fields = ['id', 'body', 'image', 'level', 'author', 'headlines', 'idealDuration', 'hint', 'correct_answer', 'type']
 
     def get_type(self, obj):
         return 'finalAnswerQuestion'
 
     def get_level(self, obj):
+        print(obj.tags.all())
         return round(obj.tags.exclude(questionlevel=None).first().questionlevel.level)
 
     def get_author(self, obj):
         return obj.tags.exclude(author=None).first().author.name
 
-    def get_headline(self, obj):
-        headbase = obj.tags.exclude(headbase=None).first().headbase
-        if hasattr(headbase, 'h1'):
-            return {'headline': headbase.name, 'level': 1}
-        else:
-            return {'headline': headbase.name, 'level': headbase.headline.level}
+    def get_headlines(self, obj):
+        tags = obj.tags.exclude(headbase=None).all()
+        headlines = []
+        for tag in tags:
+            headbase = tag.headbase
+            if hasattr(headbase, 'h1'):
+                headlines.append({'headline': headbase.name, 'level': 1})
+            else:
+                headlines.append({'headline': headbase.name, 'level': headbase.headline.level})
+        return headlines
 
 
 class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
@@ -90,12 +94,12 @@ class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
     choices = AdminMultipleChoiceAnswerSerializer(many=True)
     level = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
-    headline = serializers.SerializerMethodField()
+    headlines = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
 
     class Meta:
         model = MultipleChoiceQuestion
-        fields = ['id', 'body', 'image', 'level', 'author', 'headline', 'idealDuration', 'hint', 'correct_answer', 'choices', 'type']
+        fields = ['id', 'body', 'image', 'level', 'author', 'headlines', 'idealDuration', 'hint', 'correct_answer', 'choices', 'type']
 
     def get_type(self, obj):
         return 'multipleChoiceQuestion'
@@ -106,12 +110,16 @@ class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
     def get_author(self, obj):
         return obj.tags.exclude(author=None).first().author.name
 
-    def get_headline(self, obj):
-         headbase = obj.tags.exclude(headbase=None).first().headbase
-         if hasattr(headbase, 'h1'):
-             return {'headline': headbase.name, 'level': 1}
-         else:
-             return {'headline': headbase.name, 'level': headbase.headline.level}
+    def get_headlines(self, obj):
+        tags = obj.tags.exclude(headbase=None).all()
+        headlines = []
+        for tag in tags:
+            headbase = tag.headbase
+            if hasattr(headbase, 'h1'):
+                headlines.append({'headline': headbase.name, 'level': 1})
+            else:
+                headlines.append({'headline': headbase.name, 'level': headbase.headline.level})
+        return headlines
 
 
 class MultiSectionQuestionSerializer(serializers.ModelSerializer):
