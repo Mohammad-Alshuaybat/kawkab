@@ -66,13 +66,13 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
         sub_question = Question.objects.get(id=sub_question_id)
         if hasattr(sub_question, 'finalanswerquestion'):
             sub_answer = mark_final_answer_question(None, sub_question, {'duration': 0, 'answer': sub_question_answer},
-                                                    correct_questions, ideal_duration, attempt_duration, lessons, h1s,
+                                                    correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s,
                                                     single_question)
 
         elif hasattr(sub_question, 'multiplechoicequestion'):
             sub_answer = mark_multiple_choice_question(None, sub_question,
                                                        {'duration': 0, 'answer': sub_question_answer},
-                                                       correct_questions, ideal_duration, attempt_duration, lessons,
+                                                       correct_questions, ideal_duration, attempt_duration, modules, lessons,
                                                        h1s, single_question)
 
         if not single_question:
