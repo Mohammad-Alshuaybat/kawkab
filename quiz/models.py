@@ -161,6 +161,8 @@ class UserAnswer(Answer):
             return self.choice == other
 
         elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):
+            if self.body is None:
+                return False
             return self.body.strip() == other.body.strip()
 
         return False

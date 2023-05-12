@@ -400,6 +400,7 @@ def similar_questions(request):
 @api_view(['POST'])
 def quiz_review(request):
     data = request.data
+    print(data)
 
     quiz_id = data.pop('quiz_id', None)
 
@@ -439,14 +440,15 @@ def quiz_review(request):
 
         best_worst_skills = dict(mark_based_modules if len(mark_based_modules) > 5 else mark_based_lessons if len(mark_based_lessons) > 5 else mark_based_h1s)
 
-        statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers, mark_based_modules, mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons, time_based_h1s)
-        print(mark_based_modules)
-        print(time_based_modules)
-        print(mark_based_lessons)
-        print(time_based_lessons)
-        print(mark_based_h1s)
-        print(time_based_h1s)
-        print(statements)
+        statements=[]
+        # statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers, mark_based_modules, mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons, time_based_h1s)
+        # print(mark_based_modules)
+        # print(time_based_modules)
+        # print(mark_based_lessons)
+        # print(time_based_lessons)
+        # print(mark_based_h1s)
+        # print(time_based_h1s)
+        # print(statements)
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
 
