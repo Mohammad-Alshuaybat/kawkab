@@ -212,6 +212,7 @@ def mark_quiz(request):
 
         attempt_duration = 0
         ideal_duration = 0
+        question_num = 0
         correct_questions = 0
         modules = {}
         lessons = {}
@@ -229,7 +230,7 @@ def mark_quiz(request):
                 _, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multiple_choice_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
 
             elif hasattr(question, 'multisectionquestion'):
-                correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multi_section_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
+                question_num, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multi_section_question(quiz, question, ans, question_num, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
 
         skills = sorted(modules.items() if len(modules) > 5 else lessons.items() if len(lessons) > 5 else h1s.items(),
                         key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
@@ -238,7 +239,7 @@ def mark_quiz(request):
         ideal_duration = "{}".format(str(datetime.timedelta(seconds=round(ideal_duration))))
         attempt_duration = "{}".format(str(datetime.timedelta(seconds=round(attempt_duration))))
 
-        return Response({'total_question_num': len(answers), 'correct_questions': correct_questions,
+        return Response({'total_question_num': len(answers) + question_num, 'correct_questions': correct_questions,
                          'ideal_duration': ideal_duration, 'attempt_duration': attempt_duration,
                          'quiz_id': quiz.id, 'best_worst_skills': best_worst_skills})
     else:
@@ -271,7 +272,7 @@ def mark_question(request):
                 mark_multiple_choice_question(None, question, ans, None, None, None, None, None, None, True)
 
             elif hasattr(question, 'multisectionquestion'):
-                mark_multi_section_question(None, question, ans, None, None, None, None, None, True)
+                mark_multi_section_question(None, question, ans, None, None, None, None, None, None, True)
 
         return Response(1)
     else:
@@ -314,7 +315,7 @@ def similar_questions(request):
 
             # weight the headlines
             weighted_headlines = {levels_weight[0]: {main_headline}}
-            wastes_headlines = levels_weight[0]
+            wastes_headlines = weighted_headlines[levels_weight[0]]
 
             weighted_headlines[levels_weight[1]] = set(main_headline.get_all_child_headlines())
             wastes_headlines |= weighted_headlines[levels_weight[1]]
@@ -440,7 +441,7 @@ def quiz_review(request):
 
         best_worst_skills = dict(mark_based_modules if len(mark_based_modules) > 5 else mark_based_lessons if len(mark_based_lessons) > 5 else mark_based_h1s)
 
-        statements=[]
+        statements = []
         # statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers, mark_based_modules, mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons, time_based_h1s)
         # print(mark_based_modules)
         # print(time_based_modules)
