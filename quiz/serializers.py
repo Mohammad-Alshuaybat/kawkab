@@ -190,12 +190,12 @@ class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
         fields = ['sub_questions_answers', 'duration', 'question']
 
     def get_sub_questions_answers(self, obj):
-        sub_questions_answers = []
+        sub_questions_answers = {}
         for answer in obj.sub_questions_answers.all():
             if hasattr(answer, 'userfinalanswer'):
-                sub_questions_answers.append(UserFinalAnswerSerializer(answer.userfinalanswer).data)
+                sub_questions_answers[answer.userfinalanswer.question.id] = UserFinalAnswerSerializer(answer.userfinalanswer).data
             elif hasattr(answer, 'usermultiplechoiceanswer'):
-                sub_questions_answers.append(UserMultipleChoiceAnswerSerializer(answer.usermultiplechoiceanswer).data)
+                sub_questions_answers[answer.usermultiplechoiceanswer.question.id]=UserMultipleChoiceAnswerSerializer(answer.usermultiplechoiceanswer).data
         return sub_questions_answers
 
 
