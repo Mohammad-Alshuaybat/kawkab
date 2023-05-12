@@ -230,8 +230,8 @@ def mark_quiz(request):
                 _, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multiple_choice_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
 
             elif hasattr(question, 'multisectionquestion'):
-                question_num, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multi_section_question(quiz, question, ans, question_num, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
-
+                correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multi_section_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
+                question_num += Question.multisectionquestion.sub_questions.count() - 1
         skills = sorted(modules.items() if len(modules) > 5 else lessons.items() if len(lessons) > 5 else h1s.items(),
                         key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
         best_worst_skills = dict(list(skills[:3]) + list(skills[-2:]))
@@ -272,7 +272,7 @@ def mark_question(request):
                 mark_multiple_choice_question(None, question, ans, None, None, None, None, None, None, True)
 
             elif hasattr(question, 'multisectionquestion'):
-                mark_multi_section_question(None, question, ans, None, None, None, None, None, None, True)
+                mark_multi_section_question(None, question, ans, None, None, None, None, None, True)
 
         return Response(1)
     else:
@@ -410,6 +410,7 @@ def quiz_review(request):
         answers = UserAnswer.objects.filter(quiz=quiz)
 
         correct_questions = 0
+        question_num = 0
         solved_questions = 0
         ideal_duration = 0
         attempt_duration = 0
@@ -420,10 +421,13 @@ def quiz_review(request):
         for answer in answers:
             if hasattr(answer, 'userfinalanswer'):
                 solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
+                question_num += 1
             elif hasattr(answer, 'usermultiplechoiceanswer'):
                 solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_choice_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
+                question_num += 1
             elif hasattr(answer, 'usermultisectionanswer'):
                 solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_section_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
+                question_num += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()
 
         mark_based_h1s = sorted(h1s.items(),
                                 key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
@@ -454,7 +458,8 @@ def quiz_review(request):
         answers_serializer = UserAnswerSerializer(answers, many=True).data
 
         return Response(
-            {'answers': answers_serializer, 'correct_questions_num': correct_questions,
+            {'answers': answers_serializer,
+             'question_num': question_num, 'correct_questions_num': correct_questions,
              'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name,
              'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
@@ -551,13 +556,15 @@ def quiz_history(request):
             question_num = 0
             correct_question_num = 0
             for answer in user_answers:
-                question_num += 1
+
                 if hasattr(answer, 'usermultiplechoiceanswer'):
                     answer = answer.usermultiplechoiceanswer
                     correct_question_num += 1 if answer.question.multiplechoicequestion.correct_answer == answer else 0
+                    question_num += 1
                 elif hasattr(answer, 'userfinalanswer'):
                     answer = answer.userfinalanswer
                     correct_question_num += 1 if answer.question.finalanswerquestion.correct_answer == answer else 0
+                    question_num += 1
                 elif hasattr(answer, 'usermultisectionanswer'):
                     answer = answer.usermultisectionanswer
                     for sub_answer in answer.sub_questions_answers.all():
@@ -567,7 +574,7 @@ def quiz_history(request):
                         elif hasattr(sub_answer, 'userfinalanswer'):
                             sub_answer = sub_answer.userfinalanswer
                             correct_question_num += 1 if sub_answer.question.finalanswerquestion.correct_answer == sub_answer else 0
-
+                    question_num += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()
             tags_ids = user_answers.values_list('question__tags__id', flat=True).distinct()
             headbases = HeadBase.objects.filter(id__in=tags_ids)
             h1s = set()

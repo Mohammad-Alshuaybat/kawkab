@@ -58,7 +58,7 @@ def review_final_answer_question(answer, correct_questions, solved_questions, id
                                                    attempt_duration, modules, lessons, h1s)
 
 
-def mark_multi_section_question(quiz, ques, ans, question_num, correct_questions, ideal_duration, attempt_duration, modules, lessons,
+def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons,
                                 h1s, single_question):
     answer = UserMultiSectionAnswer.objects.create(duration=datetime.timedelta(seconds=ans['duration']),
                                                    question=ques, quiz=quiz)
@@ -77,14 +77,13 @@ def mark_multi_section_question(quiz, ques, ans, question_num, correct_questions
 
         if not single_question:
             sub_answer, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = sub_answer
-            question_num += 1
         answer.sub_questions_answers.add(sub_answer)
     answer.save()
     if single_question:
         return answer
     attempt_duration += answer.duration.total_seconds()
 
-    return question_num-1, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s
+    return correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s
 
 
 def review_multi_section_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration,
