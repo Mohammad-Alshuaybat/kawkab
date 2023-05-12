@@ -231,7 +231,7 @@ def mark_quiz(request):
 
             elif hasattr(question, 'multisectionquestion'):
                 correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multi_section_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
-                question_num += Question.multisectionquestion.sub_questions.count() - 1
+                question_num += question.multisectionquestion.sub_questions.count() - 1
         skills = sorted(modules.items() if len(modules) > 5 else lessons.items() if len(lessons) > 5 else h1s.items(),
                         key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
         best_worst_skills = dict(list(skills[:3]) + list(skills[-2:]))
