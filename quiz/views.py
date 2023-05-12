@@ -456,9 +456,12 @@ def quiz_review(request):
         # print(statements)
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
+        answers = {}
+        for answer in answers_serializer:
+            answers[answer['question']['id']] = answer
 
         return Response(
-            {'answers': answers_serializer,
+            {'answers': answers,
              'question_num': question_num, 'correct_questions_num': correct_questions,
              'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name,
              'best_worst_skills': best_worst_skills, 'statements': statements})
