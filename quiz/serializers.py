@@ -195,7 +195,7 @@ class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
             if hasattr(answer, 'userfinalanswer'):
                 sub_questions_answers[answer.userfinalanswer.question.id] = answer.userfinalanswer.body
             elif hasattr(answer, 'usermultiplechoiceanswer'):
-                sub_questions_answers[answer.usermultiplechoiceanswer.question.id] = answer.usermultiplechoiceanswer.choice
+                sub_questions_answers[answer.usermultiplechoiceanswer.question.id] = answer.usermultiplechoiceanswer.choice.id
         return sub_questions_answers
 
 
