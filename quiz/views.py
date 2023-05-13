@@ -861,13 +861,21 @@ def subject_question_num(request):
     subject = data['subject']
     subject = Subject.objects.get(name=subject)
     modules = Module.objects.filter(subject=subject)
+    print(modules)
     lessons = Lesson.objects.filter(module__in=modules)
+    print(lessons)
     h1s = H1.objects.filter(lesson__in=lessons)
+    print(h1s)
     h2s = HeadLine.objects.filter(parent_headline__in=h1s)
+    print(h2s)
     h3s = HeadLine.objects.filter(parent_headline__in=h2s)
+    print(h3s)
     h4s = HeadLine.objects.filter(parent_headline__in=h3s)
+    print(h4s)
     h5s = HeadLine.objects.filter(parent_headline__in=h4s)
+    print(h5s)
     headlines = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
+    print(headlines)
     return Response(Question.objects.filter(tags__in=headlines).count())
 
 
@@ -888,3 +896,9 @@ def subject_question_ids(request):
 # {
 #         "subject": "التاريخ"
 # }
+
+
+
+
+
+

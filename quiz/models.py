@@ -7,6 +7,7 @@ from django.db.models import Count
 
 from school.cdn.backends import MediaRootS3Boto3Storage
 from user.models import User
+from sympy.parsing.latex import parse_latex
 
 
 class Subject(models.Model):
@@ -163,6 +164,13 @@ class UserAnswer(Answer):
         elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):
             if self.body is None:
                 return False
+
+            elif self.quiz.subject.id == 'ee25ba19-a309-4010-a8ca-e6ea242faa96':
+                expr1 = parse_latex(self.body[1:-1])
+                expr2 = parse_latex(other.body[1:-1])
+
+                return expr1.equals(expr2)
+
             return self.body.strip() == other.body.strip()
 
         return False

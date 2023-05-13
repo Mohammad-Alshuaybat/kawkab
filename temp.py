@@ -2,16 +2,21 @@
 # start = time.perf_counter()
 # end = time.perf_counter()
 
+from sympy.parsing.latex import parse_latex
+expr1 = parse_latex(r"\sqrt{4}+\sin \left(z\right)")
+expr2 = parse_latex(r"(\sqrt{4}+\sin({z}))")
+expr3 = parse_latex(r"\sin \left(3x\right)-\left(9\cdot 4\right)")
+expr4 = parse_latex(r"(\sin((3\cdot{x}))-(9\cdot4))")
 
-#     registration_info = models.OneToOneField('RegistrationInfo', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-#     @property
-#     def average(self):
-#         avg = self.certificate.aggregate(average=Avg(F('first')+F('second')+F('third')+F('final')))['average']
-#         return avg
+print(expr1)
+print(expr2)
+print(expr3)
+print(expr4)
 
+print(expr1.equals(expr2))
+print(expr3.equals(expr4))
 
-# general relation field
-# from django.contrib.contenttypes.fields import GenericForeignKey, ContentType
-# content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-# object_id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-# content_object = GenericForeignKey('content_type', 'object_id')
+print(expr1.evalf(6, subs=dict()))  # first parameter is number of answer digits and second one is variables value
+print(expr2.evalf(6, subs=dict()))
+print(expr3.evalf(6, subs=dict()))
+print(expr4.evalf(6, subs=dict()))
