@@ -884,7 +884,7 @@ def subject_question_ids(request):
     h4s = HeadLine.objects.filter(parent_headline__in=h3s)
     h5s = HeadLine.objects.filter(parent_headline__in=h4s)
     headlines = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
-    return Response(Question.objects.filter(tags__in=headlines).values_list('id', flat=True))
+    return Response(Question.objects.filter(tags__in=headlines).distinct('id').values_list('id', flat=True))
 # {
 #         "subject": "التاريخ"
 # }
