@@ -71,7 +71,6 @@ class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
         return 'finalAnswerQuestion'
 
     def get_level(self, obj):
-        print(obj.tags.all())
         return round(obj.tags.exclude(questionlevel=None).first().questionlevel.level)
 
     def get_author(self, obj):

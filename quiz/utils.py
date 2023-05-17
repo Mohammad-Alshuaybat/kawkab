@@ -1,3 +1,5 @@
+import random
+
 from quiz.models import AdminMultipleChoiceAnswer, UserMultipleChoiceAnswer, UserFinalAnswer, UserMultiSectionAnswer, \
     Question
 
@@ -66,13 +68,15 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
         sub_question = Question.objects.get(id=sub_question_id)
         if hasattr(sub_question, 'finalanswerquestion'):
             sub_answer = mark_final_answer_question(None, sub_question, {'duration': 0, 'answer': sub_question_answer},
-                                                    correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s,
+                                                    correct_questions, ideal_duration, attempt_duration, modules,
+                                                    lessons, h1s,
                                                     single_question)
 
         elif hasattr(sub_question, 'multiplechoicequestion'):
             sub_answer = mark_multiple_choice_question(None, sub_question,
                                                        {'duration': 0, 'answer': sub_question_answer},
-                                                       correct_questions, ideal_duration, attempt_duration, modules, lessons,
+                                                       correct_questions, ideal_duration, attempt_duration, modules,
+                                                       lessons,
                                                        h1s, single_question)
 
         if not single_question:
@@ -116,7 +120,7 @@ def questions_statistics(question, answer, correct_questions, ideal_duration, at
         tag = tag.h1
 
         h1 = h1s.get(tag.name, {})
-        lesson = lessons.get(tag.lesson.id, {})
+        lesson = lessons.get(tag.lesson.name, {})
         module = modules.get(tag.lesson.module.name, {})
 
         if answer == question.correct_answer:
@@ -151,30 +155,51 @@ def questions_statistics(question, answer, correct_questions, ideal_duration, at
 
 
 def questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers, mark_based_modules,
-                                   mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons, time_based_h1s):
+                                   mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons,
+                                   time_based_h1s):
     statements = []
 
     if attempt_duration > ideal_duration and solved_questions < len(answers):
         statements.append(
             f'تقييم بشكل عام : أظهرت بطأ في تقديمك للامتحان حيث كان معدل حلك لكل سؤال {(attempt_duration / 60) / len(answers)} دقائق مما مكنك من حل {solved_questions} اسئلة من أصل {len(answers)} في الوقت المحدد', )
 
+    if mark_based_modules[0][1]['correct'] == 0:
+        statements.append(
+            f'لا تقلق، لا تستسلم! العلامة السيئة ليست نهاية العالم. استمر بالعمل الجاد وستحقق نتائج افضل في المرات القادمة')
+
     if mark_based_modules[-1][1]['correct'] < mark_based_modules[-1][1]['all']:
         statements.append(f'اكثر اخطاءك كانت في وحدة {mark_based_modules[-1][0]}')
     if mark_based_lessons[-1][1]['correct'] < mark_based_lessons[-1][1]['all']:
-        statements.append(f'اكثر اخطاءك كانت في درس {mark_based_lessons[-1][0]}')
+        statements.append(f'يبدو انك لم تتقن درس {mark_based_lessons[-1][0]} بعد قم بحل المزيد من الاسئلة عليه')
     if mark_based_h1s[-1][1]['correct'] < mark_based_h1s[-1][1]['all']:
         statements.append(f'ركز أكثر في دراسة موضوع {mark_based_h1s[-1][0]}')
 
+    if mark_based_modules[0][1]['correct'] == mark_based_modules[0][1]['all']:
+        statements.append(f'مذهل لقد أجبت على جميع أسئلة وحدة {mark_based_modules[0][0]} بنجاح')
+    if mark_based_lessons[0][1]['correct'] == mark_based_lessons[0][1]['all']:
+        statements.append(f'يمكننا الان القول بان درس {mark_based_lessons[0][0]} اصبح سهلا بالنسبة اليك')
+
     if mark_based_modules[-1][1]['correct'] == mark_based_modules[-1][1]['all']:
-        statements.append(f'أجبت على جميع أسئلة وحدة {mark_based_modules[0][0]} بنجاح')
+        statements.append(f'إنجاز مذهل! أثبتت قدراتك الاستثنائية بالحصول على علامة كاملة. فخور بك!')
     if mark_based_lessons[-1][1]['correct'] == mark_based_lessons[-1][1]['all']:
-        statements.append(f'أجبت على جميع أسئلة درس {mark_based_lessons[0][0]} بنجاح')
+        statements.append(
+            f'أجبت على جميع الأسئلة أنت نجم! لقد حققت أعلى الدرجات وأثبتت أنك قادر على التفوق. استمر في العمل الجاد وتحقيق المزيد من النجاحات.')
+
+    if mark_based_modules[-1][1]['correct'] + 1 == mark_based_modules[-1][1]['all']:
+        statements.append(
+            f'مهاراتك متقدمة بشكل مذهل. كنت قريبًا جدًا من الحصول على العلامة الكاملة وهذا يعكس العمل الجاد الذي قدمته.')
+    if mark_based_modules[-1][1]['correct'] + 1 == mark_based_modules[-1][1]['all']:
+        statements.append(
+            f'لقد كنت قريب جدا من الحصول على العلامة الكاملة خطأك الوحيد كان في درس {mark_based_lessons[-1][0]}')
+    if mark_based_lessons[-1][1]['correct'] + 1 == mark_based_lessons[-1][1]['all']:
+        statements.append(
+            f'لقد كنت قريب جدا من الحصول على العلامة الكاملة خطأك الوحيد كان في موضوع {mark_based_h1s[-1][0]}')
 
     if time_based_modules[0][1]['duration'] > 0:
         statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة وحدة {time_based_modules[0][0]}')
     if time_based_lessons[0][1]['duration'] > 0:
-        statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة درس {time_based_lessons[0][0]}')
+        statements.append(f'لاحظنا قضاءك وقت طويل في حل اسئلة درس {time_based_lessons[0][0]}')
     if time_based_h1s[0][1]['duration'] > 0:
-        statements.append(f'لاحظنا قضاءك الوقت الأكبر على اسئلة موضوع {time_based_h1s[0][0]}')
+        statements.append(f'تدرب اكثر على موضوع {time_based_h1s[0][0]} فقد استغرقت وقتا طويلا في حل اسئلته')
 
-    return statements
+    return statements if len(statements) < 4 else random.sample(statements, 3)

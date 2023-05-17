@@ -445,15 +445,7 @@ def quiz_review(request):
 
         best_worst_skills = dict(mark_based_modules if len(mark_based_modules) > 5 else mark_based_lessons if len(mark_based_lessons) > 5 else mark_based_h1s)
 
-        statements = []
-        # statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers, mark_based_modules, mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons, time_based_h1s)
-        # print(mark_based_modules)
-        # print(time_based_modules)
-        # print(mark_based_lessons)
-        # print(time_based_lessons)
-        # print(mark_based_h1s)
-        # print(time_based_h1s)
-        # print(statements)
+        statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers, mark_based_modules, mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons, time_based_h1s)
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
 
@@ -464,11 +456,6 @@ def quiz_review(request):
              'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
         return Response(0)
-# {
-#     "quiz_id": "e5fdfd58-56b4-48e2-a18c-c9b90c11c3ee",
-#     "email": "abood@gmail.com",
-#     "password": "123"
-# }
 
 
 @api_view(['POST'])
@@ -754,7 +741,6 @@ def add_or_edit_final_answer_question(request):
 @api_view(['POST'])
 def add_or_edit_multi_section_question(request):
     data = request.data
-    print(data)
 
     edit = data.pop('edit', False)
 
@@ -890,7 +876,13 @@ def subject_question_ids(request):
 # }
 
 
-
-
+@api_view(['GET'])
+def test(request):
+    q=Question.objects.filter(idealDuration=datetime.timedelta())
+    for i in q:
+        i.idealDuration=datetime.timedelta(seconds=120)
+        i.save()
+    print(Question.objects.filter(idealDuration=datetime.timedelta()).count())
+    return Response()
 
 

@@ -4,7 +4,7 @@ from .views import subject_set, headline_set, build_quiz, mark_quiz, similar_que
      add_or_edit_multiple_choice_question, add_or_edit_multi_section_question, add_or_edit_final_answer_question, \
      report, save_question, \
      unsave_question, quiz_review, retake_quiz, quiz_history, subject_question_num, \
-     reset_questions_level_and_ideal_duration, delete_users_answers, get_admin_question, subject_question_ids
+     reset_questions_level_and_ideal_duration, delete_users_answers, get_admin_question, subject_question_ids, test
 
 urlpatterns = [
      path('subject_set/', subject_set),
@@ -20,7 +20,7 @@ urlpatterns = [
      path('add_or_edit_multi_section_question/', add_or_edit_multi_section_question),
      path('get_admin_question/', get_admin_question),
      # path('add_final_answer_question/', add_final_answer_question),
-     #  path('read_headlines_from_xlsx/', read_headlines_from_xlsx),
+     path('test/', test),
      path('reset_questions_level_and_ideal_duration/', reset_questions_level_and_ideal_duration),
      path('delete_users_answers/', delete_users_answers),
      path('similar_questions/', similar_questions),
