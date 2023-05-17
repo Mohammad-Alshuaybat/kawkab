@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db.models.signals import post_save, post_delete
 from .models import UserMultipleChoiceAnswer, UserAnswer, UserMultiSectionAnswer, UserFinalAnswer
 
@@ -21,7 +23,7 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
 
         level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
         level.name = levels[round(level.level)]
-        question.idealDuration = (question.idealDuration * (answers_num - 1) + answer.duration) / answers_num
+        question.idealDuration = timedelta(seconds=(question.idealDuration * (answers_num - 1) + answer.duration) / answers_num)
         level.save()
         question.save()
 
@@ -45,7 +47,7 @@ def create_user_final_answer_answer(sender, instance, created, **kwargs):
 
         level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
         level.name = levels[round(level.level)]
-        question.idealDuration = (question.idealDuration * (answers_num - 1) + answer.duration) / answers_num
+        question.idealDuration = timedelta(seconds=(question.idealDuration * (answers_num - 1) + answer.duration) / answers_num)
 
         level.save()
         question.save()
