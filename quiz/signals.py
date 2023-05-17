@@ -11,6 +11,8 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
         answer = instance.usermultiplechoiceanswer
         question = answer.question.multiplechoicequestion
         answers_num = UserAnswer.objects.filter(question=question).count()
+        if answers_num < 2:
+            answers_num = 2
         level = question.tags.exclude(questionlevel=None).first().questionlevel
         # 1-->easy   2-->inAverage   3-->hard
         if answer == question.correct_answer:
@@ -23,7 +25,7 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
 
         level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
         level.name = levels[round(level.level)]
-        question.idealDuration = timedelta(seconds=(question.idealDuration * (answers_num - 1) + answer.duration) / answers_num)
+        question.idealDuration = timedelta(seconds=(question.idealDuration.total_seconds() * (answers_num - 1) + answer.duration.total_seconds()) / answers_num)
         level.save()
         question.save()
 
@@ -35,6 +37,8 @@ def create_user_final_answer_answer(sender, instance, created, **kwargs):
         answer = instance.userfinalanswer
         question = answer.question.finalanswerquestion
         answers_num = UserAnswer.objects.filter(question=question).count()
+        if answers_num < 2:
+            answers_num = 2
         level = question.tags.exclude(questionlevel=None).first().questionlevel
         # 1-->easy   2-->inAverage   3-->hard
         if answer == question.correct_answer:
@@ -47,7 +51,8 @@ def create_user_final_answer_answer(sender, instance, created, **kwargs):
 
         level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
         level.name = levels[round(level.level)]
-        question.idealDuration = timedelta(seconds=(question.idealDuration * (answers_num - 1) + answer.duration) / answers_num)
+
+        question.idealDuration = timedelta(seconds=(question.idealDuration.total_seconds() * (answers_num - 1) + answer.duration.total_seconds()) / answers_num)
 
         level.save()
         question.save()
