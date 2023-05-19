@@ -459,6 +459,7 @@ def quiz_review(request):
         return Response(
             {'answers': answers_serializer,
              'question_num': question_num, 'correct_questions_num': correct_questions,
+             'ideal_duration':ideal_duration, 'attempt_duration':attempt_duration,
              'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None, 'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
              'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
@@ -544,6 +545,8 @@ def quiz_history(request):
 
             attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
             attempt_duration = attempt_duration.total_seconds() if attempt_duration else 0
+            ideal_duration = quiz.useranswer_set.aggregate(Sum('question__idealDuration'))['question__idealDuration__sum']
+            ideal_duration = ideal_duration.total_seconds() if ideal_duration else 0
 
             user_answers = UserAnswer.objects.filter(quiz=quiz)
 
@@ -586,6 +589,7 @@ def quiz_history(request):
                 'date': date,
                 'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None,
                 'attempt_duration': attempt_duration,
+                'ideal_duration': ideal_duration,
                 'question_num': question_num,
                 'correct_question_num': correct_question_num,
                 'skills': modules if len(modules) > 5 else lessons if len(lessons) > 5 else h1s,
