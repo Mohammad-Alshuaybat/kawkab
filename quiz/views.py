@@ -459,7 +459,7 @@ def quiz_review(request):
         return Response(
             {'answers': answers_serializer,
              'question_num': question_num, 'correct_questions_num': correct_questions,
-             'quiz_duration': quiz.duration, 'quiz_subject': quiz.subject.name,
+             'quiz_duration': quiz.duration, 'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
              'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
         return Response(0)
