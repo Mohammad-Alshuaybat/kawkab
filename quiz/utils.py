@@ -185,13 +185,13 @@ def questions_statistics_statement(attempt_duration, ideal_duration, solved_ques
         statements.append(
             f'أجبت على جميع الأسئلة أنت نجم! لقد حققت أعلى الدرجات وأثبتت أنك قادر على التفوق. استمر في العمل الجاد وتحقيق المزيد من النجاحات.')
 
-    if mark_based_modules[-1][1]['correct'] + 1 == mark_based_modules[-1][1]['all']:
+    if mark_based_modules[-1][1]['correct'] + 1 == mark_based_modules[-1][1]['all'] and mark_based_modules[-1][1]['all'] > 2:
         statements.append(
             f'مهاراتك متقدمة بشكل مذهل. كنت قريبًا جدًا من الحصول على العلامة الكاملة وهذا يعكس العمل الجاد الذي قدمته.')
-    if mark_based_modules[-1][1]['correct'] + 1 == mark_based_modules[-1][1]['all']:
+    if mark_based_modules[-1][1]['correct'] + 1 == mark_based_modules[-1][1]['all'] and mark_based_modules[-1][1]['all'] > 2:
         statements.append(
             f'لقد كنت قريب جدا من الحصول على العلامة الكاملة خطأك الوحيد كان في درس {mark_based_lessons[-1][0]}')
-    if mark_based_lessons[-1][1]['correct'] + 1 == mark_based_lessons[-1][1]['all']:
+    if mark_based_lessons[-1][1]['correct'] + 1 == mark_based_lessons[-1][1]['all'] and mark_based_modules[-1][1]['all'] > 2:
         statements.append(
             f'لقد كنت قريب جدا من الحصول على العلامة الكاملة خطأك الوحيد كان في موضوع {mark_based_h1s[-1][0]}')
 

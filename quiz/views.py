@@ -220,7 +220,7 @@ def mark_quiz(request):
 
         subject = Subject.objects.get(id=subject)
         quiz = UserQuiz.objects.create(subject=subject, user=user,
-                                       duration=datetime.timedelta(seconds=int(quiz_duration)))
+                                       duration=datetime.timedelta(seconds=int(quiz_duration)) if quiz_duration is not None else None)
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):
@@ -459,7 +459,7 @@ def quiz_review(request):
         return Response(
             {'answers': answers_serializer,
              'question_num': question_num, 'correct_questions_num': correct_questions,
-             'quiz_duration': quiz.duration, 'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
+             'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None, 'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
              'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
         return Response(0)
@@ -584,7 +584,7 @@ def quiz_history(request):
                 'id': str(quiz.id),
                 'subject': quiz.subject.name,
                 'date': date,
-                'quiz_duration': quiz.duration.total_seconds(),
+                'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None,
                 'attempt_duration': attempt_duration,
                 'question_num': question_num,
                 'correct_question_num': correct_question_num,

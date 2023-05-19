@@ -279,7 +279,7 @@ class Quiz(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
-    duration = models.DurationField(default=timedelta(seconds=0), blank=True)
+    duration = models.DurationField(blank=True, null=True)
 
     def __str__(self):
         return f'{self.id}'
