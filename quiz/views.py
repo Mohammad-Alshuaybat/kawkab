@@ -459,7 +459,7 @@ def quiz_review(request):
         return Response(
             {'answers': answers_serializer,
              'question_num': question_num, 'correct_questions_num': correct_questions,
-             'ideal_duration':ideal_duration, 'attempt_duration':attempt_duration,
+             'ideal_duration': ideal_duration, 'attempt_duration': attempt_duration,
              'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None, 'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
              'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
@@ -889,11 +889,9 @@ def subject_question_ids(request):
 
 @api_view(['GET'])
 def test(request):
-    q=Question.objects.filter(idealDuration=datetime.timedelta())
+    q = Question.objects.filter(idealDuration=datetime.timedelta())
     for i in q:
-        i.idealDuration=datetime.timedelta(seconds=120)
+        i.idealDuration = datetime.timedelta(seconds=120)
         i.save()
     print(Question.objects.filter(idealDuration=datetime.timedelta()).count())
     return Response()
-
-

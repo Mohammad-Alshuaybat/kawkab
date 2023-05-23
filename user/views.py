@@ -6,7 +6,14 @@ from rest_framework.response import Response
 from quiz.models import Subject
 from user.models import Quote, Advertisement, DailyTask
 from user.serializers import DailyTaskSerializer, AdvertisementSerializer
-from user.utils import signup, login, check_user, get_user
+from user.utils import signup, login, check_user, get_user, check_account_info
+
+
+@api_view(['POST'])
+def check_new_account_info(request):
+    # 0-->no_problems  1-->account_already_exit  2-->email_is_used  3-->phone_num_is_used
+    data = request.data
+    return Response(check_account_info(data))
 
 
 @api_view(['POST'])

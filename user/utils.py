@@ -1,6 +1,17 @@
 from .models import User
 
 
+def check_account_info(data):
+    if check_user(data):
+        return 1
+    elif check_email(data):
+        return 2
+    elif check_phone(data):
+        return 3
+    else:
+        return 0
+
+
 def signup(data):
     if check_user(data):
         return 1
