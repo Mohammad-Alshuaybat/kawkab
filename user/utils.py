@@ -38,11 +38,17 @@ def check_user(data):
 
 
 def check_email(data):
-    return User.objects.filter(email=data.get('email', None)).exists()
+    email = data.get('email', None)
+    if email is not None:
+        return User.objects.filter(email=email).exists()
+    return False
 
 
 def check_phone(data):
-    return User.objects.filter(phone=data.get('phone', None)).exists()
+    phone = data.get('phone', None)
+    if phone is not None:
+        return User.objects.filter(phone=phone).exists()
+    return False
 
 
 def get_user(data):
