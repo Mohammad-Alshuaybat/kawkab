@@ -11,8 +11,17 @@ class User(models.Model):
         ('الصناعي', 'الصناعي'),
     )
 
+    auth_choices = (
+        (1, 'phone'),
+        (2, 'email'),
+        (3, 'google'),
+        (4, 'facebook'),
+    )
+
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    auth_method = models.IntegerField(choices=auth_choices, null=True, blank=True)
 
     email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(unique=True, max_length=30, null=True, blank=True)
@@ -21,7 +30,7 @@ class User(models.Model):
     firstName = models.CharField(max_length=30, null=True, blank=True)
     lastName = models.CharField(max_length=30, null=True, blank=True)
 
-    grade = models.IntegerField(null=True, blank=True)
+    grade = models.IntegerField(default=12, blank=True)
     section = models.CharField(max_length=50, choices=section_choices, null=True, blank=True)
 
     def __str__(self):
