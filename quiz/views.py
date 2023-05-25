@@ -808,11 +808,11 @@ def add_or_edit_multi_section_question(request):
     for ques in sub_questions:
         if ques['type'] == 'finalAnswerQuestion':
             correct_answer = AdminFinalAnswer.objects.create(body=ques['answer'])
-            sub_question = FinalAnswerQuestion.objects.create(body=ques['question'], correct_answer=correct_answer)
+            sub_question = FinalAnswerQuestion.objects.create(body=ques['question'], correct_answer=correct_answer, sub=True)
 
         elif ques['type'] == 'multipleChoiceQuestion':
             correct_answer = AdminMultipleChoiceAnswer.objects.create(body=ques['choices'][0])
-            sub_question = MultipleChoiceQuestion.objects.create(body=ques['question'], correct_answer=correct_answer)
+            sub_question = MultipleChoiceQuestion.objects.create(body=ques['question'], correct_answer=correct_answer, sub=True)
             sub_question.choices.add(correct_answer)
 
             for choiceIndex in range(1, len(ques['choices'])):
