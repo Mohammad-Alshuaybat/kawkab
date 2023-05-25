@@ -223,6 +223,8 @@ class Question(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
+    sub = models.BooleanField(default=False, blank=True)
+
     body = models.TextField(null=True, blank=True)
     image = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
 

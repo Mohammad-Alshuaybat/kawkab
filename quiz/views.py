@@ -163,7 +163,7 @@ def build_quiz(request):
                 while len(temp_question_set) < question_num:
                     headline = list(lesson_headline[lesson])[headline_counter % len(lesson_headline[lesson])]
 
-                    _questions = Question.objects.filter(tags=headline)  # .filter(tags=quiz_level[0])
+                    _questions = Question.objects.filter(tags=headline, sub=False)  # .filter(tags=quiz_level[0])
                     # quiz_level.pop(quiz_level[0])
                     if _questions:
                         temp_question_set.add(random.choice(_questions))
@@ -314,7 +314,7 @@ def similar_questions(request):
 
             # add headlines questions
             headlines = lesson.get_all_headlines()
-            questions = Question.objects.filter(tags__in=headlines)
+            questions = Question.objects.filter(tags__in=headlines, sub=False)
             for question in questions:
                 question_weight[str(question.id)] = question_weight.get(str(question.id), 0)
 
@@ -342,7 +342,7 @@ def similar_questions(request):
 
             # add question weight
             for weight, headlines in weighted_headlines.items():
-                questions = Question.objects.filter(tags__in=headlines)
+                questions = Question.objects.filter(tags__in=headlines, sub=False)
                 for question in questions:
                     question_weight[str(question.id)] = question_weight.get(str(question.id), 0) + weight
 
@@ -350,14 +350,14 @@ def similar_questions(request):
 
     def similar_by_author(question, question_weight):
         author = question.tags.exclude(author=None).first().author
-        questions = Question.objects.filter(tags=author, id__in=question_weight.keys())
+        questions = Question.objects.filter(tags=author, id__in=question_weight.keys(), sub=False)
         for question in questions:
             question_weight[str(question.id)] += 2
         return question_weight
 
     def similar_by_level(question, question_weight):
         level = question.tags.exclude(questionlevel=None).first().questionlevel.name
-        questions = Question.objects.filter(tags__name=level, id__in=question_weight.keys())
+        questions = Question.objects.filter(tags__name=level, id__in=question_weight.keys(), sub=False)
         for question in questions:
             question_weight[str(question.id)] += 3
         return question_weight
@@ -876,7 +876,7 @@ def subject_question_num(request):
     h4s = HeadLine.objects.filter(parent_headline__in=h3s)
     h5s = HeadLine.objects.filter(parent_headline__in=h4s)
     headlines = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
-    return Response(Question.objects.filter(tags__in=headlines).distinct('id').count())
+    return Response(Question.objects.filter(tags__in=headlines, sub=False).distinct('id').count())
 
 
 @api_view(['POST'])
@@ -892,7 +892,7 @@ def subject_question_ids(request):
     h4s = HeadLine.objects.filter(parent_headline__in=h3s)
     h5s = HeadLine.objects.filter(parent_headline__in=h4s)
     headlines = set(h1s) | set(h2s) | set(h3s) | set(h4s) | set(h5s)
-    return Response(Question.objects.filter(tags__in=headlines).distinct('id').values_list('id', flat=True))
+    return Response(Question.objects.filter(tags__in=headlines, sub=False).distinct('id').values_list('id', flat=True))
 # {
 #         "subject": "التاريخ"
 # }
