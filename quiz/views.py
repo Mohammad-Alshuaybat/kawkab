@@ -393,6 +393,13 @@ def similar_questions(request):
         questions.append(Question.objects.get(id=question_id))
 
     serializer = QuestionSerializer(questions, many=True)
+    if is_single_question:
+        tag = questions[0].tags.exclude(headbase=None).first().headbase
+        while hasattr(tag, 'headline'):
+            tag = tag.headline.parent_headline
+        subject = tag.h1.lesson.module.subject.id
+        return Response({'questions': serializer.data, 'subject': subject})
+
     return Response(serializer.data)
 # {
 #         "questions_id": ["000c37e8-0635-49a7-9e94-2cfcc57602e8"],
