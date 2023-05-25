@@ -165,7 +165,12 @@ class UserAnswer(Answer):
             if self.body is None:
                 return False
 
-            elif self.quiz.subject.id == 'ee25ba19-a309-4010-a8ca-e6ea242faa96':
+            tag = self.question.tags.exclude(headbase=None).first().headbase
+            while hasattr(tag, 'headline'):
+                tag = tag.headline.parent_headline
+            subject_id = str(tag.h1.lesson.module.subject.id)
+
+            if subject_id == 'ee25ba19-a309-4010-a8ca-e6ea242faa96':
                 expr1 = parse_latex(self.body[1:-1])
                 expr2 = parse_latex(other.body[1:-1])
 
