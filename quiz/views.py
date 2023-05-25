@@ -266,15 +266,15 @@ def mark_question(request):
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):
-                mark_final_answer_question(None, question, ans, None, None, None, None, None, None, True)
-
+                answer = mark_final_answer_question(None, question, ans, None, None, None, None, None, None, True)
+                question = question.finalanswerquestion
             elif hasattr(question, 'multiplechoicequestion'):
-                mark_multiple_choice_question(None, question, ans, None, None, None, None, None, None, True)
-
+                answer = mark_multiple_choice_question(None, question, ans, None, None, None, None, None, None, True)
+                question = question.multiplechoicequestion
             elif hasattr(question, 'multisectionquestion'):
-                mark_multi_section_question(None, question, ans, None, None, None, None, None, True)
-
-        return Response(1)
+                answer = mark_multi_section_question(None, question, ans, None, None, None, None, None, True)
+                question = question.multisectionquestion
+        return Response(answer == question.correct_answer)
     else:
         return Response(0)
 
