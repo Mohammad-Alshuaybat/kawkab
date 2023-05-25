@@ -415,7 +415,6 @@ def similar_questions(request):
 @api_view(['POST'])
 def quiz_review(request):
     data = request.data
-    print(data)
 
     quiz_id = data.pop('quiz_id', None)
 
