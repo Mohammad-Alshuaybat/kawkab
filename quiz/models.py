@@ -159,7 +159,7 @@ class UserAnswer(Answer):
 
     def __eq__(self, other):
         if isinstance(self, UserMultipleChoiceAnswer):
-            return self.choice == other
+            return bool(self.choice == other)
 
         elif isinstance(self, UserFinalAnswer) and isinstance(other, AdminFinalAnswer):
             if self.body is None:
