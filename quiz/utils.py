@@ -87,7 +87,7 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
         answer.sub_questions_answers.add(sub_answer)
     answer.save()
     if single_question:
-        return question_status
+        return question_status if question_status != [] else [False for sub_question in ques.multisectionquestion.sub_questions.all()]
     attempt_duration += answer.duration.total_seconds()
 
     return correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s

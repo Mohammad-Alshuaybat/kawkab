@@ -275,7 +275,7 @@ def mark_question(request):
                 question_status = answer == question.multiplechoicequestion.correct_answer
 
             elif hasattr(question, 'multisectionquestion'):
-                question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, True)
+                question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, None, True)
 
             # if ans.get('answer', None) is None:
             #     return Response(False)
