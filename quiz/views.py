@@ -397,7 +397,7 @@ def similar_questions(request):
         tag = questions[0].tags.exclude(headbase=None).first().headbase
         while hasattr(tag, 'headline'):
             tag = tag.headline.parent_headline
-        subject = tag.h1.lesson.module.subject.id
+        subject = str(tag.h1.lesson.module.subject.id)
         return Response({'questions': serializer.data, 'subject': subject})
 
     return Response(serializer.data)
