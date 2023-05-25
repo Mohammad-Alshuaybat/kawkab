@@ -64,6 +64,7 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
                                 h1s, single_question):
     answer = UserMultiSectionAnswer.objects.create(duration=datetime.timedelta(seconds=ans['duration']),
                                                    question=ques, quiz=quiz)
+    question_status = []
     for sub_question_id, sub_question_answer in ans.get('answer', {}).items():
         sub_question = Question.objects.get(id=sub_question_id)
         if hasattr(sub_question, 'finalanswerquestion'):
@@ -71,6 +72,7 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
                                                     correct_questions, ideal_duration, attempt_duration, modules,
                                                     lessons, h1s,
                                                     single_question)
+            question_status.append(sub_answer == sub_question.finalanswerquestion.correct_answer)
 
         elif hasattr(sub_question, 'multiplechoicequestion'):
             sub_answer = mark_multiple_choice_question(None, sub_question,
@@ -78,13 +80,14 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
                                                        correct_questions, ideal_duration, attempt_duration, modules,
                                                        lessons,
                                                        h1s, single_question)
+            question_status.append(sub_question == sub_question.multiplechoicequestion.correct_answer)
 
         if not single_question:
             sub_answer, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = sub_answer
         answer.sub_questions_answers.add(sub_answer)
     answer.save()
     if single_question:
-        return answer
+        return question_status
     attempt_duration += answer.duration.total_seconds()
 
     return correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s

@@ -263,21 +263,23 @@ def mark_question(request):
     answers = data.pop('answers', None)
 
     if check_user(data):
+        question_status = False
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):
                 answer = mark_final_answer_question(None, question, ans, None, None, None, None, None, None, True)
-                question = question.finalanswerquestion
+                question_status = answer == question.finalanswerquestion.correct_answer
+
             elif hasattr(question, 'multiplechoicequestion'):
                 answer = mark_multiple_choice_question(None, question, ans, None, None, None, None, None, None, True)
-                question = question.multiplechoicequestion
+                question_status = answer == question.multiplechoicequestion.correct_answer
+
             elif hasattr(question, 'multisectionquestion'):
-                answer = mark_multi_section_question(None, question, ans, None, None, None, None, None, True)
-                question = question.multisectionquestion
-                print(answer == question.correct_answer)
-            if ans.get('answer', None) is None:
-                return Response(False)
-        return Response(answer == question.correct_answer)
+                question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, True)
+
+            # if ans.get('answer', None) is None:
+            #     return Response(False)
+        return Response(question_status)
     else:
         return Response(0)
 
@@ -898,9 +900,6 @@ def subject_question_ids(request):
 
 @api_view(['GET'])
 def test(request):
-    q = Question.objects.filter(idealDuration=datetime.timedelta())
-    for i in q:
-        i.idealDuration = datetime.timedelta(seconds=120)
-        i.save()
-    print(Question.objects.filter(idealDuration=datetime.timedelta()).count())
-    return Response()
+    id = '539bd328-0fae-4c7c-854a-2ffed9a91587'
+    q = Question.objects.get(id=id)
+    return Response(QuestionSerializer(q, many=False).data)
