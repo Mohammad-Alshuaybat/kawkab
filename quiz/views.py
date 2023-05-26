@@ -262,7 +262,7 @@ def mark_question(request):
     data = request.data
     answers = data.pop('answers', None)
 
-    if check_user(data):
+    if check_user(data):  # TODO: user name
         question_status = False
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
@@ -620,8 +620,13 @@ def get_shared_question(request):
     question_obj = Question.objects.filter(id=question_id)
 
     if question_obj.exists():
+        tag = question_obj.first().tags.exclude(headbase=None).first().headbase
+        while hasattr(tag, 'headline'):
+            tag = tag.headline.parent_headline
+        subject = str(tag.h1.lesson.module.subject.id)
+
         serializer = QuestionSerializer(question_obj.first(), many=False).data
-        return Response(serializer)
+        return Response({'question': serializer, 'subject': subject})
 
     else:
         return Response(0)
