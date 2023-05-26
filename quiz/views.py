@@ -617,11 +617,14 @@ def get_shared_question(request):
     data = request.data
 
     question_id = data.pop('ID', None)
+    question_obj = Question.objects.filter(id=question_id)
 
-    question_obj = Question.objects.get(id=question_id)
-    serializer = QuestionSerializer(question_obj, many=False).data
+    if question_obj.exists():
+        serializer = QuestionSerializer(question_obj.first(), many=False).data
+        return Response(serializer)
 
-    return Response(serializer)
+    else:
+        return Response(0)
 
 
 @api_view(['POST'])
