@@ -633,6 +633,28 @@ def get_shared_question(request):
 
 
 @api_view(['POST'])
+def mark_shared_question(request):
+    data = request.data
+    answers = data.pop('answers', None)
+
+    question_status = False
+    for ID, ans in answers.items():
+        question = Question.objects.get(id=ID)
+        if hasattr(question, 'finalanswerquestion'):
+            answer = mark_final_answer_question(None, question, ans, None, None, None, None, None, None, True)
+            question_status = answer == question.finalanswerquestion.correct_answer
+
+        elif hasattr(question, 'multiplechoicequestion'):
+            answer = mark_multiple_choice_question(None, question, ans, None, None, None, None, None, None, True)
+            question_status = answer == question.multiplechoicequestion.correct_answer
+
+        elif hasattr(question, 'multisectionquestion'):
+            question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, None, True)
+
+    return Response(question_status)
+
+
+@api_view(['POST'])
 def get_admin_question(request):
     data = request.data
 
