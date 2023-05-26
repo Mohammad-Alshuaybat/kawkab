@@ -650,7 +650,7 @@ def mark_shared_question(request):
 
         elif hasattr(question, 'multisectionquestion'):
             question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, None, True)
-
+    print(question_status)
     return Response(question_status)
 
 

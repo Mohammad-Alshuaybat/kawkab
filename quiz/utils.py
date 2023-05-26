@@ -65,18 +65,17 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
     answer = UserMultiSectionAnswer.objects.create(duration=datetime.timedelta(seconds=ans['duration']),
                                                    question=ques, quiz=quiz)
     question_status = []
-    for sub_question_id, sub_question_answer in ans.get('answer', {}).items():
-        sub_question = Question.objects.get(id=sub_question_id)
+
+    for sub_question in ques.multisectionquestion.sub_questions.all():
         if hasattr(sub_question, 'finalanswerquestion'):
-            sub_answer = mark_final_answer_question(None, sub_question, {'duration': 0, 'answer': sub_question_answer},
+            sub_answer = mark_final_answer_question(None, sub_question, {'duration': 0, 'answer': ans.get('answer', {}).get(str(sub_question.id), None)},
                                                     correct_questions, ideal_duration, attempt_duration, modules,
-                                                    lessons, h1s,
-                                                    single_question)
+                                                    lessons, h1s, single_question)
             question_status.append(sub_answer == sub_question.finalanswerquestion.correct_answer)
 
         elif hasattr(sub_question, 'multiplechoicequestion'):
             sub_answer = mark_multiple_choice_question(None, sub_question,
-                                                       {'duration': 0, 'answer': sub_question_answer},
+                                                       {'duration': 0, 'answer': ans.get('answer', {}).get(str(sub_question.id), None)},
                                                        correct_questions, ideal_duration, attempt_duration, modules,
                                                        lessons,
                                                        h1s, single_question)
@@ -84,7 +83,26 @@ def mark_multi_section_question(quiz, ques, ans, correct_questions, ideal_durati
 
         if not single_question:
             sub_answer, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = sub_answer
-        answer.sub_questions_answers.add(sub_answer)
+        # answer.sub_questions_answers.add(sub_answer)for sub_question_id, sub_question_answer in ans.get('answer', {}).items():
+        # sub_question = Question.objects.get(id=sub_question_id)
+        # if hasattr(sub_question, 'finalanswerquestion'):
+        #     sub_answer = mark_final_answer_question(None, sub_question, {'duration': 0, 'answer': sub_question_answer},
+        #                                             correct_questions, ideal_duration, attempt_duration, modules,
+        #                                             lessons, h1s,
+        #                                             single_question)
+        #     question_status.append(sub_answer == sub_question.finalanswerquestion.correct_answer)
+        #
+        # elif hasattr(sub_question, 'multiplechoicequestion'):
+        #     sub_answer = mark_multiple_choice_question(None, sub_question,
+        #                                                {'duration': 0, 'answer': sub_question_answer},
+        #                                                correct_questions, ideal_duration, attempt_duration, modules,
+        #                                                lessons,
+        #                                                h1s, single_question)
+        #     question_status.append(sub_question == sub_question.multiplechoicequestion.correct_answer)
+        #
+        # if not single_question:
+        #     sub_answer, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = sub_answer
+        # answer.sub_questions_answers.add(sub_answer)
     answer.save()
     if single_question:
         return question_status if question_status != [] else [False for sub_question in ques.multisectionquestion.sub_questions.all()]
