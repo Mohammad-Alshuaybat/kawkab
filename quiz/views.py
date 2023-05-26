@@ -613,6 +613,18 @@ def quiz_history(request):
 
 
 @api_view(['POST'])
+def get_shared_question(request):
+    data = request.data
+
+    question_id = data.pop('ID', None)
+
+    question_obj = Question.objects.get(id=question_id)
+    serializer = QuestionSerializer(question_obj, many=False).data
+
+    return Response(serializer)
+
+
+@api_view(['POST'])
 def get_admin_question(request):
     data = request.data
 
