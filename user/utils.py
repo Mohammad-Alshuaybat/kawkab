@@ -27,10 +27,12 @@ def signup(data):
 def login(data):
     if check_user(data):
         return 0
-    elif check_email(data) or check_phone(data):
+    elif check_email(data):
         return 1
-    else:
+    elif check_phone(data):
         return 2
+    else:
+        return 3
 
 
 def check_user(data):
