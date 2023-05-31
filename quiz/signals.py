@@ -25,7 +25,8 @@ def create_user_multiple_choice_answer(sender, instance, created, **kwargs):  # 
 
         level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
         level.name = levels[round(level.level)]
-        question.idealDuration = timedelta(seconds=(question.idealDuration.total_seconds() * (answers_num - 1) + answer.duration.total_seconds()) / answers_num)
+        duration = timedelta(seconds=(question.idealDuration.total_seconds() * (answers_num - 1) + answer.duration.total_seconds()) / answers_num)
+        question.idealDuration = duration if duration.total_seconds() > 10 else timedelta(seconds=10)
         level.save()
         question.save()
 
@@ -52,7 +53,9 @@ def create_user_final_answer_answer(sender, instance, created, **kwargs):
         level.level = (level.level * (answers_num - 1) + answerLevel) / answers_num
         level.name = levels[round(level.level)]
 
-        question.idealDuration = timedelta(seconds=(question.idealDuration.total_seconds() * (answers_num - 1) + answer.duration.total_seconds()) / answers_num)
+        duration = timedelta(seconds=(question.idealDuration.total_seconds() * (
+                    answers_num - 1) + answer.duration.total_seconds()) / answers_num)
+        question.idealDuration = duration if duration.total_seconds() > 10 else timedelta(seconds=10)
 
         level.save()
         question.save()
