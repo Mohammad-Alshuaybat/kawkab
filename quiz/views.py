@@ -202,7 +202,7 @@ def build_quiz(request):
 @api_view(['POST'])
 def mark_quiz(request):
     data = request.data
-
+    print(data)
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
     quiz_duration = data.pop('quiz_duration', None)
@@ -720,10 +720,10 @@ def add_or_edit_multiple_choice_question(request):
 
     for i in range(len(headlines)):
         if headlines_level[i] == 1:
-            headline, _ = H1.objects.get_or_create(name=headlines[i].strip())
+            headline = H1.objects.get(name=headlines[i].strip())
             question.tags.add(headline)
         else:
-            headline, _ = HeadLine.objects.get_or_create(name=headlines[i].strip(), level=headlines_level[i])
+            headline = HeadLine.objects.get(name=headlines[i].strip(), level=headlines_level[i])
             question.tags.add(headline)
 
     author, _ = Author.objects.get_or_create(name=source)
@@ -786,10 +786,10 @@ def add_or_edit_final_answer_question(request):
 
     for i in range(len(headlines)):
         if headlines_level[i] == 1:
-            headline, _ = H1.objects.get_or_create(name=headlines[i].strip())
+            headline = H1.objects.get(name=headlines[i].strip())
             question.tags.add(headline)
         else:
-            headline, _ = HeadLine.objects.get_or_create(name=headlines[i].strip(), level=headlines_level[i])
+            headline = HeadLine.objects.get(name=headlines[i].strip(), level=headlines_level[i])
             question.tags.add(headline)
 
     author, _ = Author.objects.get_or_create(name=source)
@@ -863,10 +863,10 @@ def add_or_edit_multi_section_question(request):
 
         for i in range(len(ques['headlines'])):
             if ques['headlinesLevel'][i] == 1:
-                headline, _ = H1.objects.get_or_create(name=ques['headlines'][i].strip())
+                headline = H1.objects.get(name=ques['headlines'][i].strip())
 
             else:
-                headline, _ = HeadLine.objects.get_or_create(name=ques['headlines'][i].strip(), level=ques['headlinesLevel'][i])
+                headline = HeadLine.objects.get(name=ques['headlines'][i].strip(), level=ques['headlinesLevel'][i])
             sub_question.tags.add(headline)
             question.tags.add(headline)
 
@@ -940,8 +940,18 @@ def subject_question_ids(request):
 # }
 
 
-@api_view(['GET'])
-def test(request):
-    id = '539bd328-0fae-4c7c-854a-2ffed9a91587'
-    q = Question.objects.get(id=id)
-    return Response(QuestionSerializer(q, many=False).data)
+# @api_view(['GET'])
+# def test(request):
+#     for ques in ['c01a68ec-b71f-47a9-9c6d-f40a5a8f19b8','dffab2df-1da4-4fd2-b681-184766165023']:
+#         question = MultipleChoiceQuestion.objects.get(id=ques)
+#         correct = question.correct_answer
+#         if correct == None:
+#             print(question.body)
+#             print(question.id)
+#             continue
+#
+#         choice = question.choices.filter(body__contains=correct.body.strip()).exclude(id=correct.id)
+#         if choice.exists():
+#
+#             choice.delete()
+#     return Response()
