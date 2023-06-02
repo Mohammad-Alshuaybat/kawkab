@@ -7,6 +7,9 @@ from django.db.models import Count
 
 from school.cdn.backends import MediaRootS3Boto3Storage
 from user.models import User
+
+import sympy
+from sympy import symbols
 from sympy.parsing.latex import parse_latex
 
 
@@ -171,10 +174,18 @@ class UserAnswer(Answer):
             subject_id = str(tag.h1.lesson.module.subject.id)
 
             if subject_id == 'ee25ba19-a309-4010-a8ca-e6ea242faa96':
-                expr1 = parse_latex(self.body[1:-1])
-                expr2 = parse_latex(other.body[1:-1])
+                e = symbols('e')
+                pi = symbols('pi')
 
-                return expr1.equals(expr2)
+                try:
+                    expr1 = parse_latex(self.body[1:-1])
+                    expr2 = parse_latex(other.body[1:-1])
+
+                    val1 = expr1.evalf(subs={e: sympy.E, pi: sympy.pi})
+                    val2 = expr2.evalf(subs={e: sympy.E, pi: sympy.pi})
+                    return abs(val1 - val2) < 0.1
+                except:
+                    return False
 
             return self.body.strip() == other.body.strip()
 

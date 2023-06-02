@@ -1,17 +1,20 @@
 # import time
 # start = time.perf_counter()
 # end = time.perf_counter()
+import math
 
+import sympy
+from sympy import N, symbols, pi
 from sympy.parsing.latex import parse_latex
-expr1 = parse_latex(r"\sqrt{4}+\sin \left(z\right)")
-expr2 = parse_latex(r"(\sqrt{4}+\sin({z}))")
-expr3 = parse_latex(r"\sin \left(3x\right)-\left(9\cdot 4\right)")
-expr4 = parse_latex(r"(\sin((3\cdot{x}))-(9\cdot4))")
+expr1 = parse_latex(r"x*2")
+expr2 = parse_latex(r"2*x")
+expr3 = parse_latex(r"9")
+expr4 = parse_latex(r"\frac{\tan({x})}{\ln(10)}")
 
-print(expr1)
-print(expr2)
-print(expr3)
-print(expr4)
+e = symbols('e')
+pi = symbols('pi')
+
+print(expr2.evalf(subs={e: sympy.E, pi: sympy.pi})-expr1.evalf(subs={e: sympy.E, pi: sympy.pi}))
 
 print(expr1.equals(expr2))
 print(expr3.equals(expr4))
