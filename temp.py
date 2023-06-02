@@ -13,7 +13,14 @@ expr4 = parse_latex(r"\frac{\tan({x})}{\ln(10)}")
 
 e = symbols('e')
 pi = symbols('pi')
+expr1 = parse_latex(r'\sqrt{3}x')
+expr2 = parse_latex(r'\sqrt{3}x-\frac{\sqrt{3}}{3}\pi +2')
 
+val1 = expr1.evalf(subs={e: sympy.E, pi: sympy.pi})
+val2 = expr2.evalf(subs={e: sympy.E, pi: sympy.pi})
+print(val1)
+print(val2)
+print(abs(val1 - val2) < 0.1)
 print(expr2.evalf(subs={e: sympy.E, pi: sympy.pi})-expr1.evalf(subs={e: sympy.E, pi: sympy.pi}))
 
 print(expr1.equals(expr2))

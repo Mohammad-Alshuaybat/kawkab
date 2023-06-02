@@ -180,10 +180,13 @@ class UserAnswer(Answer):
                 try:
                     expr1 = parse_latex(self.body[1:-1])
                     expr2 = parse_latex(other.body[1:-1])
-
+                    print(expr1)
+                    print(expr2)
                     val1 = expr1.evalf(subs={e: sympy.E, pi: sympy.pi})
                     val2 = expr2.evalf(subs={e: sympy.E, pi: sympy.pi})
-                    return abs(val1 - val2) < 0.1
+                    print(val1)
+                    print(val2)
+                    return bool(abs(val1 - val2) < 0.1)
                 except:
                     return False
 
