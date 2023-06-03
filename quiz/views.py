@@ -564,7 +564,6 @@ def quiz_history(request):
             question_num = 0
             correct_question_num = 0
             for answer in user_answers:
-
                 if hasattr(answer, 'usermultiplechoiceanswer'):
                     answer = answer.usermultiplechoiceanswer
                     correct_question_num += 1 if answer.question.multiplechoicequestion.correct_answer == answer else 0

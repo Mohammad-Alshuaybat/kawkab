@@ -165,19 +165,27 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 class UserFinalAnswerSerializer(serializers.ModelSerializer):
     question = QuestionSerializer(many=False)
+    is_correct = serializers.SerializerMethodField()
 
     class Meta:
         model = UserFinalAnswer
-        fields = ['body', 'duration', 'question']
+        fields = ['body', 'duration', 'question', 'is_correct']
+
+    def get_is_correct(self, obj):
+        return obj == obj.question.finalanswerquestion.correct_answer
 
 
 class UserMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
     choice = AdminMultipleChoiceAnswerSerializer(many=False)
     question = QuestionSerializer(many=False)
+    is_correct = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMultipleChoiceAnswer
-        fields = ['choice', 'duration', 'question']
+        fields = ['choice', 'duration', 'question', 'is_correct']
+
+    def get_is_correct(self, obj):
+        return obj == obj.question.multiplechoicequestion.correct_answer
 
 
 class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
