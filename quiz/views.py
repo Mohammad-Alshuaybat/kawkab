@@ -440,9 +440,11 @@ def quiz_review(request):
             if hasattr(answer, 'userfinalanswer'):
                 solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
                 question_num += 1
+
             elif hasattr(answer, 'usermultiplechoiceanswer'):
                 solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_choice_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
                 question_num += 1
+
             elif hasattr(answer, 'usermultisectionanswer'):
                 solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_section_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
                 question_num += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()

@@ -178,6 +178,8 @@ class UserAnswer(Answer):
                 pi = symbols('pi')
 
                 try:
+                    print(self.body)
+                    print(other.body)
                     expr1 = parse_latex(self.body[1:-1])
                     expr2 = parse_latex(other.body[1:-1])
                     print(expr1)

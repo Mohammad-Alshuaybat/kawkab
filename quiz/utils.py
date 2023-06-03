@@ -132,6 +132,9 @@ def questions_statistics(question, answer, correct_questions, ideal_duration, at
     ideal_duration += question.idealDuration.total_seconds()
     attempt_duration += answer.duration.total_seconds()
 
+    if answer == question.correct_answer:
+        correct_questions += 1
+
     tags = question.tags.exclude(headbase=None)
     for tag in tags:
         tag = tag.headbase
@@ -145,7 +148,6 @@ def questions_statistics(question, answer, correct_questions, ideal_duration, at
         module = modules.get(tag.lesson.module.name, {})
 
         if answer == question.correct_answer:
-            correct_questions += 1
             h1['correct'] = h1.get('correct', 0) + 1
             lesson['correct'] = lesson.get('correct', 0) + 1
             module['correct'] = module.get('correct', 0) + 1
