@@ -568,21 +568,23 @@ def quiz_history(request):
             for answer in user_answers:
                 if hasattr(answer, 'usermultiplechoiceanswer'):
                     answer = answer.usermultiplechoiceanswer
-                    correct_question_num += 1 if answer.question.multiplechoicequestion.correct_answer == answer else 0
+                    correct_question_num += 1 if answer == answer.question.multiplechoicequestion.correct_answer else 0
                     question_num += 1
+
                 elif hasattr(answer, 'userfinalanswer'):
                     answer = answer.userfinalanswer
-                    correct_question_num += 1 if answer.question.finalanswerquestion.correct_answer == answer else 0
+                    correct_question_num += 1 if answer == answer.question.finalanswerquestion.correct_answer else 0
                     question_num += 1
+
                 elif hasattr(answer, 'usermultisectionanswer'):
                     answer = answer.usermultisectionanswer
                     for sub_answer in answer.sub_questions_answers.all():
                         if hasattr(sub_answer, 'usermultiplechoiceanswer'):
                             sub_answer = sub_answer.usermultiplechoiceanswer
-                            correct_question_num += 1 if sub_answer.question.multiplechoicequestion.correct_answer == sub_answer else 0
+                            correct_question_num += 1 if sub_answer == sub_answer.question.multiplechoicequestion.correct_answer else 0
                         elif hasattr(sub_answer, 'userfinalanswer'):
                             sub_answer = sub_answer.userfinalanswer
-                            correct_question_num += 1 if sub_answer.question.finalanswerquestion.correct_answer == sub_answer else 0
+                            correct_question_num += 1 if sub_answer == sub_answer.question.finalanswerquestion.correct_answer else 0
                     question_num += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()
             tags_ids = user_answers.values_list('question__tags__id', flat=True).distinct()
             headbases = HeadBase.objects.filter(id__in=tags_ids)

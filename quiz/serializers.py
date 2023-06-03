@@ -191,10 +191,11 @@ class UserMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
 class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
     question = QuestionSerializer(many=False)
     sub_questions_answers = serializers.SerializerMethodField()
+    is_correct = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMultiSectionAnswer
-        fields = ['sub_questions_answers', 'duration', 'question']
+        fields = ['sub_questions_answers', 'duration', 'question', 'is_correct']
 
     def get_sub_questions_answers(self, obj):
         sub_questions_answers = {}
@@ -204,6 +205,15 @@ class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
             elif hasattr(answer, 'usermultiplechoiceanswer'):
                 sub_questions_answers[answer.usermultiplechoiceanswer.question.id] = answer.usermultiplechoiceanswer.choice.id
         return sub_questions_answers
+
+    def get_is_correct(self, obj):
+        is_correct_for_all_sections = True
+        for answer in obj.sub_questions_answers.all():
+            if hasattr(answer, 'userfinalanswer'):
+                is_correct_for_all_sections = is_correct_for_all_sections and answer.userfinalanswer == answer.userfinalanswer.question.finalanswerquestion.correct_answer
+            elif hasattr(answer, 'usermultiplechoiceanswer'):
+                is_correct_for_all_sections = is_correct_for_all_sections and answer.usermultiplechoiceanswer == answer.usermultiplechoiceanswer.question.multiplechoicequestion.correct_answer
+        return is_correct_for_all_sections
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
