@@ -99,13 +99,15 @@ def review_multi_section_question(answer, correct_questions, solved_questions, i
 
     for sub_answer in answer.sub_questions_answers.all():
         if hasattr(sub_answer, 'userfinalanswer'):
-            correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(
+            solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(
                 sub_answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons,
                 h1s)
+
         elif hasattr(sub_answer, 'usermultiplechoiceanswer'):
-            correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_choice_question(
+            solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_choice_question(
                 sub_answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons,
                 h1s)
+
     attempt_duration += answer.duration.total_seconds()
     return solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s
 
@@ -115,6 +117,7 @@ def questions_statistics(question, answer, correct_questions, ideal_duration, at
     attempt_duration += answer.duration.total_seconds()
 
     if answer == question.correct_answer:
+        print(f'fttt{answer}')
         correct_questions += 1
 
     tags = question.tags.exclude(headbase=None)
