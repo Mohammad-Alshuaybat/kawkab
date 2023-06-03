@@ -201,9 +201,9 @@ class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
         sub_questions_answers = {}
         for answer in obj.sub_questions_answers.all():
             if hasattr(answer, 'userfinalanswer'):
-                sub_questions_answers[answer.userfinalanswer.question.id] = answer.userfinalanswer.body
+                sub_questions_answers[str(answer.userfinalanswer.question.id)] = answer.userfinalanswer.body
             elif hasattr(answer, 'usermultiplechoiceanswer'):
-                sub_questions_answers[answer.usermultiplechoiceanswer.question.id] = answer.usermultiplechoiceanswer.choice.id
+                sub_questions_answers[str(answer.usermultiplechoiceanswer.question.id)] = answer.usermultiplechoiceanswer.choice.id if answer.usermultiplechoiceanswer.choice is not None else None
         return sub_questions_answers
 
     def get_is_correct(self, obj):
