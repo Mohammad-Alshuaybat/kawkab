@@ -1,5 +1,5 @@
 from datetime import timedelta
-
+import datetime
 from django.db.models import Sum
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
@@ -62,6 +62,7 @@ class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     headlines = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
+    idealDuration = serializers.SerializerMethodField()
 
     class Meta:
         model = FinalAnswerQuestion
@@ -87,6 +88,15 @@ class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
                 headlines.append({'headline': headbase.name, 'level': headbase.headline.level})
         return headlines
 
+    def get_idealDuration(self, obj):
+        attempt_duration = obj.idealDuration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
 
 class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
     correct_answer = AdminMultipleChoiceAnswerSerializer(many=False)
@@ -95,6 +105,7 @@ class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()
     headlines = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
+    idealDuration = serializers.SerializerMethodField()
 
     class Meta:
         model = MultipleChoiceQuestion
@@ -120,11 +131,22 @@ class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
                 headlines.append({'headline': headbase.name, 'level': headbase.headline.level})
         return headlines
 
+    def get_idealDuration(self, obj):
+        attempt_duration = obj.idealDuration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
+
 
 class MultiSectionQuestionSerializer(serializers.ModelSerializer):
     sub_questions = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
     type = serializers.SerializerMethodField()
+    idealDuration = serializers.SerializerMethodField()
 
     class Meta:
         model = MultiSectionQuestion
@@ -144,6 +166,16 @@ class MultiSectionQuestionSerializer(serializers.ModelSerializer):
 
     def get_type(self, obj):
         return 'multiSectionQuestion'
+
+    def get_idealDuration(self, obj):
+        attempt_duration = obj.idealDuration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -166,6 +198,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 class UserFinalAnswerSerializer(serializers.ModelSerializer):
     question = QuestionSerializer(many=False)
     is_correct = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
 
     class Meta:
         model = UserFinalAnswer
@@ -174,11 +207,21 @@ class UserFinalAnswerSerializer(serializers.ModelSerializer):
     def get_is_correct(self, obj):
         return obj == obj.question.finalanswerquestion.correct_answer
 
+    def get_duration(self, obj):
+        attempt_duration = obj.duration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
 
 class UserMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
     choice = AdminMultipleChoiceAnswerSerializer(many=False)
     question = QuestionSerializer(many=False)
     is_correct = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMultipleChoiceAnswer
@@ -187,11 +230,22 @@ class UserMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
     def get_is_correct(self, obj):
         return obj == obj.question.multiplechoicequestion.correct_answer
 
+    def get_duration(self, obj):
+        attempt_duration = obj.duration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
+
 
 class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
     question = QuestionSerializer(many=False)
     sub_questions_answers = serializers.SerializerMethodField()
     is_correct = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
 
     class Meta:
         model = UserMultiSectionAnswer
@@ -216,6 +270,16 @@ class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
             elif hasattr(answer, 'usermultiplechoiceanswer'):
                 is_correct_for_all_sections = is_correct_for_all_sections and answer.usermultiplechoiceanswer == answer.usermultiplechoiceanswer.question.multiplechoicequestion.correct_answer
         return is_correct_for_all_sections
+
+    def get_duration(self, obj):
+        attempt_duration = obj.duration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
