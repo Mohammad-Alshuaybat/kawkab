@@ -422,7 +422,7 @@ def quiz_review(request):
     data = request.data
 
     quiz_id = data.pop('quiz_id', None)
-
+    print(quiz_id)
     if check_user(data):
         quiz = UserQuiz.objects.get(id=quiz_id)
         answers = UserAnswer.objects.filter(quiz=quiz)

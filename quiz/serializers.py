@@ -208,6 +208,8 @@ class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
 
     def get_is_correct(self, obj):
         is_correct_for_all_sections = True
+        if obj.question.multisectionquestion.sub_questions.count() != obj.sub_questions_answers.count():
+            return False
         for answer in obj.sub_questions_answers.all():
             if hasattr(answer, 'userfinalanswer'):
                 is_correct_for_all_sections = is_correct_for_all_sections and answer.userfinalanswer == answer.userfinalanswer.question.finalanswerquestion.correct_answer
