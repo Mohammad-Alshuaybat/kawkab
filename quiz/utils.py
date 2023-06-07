@@ -117,7 +117,6 @@ def questions_statistics(question, answer, correct_questions, ideal_duration, at
     attempt_duration += answer.duration.total_seconds()
 
     if answer == question.correct_answer:
-        print(f'fttt{answer}')
         correct_questions += 1
 
     tags = question.tags.exclude(headbase=None)

@@ -202,7 +202,7 @@ def build_quiz(request):
 @api_view(['POST'])
 def mark_quiz(request):
     data = request.data
-    print(data)
+
     answers = data.pop('answers', None)
     subject = data.pop('subject', None)
     quiz_duration = data.pop('quiz_duration', None)
@@ -653,8 +653,19 @@ def mark_shared_question(request):
 
         elif hasattr(question, 'multisectionquestion'):
             question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, None, True)
-    print(question_status)
+
     return Response(question_status)
+
+
+@api_view(['POST'])
+def share_quiz(request):
+    data = request.data
+    quiz_id = data.pop('quiz_id', None)
+
+    quiz = UserQuiz.objects.get(id=quiz_id)
+    question_set = Question.objects.filter(useranswer__quiz=quiz)
+    serializer = QuestionSerializer(question_set, many=True)
+    return Response({'subject': {'id': str(quiz.subject.id), 'name': quiz.subject.name}, 'questions': serializer.data, 'duration': quiz.duration.total_seconds()})
 
 
 @api_view(['POST'])
