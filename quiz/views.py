@@ -24,6 +24,15 @@ from .utils import mark_final_answer_question, mark_multiple_choice_question, ma
 
 
 @api_view(['POST'])
+def user_name(request):
+    data = request.data
+
+    if check_user(data):
+        user = get_user(data)
+        return Response(user.firstName)
+
+
+@api_view(['POST'])
 def subject_set(request):
     data = request.data
 
