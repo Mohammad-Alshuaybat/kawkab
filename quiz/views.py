@@ -535,7 +535,7 @@ def report(request):
             subject,
             message,
             settings.EMAIL_HOST_USER,
-            ['malek315@gmail.com'],
+            ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
             fail_silently=False,
         )
         return Response(1)
