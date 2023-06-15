@@ -530,7 +530,7 @@ def report(request):
         Report.objects.create(user=user, body=body, question=question)
 
         subject = 'Report from user'
-        message = f'{user.firstName} {user.lastName} said there is this issue {body} in this question {question.body}\nplease check it as soon as possible'
+        message = f'{user.firstName} {user.lastName} said there is this issue {body} in this question {question.id}\nplease check it as soon as possible'
         send_mail(
             subject,
             message,
@@ -576,9 +576,12 @@ def quiz_history(request):
             correct_question_num = 0
             for answer in user_answers:
                 if hasattr(answer, 'usermultiplechoiceanswer'):
-                    answer = answer.usermultiplechoiceanswer
-                    correct_question_num += 1 if answer == answer.question.multiplechoicequestion.correct_answer else 0
-                    question_num += 1
+                    try:
+                        answer = answer.usermultiplechoiceanswer
+                        correct_question_num += 1 if answer == answer.question.multiplechoicequestion.correct_answer else 0
+                        question_num += 1
+                    except:
+                        quiz.delete()
 
                 elif hasattr(answer, 'userfinalanswer'):
                     answer = answer.userfinalanswer
