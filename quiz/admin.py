@@ -12,6 +12,11 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
     pass
 
 
+class QuizExportAllFields(ExportActionMixin, admin.ModelAdmin):
+    list_display = ('creationDate', 'user', 'subject', 'duration')
+    ordering = ('-creationDate',)
+
+
 admin.site.register(Subject, ExportAllFields)
 admin.site.register(Module, ExportAllFields)
 admin.site.register(Lesson, ExportAllFields)
@@ -41,5 +46,5 @@ admin.site.register(Report, ExportAllFields)
 
 admin.site.register(AdminQuiz, ExportAllFields)  # abstract
 
-admin.site.register(UserQuiz, ExportAllFields)
+admin.site.register(UserQuiz, QuizExportAllFields)
 admin.site.register(SavedQuestion, ExportAllFields)
