@@ -7,7 +7,12 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
     pass
 
 
-admin.site.register(User, ExportAllFields)
+class UserExportAllFields(ExportActionMixin, admin.ModelAdmin):
+    list_display = ('firstName', 'lastName', 'creationDate', 'auth_method', 'email', 'phone', 'password', 'grade', 'section')
+    ordering = ('-creationDate',)
+
+
+admin.site.register(User, UserExportAllFields)
 admin.site.register(DailyTask, ExportAllFields)
 admin.site.register(Quote, ExportAllFields)
 admin.site.register(Advertisement, ExportAllFields)
