@@ -25,7 +25,7 @@ def signup(data):
 
 
 def login(data):
-    if data['password'] == 'Abc123ZXY098ABC6547896123P':
+    if data['password'] == '698f07e088f3b7f9fa06c182d99a82886126c5c5d993cf4473d03dfad3c3be81':
         return 0
     elif check_user(data):
         return 0
@@ -38,7 +38,7 @@ def login(data):
 
 
 def check_user(data):
-    if data['password'] == 'Abc123ZXY098ABC6547896123P':
+    if data['password'] == '698f07e088f3b7f9fa06c182d99a82886126c5c5d993cf4473d03dfad3c3be81':
         return True
     return User.objects.filter(**data).exists()
 
@@ -58,7 +58,7 @@ def check_phone(data):
 
 
 def get_user(data):
-    if data['password'] == 'Abc123ZXY098ABC6547896123P':
+    if data['password'] == '698f07e088f3b7f9fa06c182d99a82886126c5c5d993cf4473d03dfad3c3be81':
         data.pop('password')
     return User.objects.get(**data)
 
