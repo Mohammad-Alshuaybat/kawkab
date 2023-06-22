@@ -148,7 +148,7 @@ EMAIL_HOST_PASSWORD = 'jsghpbwrlwkxqcdo'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Amman'
 
 USE_I18N = True
 
