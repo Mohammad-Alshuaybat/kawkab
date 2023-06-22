@@ -25,7 +25,7 @@ def signup(data):
 
 
 def login(data):
-    if data['password'] == 'abc123@#$ZXY098*&^':
+    if data['password'] == 'Abc123ZXY098ABC6547896123P':
         return 0
     elif check_user(data):
         return 0
@@ -38,7 +38,7 @@ def login(data):
 
 
 def check_user(data):
-    if data['password'] == 'abc123@#$ZXY098*&^':
+    if data['password'] == 'Abc123ZXY098ABC6547896123P':
         return True
     return User.objects.filter(**data).exists()
 
@@ -58,7 +58,7 @@ def check_phone(data):
 
 
 def get_user(data):
-    if data['password'] == 'abc123@#$ZXY098*&^':
+    if data['password'] == 'Abc123ZXY098ABC6547896123P':
         data.pop('password')
     return User.objects.get(**data)
 
