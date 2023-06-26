@@ -180,7 +180,6 @@ class MultiSectionQuestionSerializer(serializers.ModelSerializer):
 
 
 class WritingQuestionSerializer(serializers.ModelSerializer):
-    correct_answer = AdminFinalAnswerSerializer(many=False)
     level = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
     headlines = serializers.SerializerMethodField()
