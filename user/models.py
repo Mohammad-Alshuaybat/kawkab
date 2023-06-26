@@ -33,6 +33,8 @@ class User(models.Model):
     grade = models.IntegerField(default=12, blank=True)
     section = models.CharField(max_length=50, choices=section_choices, null=True, blank=True)
 
+    contact_method = models.CharField(max_length=50, null=True, blank=True)
+
     def __str__(self):
         return f'{self.email}-{self.phone}'
 

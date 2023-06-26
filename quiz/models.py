@@ -231,6 +231,18 @@ class UserMultiSectionAnswer(UserAnswer):
     sub_questions_answers = models.ManyToManyField(UserAnswer, related_name='sections_answers', symmetrical=False, blank=True)
 
 
+class UserWritingAnswer(UserAnswer):
+    level_choices = (
+        (0, 'waiting'),
+        (1, 'done'),
+    )
+
+    answer = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
+    mark = models.IntegerField(null=True, blank=True)
+    comments = models.TextField(null=True, blank=True)
+    status = models.IntegerField(choices=level_choices, null=True, blank=True)
+
+
 class Question(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
@@ -261,6 +273,10 @@ class MultipleChoiceQuestion(Question):
 
 class MultiSectionQuestion(Question):
     sub_questions = models.ManyToManyField(Question, related_name='sections', symmetrical=False, blank=True)
+
+
+class WritingQuestion(Question):
+    pass
 
 
 class Solution(models.Model):

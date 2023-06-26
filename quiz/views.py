@@ -10,7 +10,7 @@ from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
-    UserMultiSectionAnswer
+    UserMultiSectionAnswer, UserWritingAnswer
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer
 
 from django.db.models import Count, Q, Sum
@@ -20,7 +20,8 @@ import datetime
 
 # import pandas as pd
 from .utils import mark_final_answer_question, mark_multiple_choice_question, mark_multi_section_question, \
-    review_final_answer_question, review_multi_choice_question, review_multi_section_question, questions_statistics_statement
+    review_final_answer_question, review_multi_choice_question, review_multi_section_question, \
+    questions_statistics_statement
 
 
 @api_view(['POST'])
@@ -187,7 +188,6 @@ def build_quiz(request):
     h1_ids = data.pop('headlines', None)
     question_number = data.pop('question_num', None)
     quiz_level = data.pop('quiz_level', None)
-
     if check_user(data):
         h1s = H1.objects.filter(id__in=h1_ids)
 
@@ -201,9 +201,60 @@ def build_quiz(request):
         # level = quiz_level(quiz_level, question_number)
         questions = get_questions(lesson_headline, modules_lessons_normalized_weights)
 
+        # while recursion_num < 3 and len(questions) < question_number:
+        #     print(recursion_num)
+        #     questions += get_questions(lesson_headline, modules_lessons_normalized_weights)[:question_number - len(questions)]
+        #     questions = list(set(questions))
+        #     recursion_num += 1
+        # print(len(questions))
         return Response(questions)
+    else:
+        return Response(0)
 
 
+@api_view(['POST'])
+def get_writing_question(request):
+    def get_questions(tag):
+        _question = random.choice(Question.objects.filter(tags=tag, sub=True).exclude(writingquestion=None))
+        serializer = QuestionSerializer(_question, many=False)
+        return serializer.data
+
+    data = request.data
+    tag = data.pop('tag', None)
+    if check_user(data):
+        h1 = H1.objects.get(name=tag)
+        question = get_questions(h1)
+        return Response(question)
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def submit_writing_question(request):
+    data = request.data
+    question = data.pop('question', None)
+    answer = data.pop('image', None)
+    duration = data.pop('attemptDuration', None)
+    contact_method = data.pop('contactMethod', None)
+
+    if check_user(data):
+        # answer question quiz user
+        user = get_user(data)
+        user.contact_method = contact_method
+        user.save()
+
+        question = Question.objects.get(id=question)
+        subject = question.tags.exclude(headbase=None).h1.lesson.module.subject
+        quiz = UserQuiz.objects.create(subject=subject, user=user)
+
+        image = base64.b64decode(answer)
+        image_name = LastImageName.objects.first()
+        image = ContentFile(image, f'w{str(image_name.name)}.png')
+        image_name.name += 1
+        image_name.save()
+
+        UserWritingAnswer.objects.create(quiz=quiz, question=question, answer=image, duration=duration, status=0)
+        return Response(1)
     else:
         return Response(0)
 
@@ -229,17 +280,24 @@ def mark_quiz(request):
 
         subject = Subject.objects.get(id=subject)
         quiz = UserQuiz.objects.create(subject=subject, user=user,
-                                       duration=datetime.timedelta(seconds=int(quiz_duration)) if quiz_duration is not None else None)
+                                       duration=datetime.timedelta(
+                                           seconds=int(quiz_duration)) if quiz_duration is not None else None)
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
             if hasattr(question, 'finalanswerquestion'):
-                _, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_final_answer_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
+                _, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_final_answer_question(
+                    quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s,
+                    False)
 
             elif hasattr(question, 'multiplechoicequestion'):
-                _, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multiple_choice_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
+                _, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multiple_choice_question(
+                    quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s,
+                    False)
 
             elif hasattr(question, 'multisectionquestion'):
-                correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multi_section_question(quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s, False)
+                correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = mark_multi_section_question(
+                    quiz, question, ans, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s,
+                    False)
                 question_num += question.multisectionquestion.sub_questions.count() - 1
         skills = sorted(modules.items() if len(modules) > 5 else lessons.items() if len(lessons) > 5 else h1s.items(),
                         key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
@@ -284,7 +342,8 @@ def mark_question(request):
                 question_status = answer == question.multiplechoicequestion.correct_answer
 
             elif hasattr(question, 'multisectionquestion'):
-                question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, None, True)
+                question_status = mark_multi_section_question(None, question, ans, None, None, None, None, None, None,
+                                                              True)
 
             # if ans.get('answer', None) is None:
             #     return Response(False)
@@ -339,7 +398,8 @@ def similar_questions(request):
                 main_headline = main_headline.parent_headline
                 main_headline = main_headline.h1 if hasattr(main_headline, 'h1') else main_headline.headline
 
-                weighted_headlines[levels_weight[similarity_level]] = (set(main_headline.get_all_child_headlines()) | {main_headline}) - wastes_headlines
+                weighted_headlines[levels_weight[similarity_level]] = (set(main_headline.get_all_child_headlines()) | {
+                    main_headline}) - wastes_headlines
                 wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
 
                 similarity_level += 1
@@ -347,7 +407,8 @@ def similar_questions(request):
             weighted_headlines[levels_weight[similarity_level]] = lesson.get_all_headlines() - wastes_headlines
             wastes_headlines |= weighted_headlines[levels_weight[similarity_level]]
 
-            weighted_headlines[levels_weight[similarity_level+1]] = lesson.module.get_all_headlines() - wastes_headlines
+            weighted_headlines[
+                levels_weight[similarity_level + 1]] = lesson.module.get_all_headlines() - wastes_headlines
 
             # add question weight
             for weight, headlines in weighted_headlines.items():
@@ -431,7 +492,7 @@ def quiz_review(request):
     data = request.data
 
     quiz_id = data.pop('quiz_id', None)
-    print(quiz_id)
+
     if check_user(data):
         quiz = UserQuiz.objects.get(id=quiz_id)
         answers = UserAnswer.objects.filter(quiz=quiz)
@@ -444,19 +505,42 @@ def quiz_review(request):
         modules = {}
         lessons = {}
         h1s = {}
-
+        writing_quiz = False
         for answer in answers:
             if hasattr(answer, 'userfinalanswer'):
-                solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
+                solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(
+                    answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons,
+                    h1s)
                 question_num += 1
 
             elif hasattr(answer, 'usermultiplechoiceanswer'):
-                solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_choice_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
+                solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_choice_question(
+                    answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons,
+                    h1s)
                 question_num += 1
 
             elif hasattr(answer, 'usermultisectionanswer'):
-                solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_section_question(answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons, h1s)
+                solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_section_question(
+                    answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules, lessons,
+                    h1s)
                 question_num += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()
+
+            elif hasattr(answer, 'userwritinganswer'):
+                correct_questions = answer.userwritinganswer.mark
+                question_num = 10
+                ideal_duration = answer.userwritinganswer.question.idealDuration.total_seconds()
+                attempt_duration = answer.userwritinganswer.duration.total_seconds()
+                h1s = {answer.userwritinganswer.question.tags.exclude(headbase=None).first().h1.name}
+                statements = answer.userwritinganswer.comments.split('\n')
+                answers_serializer = UserAnswerSerializer(answers, many=True).data
+
+                return Response(
+                    {'answers': answers_serializer,
+                     'question_num': question_num, 'correct_questions_num': correct_questions,
+                     'ideal_duration': ideal_duration, 'attempt_duration': attempt_duration,
+                     'quiz_duration': None,
+                     'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
+                     'best_worst_skills': h1s, 'statements': statements})
 
         mark_based_h1s = sorted(h1s.items(),
                                 key=lambda x: (x[1]['correct'] + x[1]['all'], x[1]['correct']), reverse=True)
@@ -472,9 +556,12 @@ def quiz_review(request):
         time_based_modules = sorted(modules.items(),
                                     key=lambda x: x[1]['duration'], reverse=True)
 
-        best_worst_skills = dict(mark_based_modules if len(mark_based_modules) > 5 else mark_based_lessons if len(mark_based_lessons) > 5 else mark_based_h1s)
-
-        statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers, mark_based_modules, mark_based_lessons, mark_based_h1s, time_based_modules, time_based_lessons, time_based_h1s)
+        best_worst_skills = dict(mark_based_modules if len(mark_based_modules) > 5 else mark_based_lessons if len(
+            mark_based_lessons) > 5 else mark_based_h1s)
+        if not writing_quiz:
+            statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers,
+                                                        mark_based_modules, mark_based_lessons, mark_based_h1s,
+                                                        time_based_modules, time_based_lessons, time_based_h1s)
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
 
@@ -482,7 +569,8 @@ def quiz_review(request):
             {'answers': answers_serializer,
              'question_num': question_num, 'correct_questions_num': correct_questions,
              'ideal_duration': ideal_duration, 'attempt_duration': attempt_duration,
-             'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None, 'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
+             'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None,
+             'quiz_subject': {'id': quiz.subject.id, 'name': quiz.subject.name},
              'best_worst_skills': best_worst_skills, 'statements': statements})
     else:
         return Response(0)
@@ -552,7 +640,8 @@ def quiz_history(request):
     if check_user(data):
         user = get_user(data)
 
-        days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء', 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
+        days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
+                'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
 
         quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index + 10]
 
@@ -561,16 +650,33 @@ def quiz_history(request):
 
         quiz_list = []
         for quiz in quizzes:
-
             date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
             date = date[:22] + days[date[22:]]
 
             attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
             attempt_duration = attempt_duration.total_seconds() if attempt_duration else 0
-            ideal_duration = quiz.useranswer_set.aggregate(Sum('question__idealDuration'))['question__idealDuration__sum']
+            ideal_duration = quiz.useranswer_set.aggregate(Sum('question__idealDuration'))[
+                'question__idealDuration__sum']
             ideal_duration = ideal_duration.total_seconds() if ideal_duration else 0
 
             user_answers = UserAnswer.objects.filter(quiz=quiz)
+            if hasattr(user_answers.first(), 'userwritinganswer'):
+                answer = user_answers.first().userwritinganswer
+                if answer.status == 1:
+                    quiz_list.append({
+                        'id': str(quiz.id),
+                        'subject': quiz.subject.name,
+                        'date': date,
+                        'quiz_duration': None,
+                        'attempt_duration': attempt_duration,
+                        'ideal_duration': ideal_duration,
+                        'question_num': 10,
+                        'correct_question_num': answer.mark,
+                        'skills': {answer.question.tags.exclude(headbase=None).first().h1.name},
+                    })
+                continue
+            # quiz = UserQuiz.objects.create(subject=subject, user=user)
+            # UserWritingAnswer.objects.create(quiz=quiz, question=question, answer=image, status=0)
 
             question_num = 0
             correct_question_num = 0
@@ -609,6 +715,7 @@ def quiz_history(request):
                 h1s.add(tag.h1.name)
                 lessons.add(tag.h1.lesson.name)
                 modules.add(tag.h1.lesson.module.name)
+
             quiz_list.append({
                 'id': str(quiz.id),
                 'subject': quiz.subject.name,
@@ -677,7 +784,8 @@ def share_quiz(request):
     quiz = UserQuiz.objects.get(id=quiz_id)
     question_set = Question.objects.filter(useranswer__quiz=quiz)
     serializer = QuestionSerializer(question_set, many=True)
-    return Response({'subject': {'id': str(quiz.subject.id), 'name': quiz.subject.name}, 'questions': serializer.data, 'duration': quiz.duration.total_seconds()})
+    return Response({'subject': {'id': str(quiz.subject.id), 'name': quiz.subject.name}, 'questions': serializer.data,
+                     'duration': quiz.duration.total_seconds()})
 
 
 @api_view(['POST'])
@@ -728,7 +836,7 @@ def add_or_edit_multiple_choice_question(request):
     if image is not None and not edit:
         image = base64.b64decode(image)
         image_name = LastImageName.objects.first()
-        question.image = ContentFile(image, str(image_name.name)+'.png')
+        question.image = ContentFile(image, str(image_name.name) + '.png')
         image_name.name += 1
         image_name.save()
     elif image is not None and edit:
@@ -802,7 +910,7 @@ def add_or_edit_final_answer_question(request):
     if image is not None and not edit:
         image = base64.b64decode(image)
         image_name = LastImageName.objects.first()
-        question.image = ContentFile(image, str(image_name.name)+'.png')
+        question.image = ContentFile(image, str(image_name.name) + '.png')
         image_name.name += 1
         image_name.save()
     elif image is not None and edit:
@@ -861,7 +969,7 @@ def add_or_edit_multi_section_question(request):
     if image is not None and not edit:
         image = base64.b64decode(image)
         image_name = LastImageName.objects.first()
-        question.image = ContentFile(image, str(image_name.name)+'.png')
+        question.image = ContentFile(image, str(image_name.name) + '.png')
         image_name.name += 1
         image_name.save()
 
@@ -876,15 +984,18 @@ def add_or_edit_multi_section_question(request):
     for ques in sub_questions:
         if ques['type'] == 'finalAnswerQuestion':
             correct_answer = AdminFinalAnswer.objects.create(body=ques['answer'])
-            sub_question = FinalAnswerQuestion.objects.create(body=ques['question'], correct_answer=correct_answer, sub=True)
+            sub_question = FinalAnswerQuestion.objects.create(body=ques['question'], correct_answer=correct_answer,
+                                                              sub=True)
 
         elif ques['type'] == 'multipleChoiceQuestion':
             correct_answer = AdminMultipleChoiceAnswer.objects.create(body=ques['choices'][0])
-            sub_question = MultipleChoiceQuestion.objects.create(body=ques['question'], correct_answer=correct_answer, sub=True)
+            sub_question = MultipleChoiceQuestion.objects.create(body=ques['question'], correct_answer=correct_answer,
+                                                                 sub=True)
             sub_question.choices.add(correct_answer)
 
             for choiceIndex in range(1, len(ques['choices'])):
-                choice = AdminMultipleChoiceAnswer.objects.create(body=ques['choices'][choiceIndex], notes=ques['choicesNotes'][choiceIndex])
+                choice = AdminMultipleChoiceAnswer.objects.create(body=ques['choices'][choiceIndex],
+                                                                  notes=ques['choicesNotes'][choiceIndex])
                 sub_question.choices.add(choice)
 
         for i in range(len(ques['headlines'])):
@@ -898,7 +1009,8 @@ def add_or_edit_multi_section_question(request):
 
         sub_question.tags.add(author)
 
-        sub_question_level = QuestionLevel.objects.create(name=levels[ques['questionLevel']], level=ques['questionLevel'])
+        sub_question_level = QuestionLevel.objects.create(name=levels[ques['questionLevel']],
+                                                          level=ques['questionLevel'])
         sub_question.tags.add(sub_question_level)
         level += ques['questionLevel']
 
@@ -906,7 +1018,8 @@ def add_or_edit_multi_section_question(request):
 
         question.sub_questions.add(sub_question)
 
-    question_level = QuestionLevel.objects.create(name=levels[round(level/len(sub_questions))], level=level/len(sub_questions))
+    question_level = QuestionLevel.objects.create(name=levels[round(level / len(sub_questions))],
+                                                  level=level / len(sub_questions))
 
     question.tags.add(question_level)
 

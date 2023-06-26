@@ -4,7 +4,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
     AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer, UserQuiz, \
-    MultiSectionQuestion, UserMultiSectionAnswer
+    MultiSectionQuestion, UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -98,6 +98,7 @@ class FinalAnswerQuestionSerializer(serializers.ModelSerializer):
         formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
         return formatted_duration
 
+
 class MultipleChoiceQuestionSerializer(serializers.ModelSerializer):
     correct_answer = AdminMultipleChoiceAnswerSerializer(many=False)
     choices = AdminMultipleChoiceAnswerSerializer(many=True)
@@ -178,6 +179,43 @@ class MultiSectionQuestionSerializer(serializers.ModelSerializer):
         return formatted_duration
 
 
+class WritingQuestionSerializer(serializers.ModelSerializer):
+    correct_answer = AdminFinalAnswerSerializer(many=False)
+    level = serializers.SerializerMethodField()
+    author = serializers.SerializerMethodField()
+    headlines = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
+    idealDuration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = WritingQuestion
+        fields = ['id', 'body', 'level', 'author', 'headlines', 'idealDuration', 'hint', 'type']
+
+    def get_type(self, obj):
+        return 'writingquestion'
+
+    def get_level(self, obj):
+        return round(obj.tags.exclude(questionlevel=None).first().questionlevel.level)
+
+    def get_author(self, obj):
+        return obj.tags.exclude(author=None).first().author.name
+
+    def get_headlines(self, obj):
+        tag = obj.tags.exclude(headbase=None).first()
+        headbase = tag.headbase
+        return [{'headline': headbase.name, 'level': 1}]
+
+    def get_idealDuration(self, obj):
+        attempt_duration = obj.idealDuration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
+
+
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
@@ -190,6 +228,8 @@ class QuestionSerializer(serializers.ModelSerializer):
             serializer = MultipleChoiceQuestionSerializer(obj.multiplechoicequestion).data
         elif hasattr(obj, 'multisectionquestion'):
             serializer = MultiSectionQuestionSerializer(obj.multisectionquestion).data
+        elif hasattr(obj, 'writingquestion'):
+            serializer = WritingQuestionSerializer(obj.writingquestion).data
         else:
             serializer = super().to_representation(obj)
         return serializer
@@ -216,6 +256,7 @@ class UserFinalAnswerSerializer(serializers.ModelSerializer):
 
         formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
         return formatted_duration
+
 
 class UserMultipleChoiceAnswerSerializer(serializers.ModelSerializer):
     choice = AdminMultipleChoiceAnswerSerializer(many=False)
@@ -282,6 +323,26 @@ class UserMultiSectionAnswerSerializer(serializers.ModelSerializer):
         return formatted_duration
 
 
+class UserWritingAnswerSerializer(serializers.ModelSerializer):
+    question = QuestionSerializer(many=False)
+    is_correct = serializers.SerializerMethodField()
+    duration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserWritingAnswer
+        fields = ['answer', 'duration', 'question', 'mark', 'comments']
+
+    def get_duration(self, obj):
+        attempt_duration = obj.duration
+
+        hours = attempt_duration.seconds // 3600
+        minutes = (attempt_duration.seconds % 3600) // 60
+        seconds = attempt_duration.seconds % 60
+
+        formatted_duration = "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
+        return formatted_duration
+
+
 class UserAnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -295,6 +356,8 @@ class UserAnswerSerializer(serializers.ModelSerializer):
             serializer = UserFinalAnswerSerializer(obj.userfinalanswer).data
         elif hasattr(obj, 'usermultisectionanswer'):
             serializer = UserMultiSectionAnswerSerializer(obj.usermultisectionanswer).data
+        elif hasattr(obj, 'userwritinganswer'):
+            serializer = UserWritingAnswerSerializer(obj.userwritinganswer).data
         else:
             serializer = super().to_representation(obj)
         return serializer
