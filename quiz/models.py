@@ -232,7 +232,7 @@ class UserMultiSectionAnswer(UserAnswer):
 
 
 class UserWritingAnswer(UserAnswer):
-    level_choices = (
+    status_choices = (
         (0, 'waiting'),
         (1, 'done'),
     )
@@ -240,7 +240,7 @@ class UserWritingAnswer(UserAnswer):
     answer = models.ImageField(storage=MediaRootS3Boto3Storage(), null=True, blank=True)
     mark = models.IntegerField(null=True, blank=True)
     comments = models.TextField(null=True, blank=True)
-    status = models.IntegerField(choices=level_choices, null=True, blank=True)
+    status = models.IntegerField(choices=status_choices, null=True, blank=True)
 
 
 class Question(models.Model):

@@ -17,6 +17,26 @@ class QuizExportAllFields(ExportActionMixin, admin.ModelAdmin):
     ordering = ('-creationDate',)
 
 
+class UserWritingAnswerExportAllFields(ExportActionMixin, admin.ModelAdmin):
+    list_display = ('creation_date', 'user', 'contact_info', 'status')
+    ordering = ('status',)
+
+    def creation_date(self, obj):
+        if obj.quiz:
+            return obj.quiz.creationDate
+        return None
+
+    def user(self, obj):
+        if obj.quiz:
+            return obj.quiz.user
+        return None
+
+    def contact_info(self, obj):
+        if obj.quiz:
+            return obj.quiz.user.contact_method
+        return None
+
+
 admin.site.register(Subject, ExportAllFields)
 admin.site.register(Module, ExportAllFields)
 admin.site.register(Lesson, ExportAllFields)
@@ -35,7 +55,7 @@ admin.site.register(AdminFinalAnswer, ExportAllFields)
 admin.site.register(MultiSectionQuestion, ExportAllFields)
 admin.site.register(UserMultiSectionAnswer, ExportAllFields)
 admin.site.register(WritingQuestion, ExportAllFields)
-admin.site.register(UserWritingAnswer, ExportAllFields)
+admin.site.register(UserWritingAnswer, UserWritingAnswerExportAllFields)
 admin.site.register(UserFinalAnswer, ExportAllFields)
 admin.site.register(AdminMultipleChoiceAnswer, ExportAllFields)
 admin.site.register(UserMultipleChoiceAnswer, ExportAllFields)
