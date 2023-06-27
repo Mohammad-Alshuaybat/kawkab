@@ -10,7 +10,7 @@ from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
-    UserMultiSectionAnswer, UserWritingAnswer
+    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer
 
 from django.db.models import Count, Q, Sum
@@ -1076,6 +1076,24 @@ def subject_question_ids(request):
 # {
 #         "subject": "التاريخ"
 # }
+
+@api_view(['POST'])
+def add_writing_topic(request):
+    topics = []
+
+    for i in topics:
+        level = QuestionLevel.objects.create(name='inAverage', level=2)
+        author = Author.objects.get(name="المواضيع المقترحه")
+        # h1 = H1.objects.get(id="aa5d8720-a404-4c00-99cd-9495781a88f7") # arabic
+        h1 = H1.objects.get(id="483dbca5-de2e-4bcc-9793-e32c13f14aa0") # english
+        q = WritingQuestion.objects.create(body=i, sub=True, idealDuration=datetime.timedelta(seconds=int(1200)))
+        q.tags.add(h1)
+        q.tags.add(level)
+        q.tags.add(author)
+        q.save()
+
+    return Response()
+
 
 
 # @api_view(['GET'])
