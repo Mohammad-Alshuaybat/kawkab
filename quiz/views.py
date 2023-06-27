@@ -641,7 +641,7 @@ def quiz_history(request):
         days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
                 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
 
-        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index + 1]
+        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index + 10]
 
         if not quizzes.exists():
             return Response([])
