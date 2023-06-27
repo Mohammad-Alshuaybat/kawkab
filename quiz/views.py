@@ -244,7 +244,7 @@ def submit_writing_question(request):
         user.save()
 
         question = Question.objects.get(id=question)
-        subject = question.tags.exclude(headbase=None).h1.lesson.module.subject
+        subject = question.tags.exclude(headbase=None).first().headbase.h1.lesson.module.subject
         quiz = UserQuiz.objects.create(subject=subject, user=user)
 
         image = base64.b64decode(answer)
@@ -253,7 +253,7 @@ def submit_writing_question(request):
         image_name.name += 1
         image_name.save()
 
-        UserWritingAnswer.objects.create(quiz=quiz, question=question, answer=image, duration=duration, status=0)
+        UserWritingAnswer.objects.create(quiz=quiz, question=question, answer=image, duration=datetime.timedelta(seconds = int(duration)), status=0)
         return Response(1)
     else:
         return Response(0)
@@ -530,7 +530,7 @@ def quiz_review(request):
                 question_num = 10
                 ideal_duration = answer.userwritinganswer.question.idealDuration.total_seconds()
                 attempt_duration = answer.userwritinganswer.duration.total_seconds()
-                h1s = {answer.userwritinganswer.question.tags.exclude(headbase=None).first().h1.name}
+                h1s = {answer.userwritinganswer.question.tags.exclude(headbase=None).first().headbase.h1.name}
                 statements = answer.userwritinganswer.comments.split('\n')
                 answers_serializer = UserAnswerSerializer(answers, many=True).data
 
@@ -672,7 +672,7 @@ def quiz_history(request):
                         'ideal_duration': ideal_duration,
                         'question_num': 10,
                         'correct_question_num': answer.mark,
-                        'skills': {answer.question.tags.exclude(headbase=None).first().h1.name},
+                        'skills': {answer.question.tags.exclude(headbase=None).first().headbase.h1.name},
                     })
                 continue
             # quiz = UserQuiz.objects.create(subject=subject, user=user)
