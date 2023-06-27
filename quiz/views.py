@@ -529,7 +529,7 @@ def quiz_review(request):
                 question_num = 10
                 ideal_duration = answer.userwritinganswer.question.idealDuration.total_seconds()
                 attempt_duration = answer.userwritinganswer.duration.total_seconds()
-                h1s = {answer.userwritinganswer.question.tags.exclude(headbase=None).first().headbase.h1.name}
+                h1s = {answer.userwritinganswer.question.tags.exclude(headbase=None).first().headbase.h1.name: {'correct': answer.userwritinganswer.mark, 'all': 10, 'duration': answer.userwritinganswer.duration.total_seconds()}}
                 statements = answer.userwritinganswer.comments.split('\n')
                 answers_serializer = UserAnswerSerializer(answers, many=True).data
 
@@ -562,7 +562,7 @@ def quiz_review(request):
                                                         time_based_modules, time_based_lessons, time_based_h1s)
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
-
+        print(best_worst_skills)
         return Response(
             {'answers': answers_serializer,
              'question_num': question_num, 'correct_questions_num': correct_questions,
@@ -641,7 +641,7 @@ def quiz_history(request):
         days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
                 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
 
-        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index + 10]
+        quizzes = UserQuiz.objects.filter(user=user).order_by('-creationDate')[quiz_index:quiz_index + 1]
 
         if not quizzes.exists():
             return Response([])

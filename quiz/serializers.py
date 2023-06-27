@@ -191,7 +191,7 @@ class WritingQuestionSerializer(serializers.ModelSerializer):
         fields = ['id', 'body', 'level', 'author', 'headlines', 'idealDuration', 'hint', 'type']
 
     def get_type(self, obj):
-        return 'writingquestion'
+        return 'writingQuestion'
 
     def get_level(self, obj):
         return round(obj.tags.exclude(questionlevel=None).first().questionlevel.level)
@@ -329,7 +329,12 @@ class UserWritingAnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserWritingAnswer
-        fields = ['answer', 'duration', 'question', 'mark', 'comments']
+        fields = ['answer', 'duration', 'question', 'mark', 'comments', 'is_correct']
+
+
+    def get_is_correct(self, obj):
+        return obj.mark == 10
+
 
     def get_duration(self, obj):
         attempt_duration = obj.duration
