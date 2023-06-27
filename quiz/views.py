@@ -505,7 +505,6 @@ def quiz_review(request):
         modules = {}
         lessons = {}
         h1s = {}
-        writing_quiz = False
         for answer in answers:
             if hasattr(answer, 'userfinalanswer'):
                 solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(
@@ -558,8 +557,7 @@ def quiz_review(request):
 
         best_worst_skills = dict(mark_based_modules if len(mark_based_modules) > 5 else mark_based_lessons if len(
             mark_based_lessons) > 5 else mark_based_h1s)
-        if not writing_quiz:
-            statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers,
+        statements = questions_statistics_statement(attempt_duration, ideal_duration, solved_questions, answers,
                                                         mark_based_modules, mark_based_lessons, mark_based_h1s,
                                                         time_based_modules, time_based_lessons, time_based_h1s)
 
@@ -675,6 +673,7 @@ def quiz_history(request):
                         'skills': {answer.question.tags.exclude(headbase=None).first().headbase.h1.name},
                     })
                 continue
+
             # quiz = UserQuiz.objects.create(subject=subject, user=user)
             # UserWritingAnswer.objects.create(quiz=quiz, question=question, answer=image, status=0)
 
