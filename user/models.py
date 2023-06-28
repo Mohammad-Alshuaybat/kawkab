@@ -36,7 +36,7 @@ class User(models.Model):
     contact_method = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.email}-{self.phone}'
+        return f'{self.firstName} {self.lastName}'
 
 
 class DailyTask(models.Model):

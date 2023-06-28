@@ -1,14 +1,50 @@
-from datetime import date
+from datetime import date, timedelta, time
 
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from quiz.models import Subject
+from quiz.models import Subject, UserQuiz
 from school import settings
 from user.models import Quote, Advertisement, DailyTask, User
 from user.serializers import DailyTaskSerializer, AdvertisementSerializer
 from user.utils import signup, login, check_user, get_user, check_account_info
+
+
+from django.shortcuts import render
+
+
+def statistics(request):
+    total_users = User.objects.count()
+    total_quizzes = UserQuiz.objects.count()
+    today_new_users = User.objects.filter(creationDate__date=date.today()).count()
+    today_total_quizzes = UserQuiz.objects.filter(creationDate__date=date.today()).count()
+    yesterday_new_users = User.objects.filter(creationDate__date=date.today() - timedelta(days=1)).count()
+    yesterday_total_quizzes = UserQuiz.objects.filter(creationDate__date=date.today() - timedelta(days=1)).count()
+    users_signup_time = {
+        'am_to_am': User.objects.filter(creationDate__time__range=(time(0, 0, 0), time(6, 0, 0))).count(),
+        'am_to_pm': User.objects.filter(creationDate__time__range=(time(6, 0, 0), time(12, 0, 0))).count(),
+        'pm_to_pm': User.objects.filter(creationDate__time__range=(time(12, 0, 0), time(18, 0, 0))).count(),
+        'pm_to_am': User.objects.filter(creationDate__time__range=(time(18, 0, 0), time(23, 59, 59))).count(),
+    }
+    quizzes_time = {
+        'am_to_am': UserQuiz.objects.filter(creationDate__time__range=(time(0, 0, 0), time(6, 0, 0))).count(),
+        'am_to_pm': UserQuiz.objects.filter(creationDate__time__range=(time(6, 0, 0), time(12, 0, 0))).count(),
+        'pm_to_pm': UserQuiz.objects.filter(creationDate__time__range=(time(12, 0, 0), time(18, 0, 0))).count(),
+        'pm_to_am': UserQuiz.objects.filter(creationDate__time__range=(time(18, 0, 0), time(23, 59, 59))).count(),
+    }
+
+    context = {
+        'total_users': total_users,
+        'total_quizzes': total_quizzes,
+        'today_new_users': today_new_users,
+        'today_total_quizzes': today_total_quizzes,
+        'yesterday_new_users': yesterday_new_users,
+        'yesterday_total_quizzes': yesterday_total_quizzes,
+        'users_signup_time': users_signup_time,
+        'quizzes_time': quizzes_time,
+    }
+    return render(request, r'adminPage.html', context)
 
 
 @api_view(['POST'])

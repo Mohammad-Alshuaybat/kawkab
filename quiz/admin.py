@@ -13,8 +13,11 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
 
 
 class QuizExportAllFields(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('creationDate', 'user', 'subject', 'duration')
+    list_display = ('creationDate', 'user', 'subject', 'questions_num', 'duration')
     ordering = ('-creationDate',)
+
+    def questions_num(self, obj):
+        return UserAnswer.objects.filter(quiz=obj).count()
 
 
 class UserWritingAnswerExportAllFields(ExportActionMixin, admin.ModelAdmin):

@@ -1077,10 +1077,55 @@ def subject_question_ids(request):
 #         "subject": "التاريخ"
 # }
 
+
 @api_view(['POST'])
 def add_writing_topic(request):
     topics = []
+    """
+    Discuss the impact of social media on society, focusing on its advantages and disadvantages.
+Write an essay analyzing the effects of climate change on the environment and proposing possible solutions.
+Examine the role of education in promoting gender equality and empowering women.
+Write an essay exploring the benefits and drawbacks of remote learning in the digital age.
+Discuss the ethical implications of genetic engineering and its potential impact on future generations.
+Analyze the effects of globalization on cultural diversity and identity.
+Write an essay discussing the importance of mental health awareness and the ways to promote emotional well-being.
+Examine the impact of artificial intelligence on the job market and discuss the potential challenges and opportunities.
+Discuss the significance of renewable energy sources in combating climate change and reducing reliance on fossil fuels.
+Write an essay exploring the pros and cons of genetically modified organisms (GMOs) in agriculture and food production.
+Analyze the impact of social inequality on individuals and society, and propose strategies for achieving greater social justice.
+Discuss the role of media in shaping public opinion and its influence on democratic societies.
+Examine the ethical considerations surrounding the use of animals in scientific research and propose alternative methods.
+Write an essay discussing the pros and cons of online shopping compared to traditional retail.
+Analyze the effects of globalization on traditional cultures and indigenous communities.
+Discuss the benefits and challenges of multiculturalism in today's society.
+Examine the impact of automation and robotics on the future of work and employment.
+Write an essay exploring the causes and consequences of income inequality in modern society.
+Analyze the role of mass media in shaping body image and its impact on mental health.
+Discuss the benefits and drawbacks of using renewable energy sources for transportation, such as electric vehicles.
+    """
 
+    """
+    مقالة: "العنف المدرسي ظاهرة دخيلة على مجتمعنا"
+
+تعريف العنف المدرسي وتحليل أسبابه وتأثيراته.
+آثار العنف المدرسي على الطلاب والمدرسين والمجتمع بشكل عام.
+دور المدارس والأهل والمجتمع في مكافحة العنف المدرسي وتوفير بيئة تعليمية آمنة ومحفزة.
+مقالة: "القدس زهرة المدائن ومهوى القلوب"
+
+أهمية القدس في الديانات الثلاث السماوية.
+التراث الثقافي والتاريخي للقدس وأهمية المدينة القدسية.
+التحديات التي تواجه القدس وأهمية المحافظة على هويتها وتاريخها.
+مقالة: "التعاون وتنسيق الجهود بين مؤسسات المجتمع هما السبيل إلى بناء الوطن ونهضته"
+
+أهمية التعاون والتنسيق بين مؤسسات المجتمع المختلفة.
+أمثلة على التعاون الناجح بين القطاعات المختلفة في تطوير الوطن.
+الفوائد المترتبة على التعاون وتبادل المعرفة والخبرات.
+مقالة: "المطالعة عدو للفراغ والجهل"
+
+أهمية القراءة في تنمية المعرفة والثقافة الشخصية.
+التأثير الإيجابي للقراءة في توسيع آفاق الفرد وتنمية مهاراته.
+طرق تشجيع المطالعة وتجاوز التحديات التي تواجهها.
+"""
     for i in topics:
         level = QuestionLevel.objects.create(name='inAverage', level=2)
         author = Author.objects.get(name="المواضيع المقترحه")
