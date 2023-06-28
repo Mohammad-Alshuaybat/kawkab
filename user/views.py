@@ -21,6 +21,8 @@ def statistics(request):
     today_total_quizzes = UserQuiz.objects.filter(creationDate__date=date.today()).count()
     yesterday_new_users = User.objects.filter(creationDate__date=date.today() - timedelta(days=1)).count()
     yesterday_total_quizzes = UserQuiz.objects.filter(creationDate__date=date.today() - timedelta(days=1)).count()
+    two_days_ago_new_users = User.objects.filter(creationDate__date=date.today() - timedelta(days=2)).count()
+    two_days_ago_total_quizzes = UserQuiz.objects.filter(creationDate__date=date.today() - timedelta(days=2)).count()
     users_signup_time = {
         'am_to_am': User.objects.filter(creationDate__time__range=(time(0, 0, 0), time(6, 0, 0))).count(),
         'am_to_pm': User.objects.filter(creationDate__time__range=(time(6, 0, 0), time(12, 0, 0))).count(),
@@ -41,6 +43,8 @@ def statistics(request):
         'today_total_quizzes': today_total_quizzes,
         'yesterday_new_users': yesterday_new_users,
         'yesterday_total_quizzes': yesterday_total_quizzes,
+        'two_days_ago_new_users': two_days_ago_new_users,
+        'two_days_ago_total_quizzes': two_days_ago_total_quizzes,
         'users_signup_time': users_signup_time,
         'quizzes_time': quizzes_time,
     }
