@@ -22,7 +22,7 @@ class QuizExportAllFields(ExportActionMixin, admin.ModelAdmin):
 
 class UserWritingAnswerExportAllFields(ExportActionMixin, admin.ModelAdmin):
     list_display = ('creation_date', 'user', 'contact_info', 'status')
-    ordering = ('status',)
+    ordering = ('status', '-quiz__creationDate',)
 
     def creation_date(self, obj):
         if obj.quiz:
