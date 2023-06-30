@@ -10,7 +10,7 @@ from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
-    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion
+    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer
 
 from django.db.models import Count, Q, Sum
@@ -866,7 +866,7 @@ def add_or_edit_multiple_choice_question(request):
     question.tags.add(level)
 
     question.save()
-    return Response(1)
+    return Response({'check': 1, 'id': str(question.id)})
 
 
 @api_view(['POST'])
@@ -932,7 +932,7 @@ def add_or_edit_final_answer_question(request):
     question.tags.add(level)
 
     question.save()
-    return Response(1)
+    return Response({'check': 1, 'id': str(question.id)})
 
 
 @api_view(['POST'])
@@ -1023,6 +1023,29 @@ def add_or_edit_multi_section_question(request):
     question.tags.add(question_level)
 
     question.save()
+    return Response({'check': 1, 'id': str(question.id)})
+
+
+@api_view(['POST'])
+def add_suggested_quiz(request):
+    data = request.data
+
+    quiz_name = data.pop('quiz_name', None)
+
+    quiz_subject = data.pop('quiz_subject', None)
+
+    quiz_duration = data.pop('quiz_duration', None)
+
+    questions = data.pop('questions', None)
+
+    subject = Subject.objects.get(name=quiz_subject)
+    quiz = AdminQuiz.objects.create(name=quiz_name, subject=subject, duration=datetime.timedelta(minutes=int(quiz_duration)))
+
+    for question_id in questions:
+        question = Question.objects.get(id=question_id)
+        quiz.questions.add(question)
+
+    quiz.save()
     return Response(1)
 
 
