@@ -10,8 +10,8 @@ from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
-    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz
-from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer
+    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz
+from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer, AdminQuizSerializer
 
 from django.db.models import Count, Q, Sum
 
@@ -729,6 +729,37 @@ def quiz_history(request):
 
         return Response(quiz_list)
 
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def suggested_quizzes(request):
+    data = request.data
+
+    if check_user(data):
+        quizzes = AdminQuiz.objects.all().order_by('-creationDate')
+
+        if not quizzes.exists():
+            return Response([])
+
+        quizzes_set = AdminQuizSerializer(quizzes, many=True).data
+
+        return Response(quizzes_set)
+
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def take_quiz(request):
+    data = request.data
+    quiz_id = data.pop('quiz_id', None)
+
+    if check_user(data):
+        quiz = AdminQuiz.objects.get(id=quiz_id)
+        serializer = QuestionSerializer(quiz.questions.all(), many=True)
+        return Response(serializer.data)
     else:
         return Response(0)
 

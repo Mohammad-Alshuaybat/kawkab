@@ -4,7 +4,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 from .models import Subject, Tag, Module, Lesson, Question, FinalAnswerQuestion, MultipleChoiceQuestion, \
     AdminMultipleChoiceAnswer, H1, UserAnswer, AdminFinalAnswer, UserFinalAnswer, UserMultipleChoiceAnswer, UserQuiz, \
-    MultiSectionQuestion, UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion
+    MultiSectionQuestion, UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -365,3 +365,19 @@ class UserAnswerSerializer(serializers.ModelSerializer):
         else:
             serializer = super().to_representation(obj)
         return serializer
+
+
+class AdminQuizSerializer(serializers.ModelSerializer):
+    subject = SubjectSerializer(many=False)
+    duration = serializers.SerializerMethodField()
+    questions_num = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AdminQuiz
+        fields = ['id', 'subject', 'duration', 'name', 'questions_num']
+
+    def get_duration(self, obj):
+        return obj.duration.total_seconds() // 60
+
+    def get_questions_num(self, obj):
+        return obj.questions.all().count()

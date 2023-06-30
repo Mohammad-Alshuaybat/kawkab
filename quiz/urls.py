@@ -6,7 +6,7 @@ from .views import subject_set, headline_set, build_quiz, mark_quiz, similar_que
      unsave_question, quiz_review, retake_quiz, quiz_history, subject_question_num, \
      reset_questions_level_and_ideal_duration, delete_users_answers, get_admin_question, subject_question_ids, \
      mark_question, get_shared_question, mark_shared_question, share_quiz, user_name, get_writing_question, \
-     submit_writing_question, add_writing_topic, add_suggested_quiz
+     submit_writing_question, add_writing_topic, add_suggested_quiz, suggested_quizzes, take_quiz
 
 urlpatterns = [
      path('subject_set/', subject_set),
@@ -38,6 +38,8 @@ urlpatterns = [
      path('save_question/', save_question),
      path('unsave_question/', unsave_question),
      path('quiz_history/', quiz_history),
+     path('suggested_quizzes/', suggested_quizzes),
+     path('take_quiz/', take_quiz),
      path('subject_question_num/', subject_question_num),
      # path('read_headlines_from_xlsx/', read_headlines_from_xlsx),
 ]
