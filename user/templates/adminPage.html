@@ -21,7 +21,7 @@
 <body>
   <table>
     <tr>
-      <th colspan="2">Total Number of Users and Quizzes</th>
+      <th colspan="2">General Statistics of Users and Quizzes</th>
     </tr>
     <tr>
       <td>Total Number of Users:</td>
@@ -30,6 +30,22 @@
     <tr>
       <td>Total Number of Quizzes:</td>
       <td>{{ total_quizzes }}</td>
+    </tr>
+    <tr>
+      <td>Avg Number of Users per day:</td>
+      <td>{{ average_new_users_per_day }}</td>
+    </tr>
+    <tr>
+      <td>Avg Number of Quizzes per day:</td>
+      <td>{{ average_new_quizzes_per_day }}</td>
+    </tr>
+    <tr>
+      <td>Maximum Number of Users per day:</td>
+      <td>{{ max_new_users_per_day }}</td>
+    </tr>
+    <tr>
+      <td>Maximum Number of Quizzes per day:</td>
+      <td>{{ max_new_quizzes_per_day }}</td>
     </tr>
     <tr>
       <th colspan="2">Last 3 days Statistics</th>

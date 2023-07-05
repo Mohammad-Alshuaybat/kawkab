@@ -7,5 +7,5 @@ urlpatterns = [
     path('log_in/', log_in),
     path('dashboard/', dashboard),
     path('edit_tasks/', edit_tasks),
-    path('statistics/', statistics)
+    path('statistics/', statistics),
 ]

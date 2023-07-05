@@ -1,6 +1,7 @@
 from datetime import date, timedelta, time
 
 from django.core.mail import send_mail
+from django.db.models.functions import Trunc
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -12,11 +13,30 @@ from user.utils import signup, login, check_user, get_user, check_account_info
 
 
 from django.shortcuts import render
+from django.db.models import Count, Max, Avg
+from django.utils import timezone
 
 
 def statistics(request):
     total_users = User.objects.count()
     total_quizzes = UserQuiz.objects.count()
+
+    average_new_users_per_day = \
+        User.objects.annotate(date=Trunc('creationDate', 'day')).values('date').annotate(count=Count('id')).aggregate(
+            average=Avg('count'))['average']
+
+    average_new_quizzes_per_day = \
+        UserQuiz.objects.annotate(date=Trunc('creationDate', 'day')).values('date').annotate(count=Count('id')).aggregate(
+            average=Avg('count'))['average']
+
+    max_new_users_per_day = \
+    User.objects.annotate(date=Trunc('creationDate', 'day')).values('date').annotate(count=Count('id')).aggregate(
+        maximum=Max('count'))['maximum']
+
+    max_new_quizzes_per_day = \
+        UserQuiz.objects.annotate(date=Trunc('creationDate', 'day')).values('date').annotate(count=Count('id')).aggregate(
+            maximum=Max('count'))['maximum']
+
     today_new_users = User.objects.filter(creationDate__date=date.today()).count()
     today_total_quizzes = UserQuiz.objects.filter(creationDate__date=date.today()).count()
     yesterday_new_users = User.objects.filter(creationDate__date=date.today() - timedelta(days=1)).count()
@@ -39,6 +59,10 @@ def statistics(request):
     context = {
         'total_users': total_users,
         'total_quizzes': total_quizzes,
+        'average_new_users_per_day': int(average_new_users_per_day),
+        'average_new_quizzes_per_day': int(average_new_quizzes_per_day),
+        'max_new_users_per_day': max_new_users_per_day,
+        'max_new_quizzes_per_day': max_new_quizzes_per_day,
         'today_new_users': today_new_users,
         'today_total_quizzes': today_total_quizzes,
         'yesterday_new_users': yesterday_new_users,
