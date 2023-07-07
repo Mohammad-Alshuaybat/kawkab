@@ -5,12 +5,6 @@ from school.cdn.backends import MediaRootS3Boto3Storage
 
 
 class User(models.Model):
-    section_choices = (
-        ('العلمي', 'العلمي'),
-        ('الأدبي', 'الأدبي'),
-        ('الصناعي', 'الصناعي'),
-    )
-
     auth_choices = (
         (1, 'phone'),
         (2, 'email'),
@@ -31,8 +25,10 @@ class User(models.Model):
     lastName = models.CharField(max_length=30, null=True, blank=True)
 
     grade = models.IntegerField(default=12, blank=True)
-    section = models.CharField(max_length=50, choices=section_choices, null=True, blank=True)
+    age = models.IntegerField(default=2006, blank=True)
 
+    school_name = models.CharField(max_length=100, null=True, blank=True)
+    listenFrom = models.CharField(max_length=50, null=True, blank=True)
     contact_method = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
