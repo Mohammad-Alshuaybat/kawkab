@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from school import settings
+from user.serializers import UserSerializer
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
@@ -30,7 +31,8 @@ def user_name(request):
 
     if check_user(data):
         user = get_user(data)
-        return Response(user.firstName)
+        user_serializer = UserSerializer(user, many=False).data
+        return Response(user_serializer)
 
 
 @api_view(['POST'])
