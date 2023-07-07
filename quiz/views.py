@@ -6,6 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from school import settings
+from user.models import User
 from user.serializers import UserSerializer
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
@@ -33,6 +34,22 @@ def user_info(request):
         user = get_user(data)
         user_serializer = UserSerializer(user, many=False).data
         return Response(user_serializer)
+
+
+@api_view(['POST'])
+def edit_user_info(request):
+    data = request.data
+    age = data.pop('age', None)
+    school_name = data.pop('school_name', None)
+    listenFrom = data.pop('listenFrom', None)
+
+    if check_user(data):
+        user = get_user(data)
+        user.age = age
+        user.school_name = school_name
+        user.listenFrom = listenFrom
+        user.save()
+        return Response(1)
 
 
 @api_view(['POST'])
@@ -1203,45 +1220,7 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
 
 @api_view(['GET'])
 def test(request):
-    # aut = Author.objects.get(name='الأستاذ مروان عمارة')
-    # wrong_aut = Author.objects.get(name='الوزارة عام 2022')
-    # question_ids = [
-    #     '6cdda93a-08a4-4b36-9c05-c35e7d92f062',
-    #     'f7ba3a1e-e611-4fa3-a846-f2e2dbef5d6f',
-    #     '8cee36e2-e44b-4fe3-9420-5bdc776d0174',
-    #     '4623e41e-78b6-494e-ab33-882961f8ee7d',
-    #     'c9d3950c-d794-47d4-a611-de5360e78ab0',
-    #     '741b610b-28c1-4297-8f4c-31bb8d271192',
-    #     '0f43c898-3b72-43dd-a746-c267bb749ac9',
-    #     'ed6f26af-e486-4483-9c91-e3ce59796c3d',
-    #     '54ef908d-00af-45f2-8ef2-cb3b97a22b1f',
-    #     'cd7484c1-7da9-412f-90b3-4c597fb846ae',
-    #     'a85ed649-6096-47ee-81a5-52c753bda98f',
-    #     '1ed3ba34-ab29-4333-839d-d49b2a5bdd86',
-    #     'd02230c2-a290-4afe-9a33-dcd08f0bf8ec',
-    #     '35d9710d-d967-41f5-a3a1-87ce8092094e',
-    #     'f2829a96-4763-438f-9a88-42dace3508f1',
-    #     '0d5bc96a-2305-4079-a5fc-b4086f56efd9',
-    #     '87b12d21-8236-4ef0-8e79-126e2cf2fb6e',
-    #     'ad79ffc5-e03b-48b4-a623-d80d10f689ea',
-    #     '3649e813-c94d-4728-8bcb-14bd39307550',
-    #     'c3d17765-b048-4161-8b62-9616d0014b04',
-    #     '28918435-2ca6-48a1-9fe1-2f3c09a7173b',
-    #     '976bd1bf-476d-4c29-b67b-ed9f013c980f',
-    #     '1db8f339-67da-4ca5-8ab4-75b77e415171',
-    #     '2aaa9978-10e6-463c-adde-65c23f0506d1',
-    #     '2a296db9-3014-4f95-ada6-25ad21b249f2',
-    #     '593ab20d-ecd4-4478-9eff-a0d5eed25d41',
-    #     'de930059-08d1-4e9d-9078-17672c47575a',
-    #     '32bc0363-d99a-43e2-ad6f-5b5b0021f635',
-    #     '33104438-debf-44ff-92aa-5cce57eb2b59',
-    #     '3c9af127-aa37-4664-87e2-d13dc2cb7e60',
-    #     'ce4fda53-53be-4ff5-94a4-8dbf5df766a7',
-    #     '29011a16-04b8-4ade-a925-6ee9a7d7f797',
-    # ]
-    # for ques_id in question_ids:
-    #     question = MultipleChoiceQuestion.objects.get(id=ques_id)
-    #     question.tags.remove(wrong_aut)
-    #     question.tags.add(aut)
-    #     question.save()
+    for i in User.objects.all():
+        i.age = None
+        i.save()
     return Response()
