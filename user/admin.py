@@ -10,7 +10,7 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
 
 
 class UserExportAllFields(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('user_name', 'auth_method', 'account', 'quizzes_num', 'last_quiz', 'creationDate')
+    list_display = ('user_name', 'age', 'school_name', 'listenFrom', 'auth_method', 'account', 'quizzes_num', 'last_quiz', 'creationDate')
     ordering = ('-creationDate',)
 
     @staticmethod
