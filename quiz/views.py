@@ -26,7 +26,7 @@ from .utils import mark_final_answer_question, mark_multiple_choice_question, ma
 
 
 @api_view(['POST'])
-def user_name(request):
+def user_info(request):
     data = request.data
 
     if check_user(data):

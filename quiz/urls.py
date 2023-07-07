@@ -5,12 +5,12 @@ from .views import subject_set, headline_set, build_quiz, mark_quiz, similar_que
      report, save_question, \
      unsave_question, quiz_review, retake_quiz, quiz_history, subject_question_num, \
      reset_questions_level_and_ideal_duration, delete_users_answers, get_admin_question, subject_question_ids, \
-     mark_question, get_shared_question, mark_shared_question, share_quiz, user_name, get_writing_question, \
+     mark_question, get_shared_question, mark_shared_question, share_quiz, user_info, get_writing_question, \
      submit_writing_question, add_writing_topic, add_suggested_quiz, suggested_quizzes, take_quiz, test
 
 urlpatterns = [
      path('subject_set/', subject_set),
-     path('user_name/', user_name),
+     path('user_info/', user_info),
      path('share_quiz/', share_quiz),
      path('add_writing_topic/', add_writing_topic),
      path('get_writing_question/', get_writing_question),
