@@ -876,7 +876,7 @@ def add_or_edit_multiple_choice_question(request):
     levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
 
     if not edit:
-        question, _ = MultipleChoiceQuestion.objects.get_or_create(body=question_body)
+        question = MultipleChoiceQuestion.objects.create(body=question_body)
     else:
         question = Question.objects.get(id=question_id).multiplechoicequestion
         question.choices.all().delete()
@@ -945,7 +945,7 @@ def add_or_edit_final_answer_question(request):
     levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
 
     if not edit:
-        question, _ = FinalAnswerQuestion.objects.get_or_create(body=question_body)
+        question = FinalAnswerQuestion.objects.create(body=question_body)
     else:
         question = Question.objects.get(id=question_id).finalanswerquestion
 
@@ -1008,7 +1008,7 @@ def add_or_edit_multi_section_question(request):
     levels = {1: 'easy', 2: 'inAverage', 3: 'hard'}
 
     if not edit:
-        question, _ = MultiSectionQuestion.objects.get_or_create(body=question_body)
+        question = MultiSectionQuestion.objects.create(body=question_body)
     else:
         question = Question.objects.get(id=question_id).multisectionquestion
 
