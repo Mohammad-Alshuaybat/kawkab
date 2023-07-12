@@ -670,85 +670,88 @@ def quiz_history(request):
             return Response([])
 
         quiz_list = []
-        for quiz in quizzes:
-            date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
-            date = date[:22] + days[date[22:]]
+        for quiz in quizzes[5:]:
+            try:
+                date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
+                date = date[:22] + days[date[22:]]
 
-            attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
-            attempt_duration = attempt_duration.total_seconds() if attempt_duration else 0
-            ideal_duration = quiz.useranswer_set.aggregate(Sum('question__idealDuration'))[
-                'question__idealDuration__sum']
-            ideal_duration = ideal_duration.total_seconds() if ideal_duration else 0
+                attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
+                attempt_duration = attempt_duration.total_seconds() if attempt_duration else 0
+                ideal_duration = quiz.useranswer_set.aggregate(Sum('question__idealDuration'))[
+                    'question__idealDuration__sum']
+                ideal_duration = ideal_duration.total_seconds() if ideal_duration else 0
 
-            user_answers = UserAnswer.objects.filter(quiz=quiz)
-            if hasattr(user_answers.first(), 'userwritinganswer'):
-                answer = user_answers.first().userwritinganswer
-                if answer.status == 1:
-                    quiz_list.append({
-                        'id': str(quiz.id),
-                        'subject': quiz.subject.name,
-                        'date': date,
-                        'quiz_duration': None,
-                        'attempt_duration': attempt_duration,
-                        'ideal_duration': ideal_duration,
-                        'question_num': 10,
-                        'correct_question_num': answer.mark,
-                        'skills': {answer.question.tags.exclude(headbase=None).first().headbase.h1.name},
-                    })
-                continue
+                user_answers = UserAnswer.objects.filter(quiz=quiz)
+                if hasattr(user_answers.first(), 'userwritinganswer'):
+                    answer = user_answers.first().userwritinganswer
+                    if answer.status == 1:
+                        quiz_list.append({
+                            'id': str(quiz.id),
+                            'subject': quiz.subject.name,
+                            'date': date,
+                            'quiz_duration': None,
+                            'attempt_duration': attempt_duration,
+                            'ideal_duration': ideal_duration,
+                            'question_num': 10,
+                            'correct_question_num': answer.mark,
+                            'skills': {answer.question.tags.exclude(headbase=None).first().headbase.h1.name},
+                        })
+                    continue
 
-            # quiz = UserQuiz.objects.create(subject=subject, user=user)
-            # UserWritingAnswer.objects.create(quiz=quiz, question=question, answer=image, status=0)
+                # quiz = UserQuiz.objects.create(subject=subject, user=user)
+                # UserWritingAnswer.objects.create(quiz=quiz, question=question, answer=image, status=0)
 
-            question_num = 0
-            correct_question_num = 0
-            for answer in user_answers:
-                if hasattr(answer, 'usermultiplechoiceanswer'):
-                    try:
-                        answer = answer.usermultiplechoiceanswer
-                        correct_question_num += 1 if answer == answer.question.multiplechoicequestion.correct_answer else 0
+                question_num = 0
+                correct_question_num = 0
+                for answer in user_answers:
+                    if hasattr(answer, 'usermultiplechoiceanswer'):
+                        try:
+                            answer = answer.usermultiplechoiceanswer
+                            correct_question_num += 1 if answer == answer.question.multiplechoicequestion.correct_answer else 0
+                            question_num += 1
+                        except:
+                            quiz.delete()
+
+                    elif hasattr(answer, 'userfinalanswer'):
+                        answer = answer.userfinalanswer
+                        correct_question_num += 1 if answer == answer.question.finalanswerquestion.correct_answer else 0
                         question_num += 1
-                    except:
-                        quiz.delete()
 
-                elif hasattr(answer, 'userfinalanswer'):
-                    answer = answer.userfinalanswer
-                    correct_question_num += 1 if answer == answer.question.finalanswerquestion.correct_answer else 0
-                    question_num += 1
+                    elif hasattr(answer, 'usermultisectionanswer'):
+                        answer = answer.usermultisectionanswer
+                        for sub_answer in answer.sub_questions_answers.all():
+                            if hasattr(sub_answer, 'usermultiplechoiceanswer'):
+                                sub_answer = sub_answer.usermultiplechoiceanswer
+                                correct_question_num += 1 if sub_answer == sub_answer.question.multiplechoicequestion.correct_answer else 0
+                            elif hasattr(sub_answer, 'userfinalanswer'):
+                                sub_answer = sub_answer.userfinalanswer
+                                correct_question_num += 1 if sub_answer == sub_answer.question.finalanswerquestion.correct_answer else 0
+                        question_num += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()
+                tags_ids = user_answers.values_list('question__tags__id', flat=True).distinct()
+                headbases = HeadBase.objects.filter(id__in=tags_ids)
+                h1s = set()
+                lessons = set()
+                modules = set()
+                for tag in headbases:
+                    while hasattr(tag, 'headline'):
+                        tag = tag.headline.parent_headline
+                    h1s.add(tag.h1.name)
+                    lessons.add(tag.h1.lesson.name)
+                    modules.add(tag.h1.lesson.module.name)
 
-                elif hasattr(answer, 'usermultisectionanswer'):
-                    answer = answer.usermultisectionanswer
-                    for sub_answer in answer.sub_questions_answers.all():
-                        if hasattr(sub_answer, 'usermultiplechoiceanswer'):
-                            sub_answer = sub_answer.usermultiplechoiceanswer
-                            correct_question_num += 1 if sub_answer == sub_answer.question.multiplechoicequestion.correct_answer else 0
-                        elif hasattr(sub_answer, 'userfinalanswer'):
-                            sub_answer = sub_answer.userfinalanswer
-                            correct_question_num += 1 if sub_answer == sub_answer.question.finalanswerquestion.correct_answer else 0
-                    question_num += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()
-            tags_ids = user_answers.values_list('question__tags__id', flat=True).distinct()
-            headbases = HeadBase.objects.filter(id__in=tags_ids)
-            h1s = set()
-            lessons = set()
-            modules = set()
-            for tag in headbases:
-                while hasattr(tag, 'headline'):
-                    tag = tag.headline.parent_headline
-                h1s.add(tag.h1.name)
-                lessons.add(tag.h1.lesson.name)
-                modules.add(tag.h1.lesson.module.name)
-
-            quiz_list.append({
-                'id': str(quiz.id),
-                'subject': quiz.subject.name,
-                'date': date,
-                'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None,
-                'attempt_duration': attempt_duration,
-                'ideal_duration': ideal_duration,
-                'question_num': question_num,
-                'correct_question_num': correct_question_num,
-                'skills': modules if len(modules) > 5 else lessons if len(lessons) > 5 else h1s,
-            })
+                quiz_list.append({
+                    'id': str(quiz.id),
+                    'subject': quiz.subject.name,
+                    'date': date,
+                    'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None,
+                    'attempt_duration': attempt_duration,
+                    'ideal_duration': ideal_duration,
+                    'question_num': question_num,
+                    'correct_question_num': correct_question_num,
+                    'skills': modules if len(modules) > 5 else lessons if len(lessons) > 5 else h1s,
+                })
+            except:
+                continue
 
         return Response(quiz_list)
 
