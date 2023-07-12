@@ -670,8 +670,9 @@ def quiz_history(request):
             return Response([])
 
         quiz_list = []
-        for quiz in quizzes[5:]:
+        for quiz in quizzes:
             try:
+                print(1)
                 date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
                 date = date[:22] + days[date[22:]]
 
@@ -751,6 +752,7 @@ def quiz_history(request):
                     'skills': modules if len(modules) > 5 else lessons if len(lessons) > 5 else h1s,
                 })
             except:
+                print(2)
                 continue
 
         return Response(quiz_list)
