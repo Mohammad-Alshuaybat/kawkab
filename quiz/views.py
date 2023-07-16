@@ -20,7 +20,7 @@ from django.db.models import Count, Q, Sum
 import random
 import datetime
 
-# import pandas as pd
+import pandas as pd
 from .utils import mark_final_answer_question, mark_multiple_choice_question, mark_multi_section_question, \
     review_final_answer_question, review_multi_choice_question, review_multi_section_question, \
     questions_statistics_statement
@@ -1222,10 +1222,30 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
     return Response()
 
 
-
 @api_view(['GET'])
 def test(request):
-    for i in User.objects.all():
-        i.age = None
-        i.save()
+    df = pd.read_excel(r'english.xlsx')
+
+    sub, _ = Subject.objects.get_or_create(name='اللغة الإنجليزية')
+    semester = 1
+    for index, row in df.iterrows():
+        # print(f'{index} -- {row["module"]}')
+        # if index == 54:
+        #     semester = 2
+        #     continue
+        mod, _ = Module.objects.get_or_create(name=row['module'].strip(), subject=sub, semester=semester)
+        les, _ = Lesson.objects.get_or_create(name=row['lesson'].strip(), module=mod)
+        h1, _ = H1.objects.get_or_create(name=row['h1'].strip())
+        h1.lesson = les
+        h1.save()
+
+        # if str(row['h2']) != 'nan':
+        #     h2, _ = HeadLine.objects.get_or_create(name=row['h2'].strip(), level=2)
+        #     h2.parent_headline = h1
+        #     h2.save()
+        # if str(row['h3']) != 'nan':
+        #     h3, _ = HeadLine.objects.get_or_create(name=row['h3'].strip(), level=3)
+        #     h3.parent_headline = h2
+        #     h3.save()
+
     return Response()
