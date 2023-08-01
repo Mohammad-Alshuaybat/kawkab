@@ -4,9 +4,10 @@ from .views import subject_set, headline_set, build_quiz, mark_quiz, similar_que
      add_or_edit_multiple_choice_question, add_or_edit_multi_section_question, add_or_edit_final_answer_question, \
      report, save_question, \
      unsave_question, quiz_review, retake_quiz, quiz_history, subject_question_num, \
-     reset_questions_level_and_ideal_duration, delete_users_answers, get_admin_question, subject_question_ids, \
+     get_admin_question, subject_question_ids, \
      mark_question, get_shared_question, mark_shared_question, share_quiz, user_info, get_writing_question, \
-     submit_writing_question, add_writing_topic, add_suggested_quiz, suggested_quizzes, take_quiz, test, edit_user_info
+     submit_writing_question, add_writing_topic, add_suggested_quiz, suggested_quizzes, take_quiz, test, edit_user_info, \
+     test1
 
 urlpatterns = [
      path('subject_set/', subject_set),
@@ -33,6 +34,7 @@ urlpatterns = [
      path('get_admin_question/', get_admin_question),
      # path('add_final_answer_question/', add_final_answer_question),
      path('test/', test),
+     path('test1/', test1),
      # path('reset_questions_level_and_ideal_duration/', reset_questions_level_and_ideal_duration),
      # path('delete_users_answers/', delete_users_answers),
      path('similar_questions/', similar_questions),
