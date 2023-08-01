@@ -19,14 +19,14 @@ from django.db.models import Count, Q, Sum
 import random
 import datetime
 
-import pandas as pd
+# import pandas as pd
 from .utils import mark_final_answer_question, mark_multiple_choice_question, mark_multi_section_question, \
     review_final_answer_question, review_multi_choice_question, review_multi_section_question, \
     questions_statistics_statement
 
 import requests
 from bs4 import BeautifulSoup
-import re
+# import re
 
 
 @api_view(['POST'])
