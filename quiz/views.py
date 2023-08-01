@@ -1226,8 +1226,9 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
 
 
 def get_kroger_prices(url):
+    print('try')
     response = requests.get(url)
-
+    print('get in')
     if response.status_code != 200:
         print("Failed to retrieve the website.")
         return
