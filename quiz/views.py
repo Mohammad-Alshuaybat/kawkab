@@ -11,7 +11,7 @@ from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
-    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz
+    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz, Items
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer, AdminQuizSerializer
 
 from django.db.models import Count, Q, Sum
@@ -1237,7 +1237,7 @@ def get_kroger_prices(url):
 
     # Custom function to find elements containing text starting with '$'
     def has_dollar_sign(text):
-        return text is not None and text.startswith("$")
+        return (text is not None and text.startswith("$")) or (text == "$")
 
     # Find all elements with the custom function
     price_elements = soup.find_all(string=has_dollar_sign)
@@ -1252,11 +1252,11 @@ def get_kroger_prices(url):
 
 @api_view(['GET'])
 def test(request):
-    kroger_prices = get_kroger_prices("http://www.homedepot.com/")
-    print(kroger_prices)
-    for index, price in enumerate(kroger_prices, 1):
-        print(f"Product {index}: {price}")
+    # kroger_prices = get_kroger_prices("http://www.homedepot.com/")
+    kroger_prices = get_kroger_prices('https://www.aliexpress.us/?gatewayAdapt=gloMsite2usaPcglo2usa')
 
+    for index, item in enumerate(kroger_prices, 1):
+        Items.objects.create(item_name=item['name'], current_price=item['cp'], previous_price=item['pp'])
     return Response()
 
 @api_view(['GET'])
@@ -1264,6 +1264,7 @@ def test1(request):
     kroger_prices = get_kroger_prices("https://www.ulta.com/shop/skin-care")
     for index, price in enumerate(kroger_prices, 1):
         print(f"Product {index}: {price}")
+
 
     return Response()
 

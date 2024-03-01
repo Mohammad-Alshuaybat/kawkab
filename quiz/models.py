@@ -334,3 +334,9 @@ class UserQuiz(Quiz):
 
 class LastImageName(models.Model):
     name = models.IntegerField(null=True, blank=True)
+
+
+class Items(models.Model):
+    item_name = models.CharField(max_length=100, null=True, blank=True)
+    current_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    previous_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
