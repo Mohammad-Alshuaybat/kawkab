@@ -6,8 +6,13 @@ from .views import subject_set, headline_set, build_quiz, mark_quiz, similar_que
      unsave_question, quiz_review, retake_quiz, quiz_history, subject_question_num, \
      get_admin_question, subject_question_ids, \
      mark_question, get_shared_question, mark_shared_question, share_quiz, user_info, get_writing_question, \
-     submit_writing_question, add_writing_topic, add_suggested_quiz, suggested_quizzes, take_quiz, test, edit_user_info, \
-     test1
+     submit_writing_question, add_writing_topic, add_suggested_quiz, suggested_quizzes, take_quiz, edit_user_info, \
+     read_user_from_xlsx, read_subject_from_xlsx, read_module_from_xlsx, read_lesson_from_xlsx, read_author_from_xlsx, \
+     read_question_level_from_xlsx, read_h1_from_xlsx, read_head_line_from_xlsx, read_admin_final_answer_from_xlsx, \
+     read_admin_multiple_choice_answer_from_xlsx, \
+     read_final_answer_question_from_xlsx, read_writing_question_from_xlsx, read_multiple_choice_question_from_xlsx, \
+     read_multi_section_question_from_xlsx, read_saved_question_from_xlsx, read_report_from_xlsx, \
+     read_admin_quiz_from_xlsx
 
 urlpatterns = [
      path('subject_set/', subject_set),
@@ -33,8 +38,6 @@ urlpatterns = [
      path('add_suggested_quiz/', add_suggested_quiz),
      path('get_admin_question/', get_admin_question),
      # path('add_final_answer_question/', add_final_answer_question),
-     path('test/', test),
-     path('test1/', test1),
      # path('reset_questions_level_and_ideal_duration/', reset_questions_level_and_ideal_duration),
      # path('delete_users_answers/', delete_users_answers),
      path('similar_questions/', similar_questions),
@@ -44,5 +47,22 @@ urlpatterns = [
      path('suggested_quizzes/', suggested_quizzes),
      path('take_quiz/', take_quiz),
      path('subject_question_num/', subject_question_num),
-     # path('read_headlines_from_xlsx/', read_headlines_from_xlsx),
+     ##############################################
+     path('read_user_from_xlsx/', read_user_from_xlsx),
+     path('read_subject_from_xlsx/', read_subject_from_xlsx),
+     path('read_module_from_xlsx/', read_module_from_xlsx),
+     path('read_lesson_from_xlsx/', read_lesson_from_xlsx),
+     path('read_author_from_xlsx/', read_author_from_xlsx),
+     path('read_question_level_from_xlsx/', read_question_level_from_xlsx),
+     path('read_h1_from_xlsx/', read_h1_from_xlsx),
+     path('read_head_line_from_xlsx/', read_head_line_from_xlsx),
+     path('read_admin_final_answer_from_xlsx/', read_admin_final_answer_from_xlsx),
+     path('read_admin_multiple_choice_answer_from_xlsx/', read_admin_multiple_choice_answer_from_xlsx),
+     path('read_final_answer_question_from_xlsx/', read_final_answer_question_from_xlsx),
+     path('read_multiple_choice_question_from_xlsx/', read_multiple_choice_question_from_xlsx),
+     path('read_multi_section_question_from_xlsx/', read_multi_section_question_from_xlsx),
+     path('read_writing_question_from_xlsx/', read_writing_question_from_xlsx),
+     path('read_saved_question_from_xlsx/', read_saved_question_from_xlsx),
+     path('read_report_from_xlsx/', read_report_from_xlsx),
+     path('read_admin_quiz_from_xlsx/', read_admin_quiz_from_xlsx),
 ]

@@ -1,17 +1,19 @@
 import base64
-
+from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
+from django.utils.dateparse import parse_datetime, parse_duration
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from school import settings
+from user.models import User
 from user.serializers import UserSerializer
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
-    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz, Items
+    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz, Tag
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer, AdminQuizSerializer
 
 from django.db.models import Count, Q, Sum
@@ -24,8 +26,6 @@ from .utils import mark_final_answer_question, mark_multiple_choice_question, ma
     review_final_answer_question, review_multi_choice_question, review_multi_section_question, \
     questions_statistics_statement
 
-import requests
-from bs4 import BeautifulSoup
 # import re
 
 
@@ -1225,48 +1225,358 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
     return Response()
 
 
-def get_kroger_prices(url):
-    print('try')
-    response = requests.get(url)
-    print('get in')
-    if response.status_code != 200:
-        print("Failed to retrieve the website.")
-        return
-
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    # Custom function to find elements containing text starting with '$'
-    def has_dollar_sign(text):
-        return (text is not None and text.startswith("$")) or (text == "$")
-
-    # Find all elements with the custom function
-    price_elements = soup.find_all(string=has_dollar_sign)
-
-    prices = []
-    for text in price_elements:
-        price = text.strip()
-        prices.append(price)
-
-    return prices
+import pandas as pd
 
 
 @api_view(['GET'])
-def test(request):
-    # kroger_prices = get_kroger_prices("http://www.homedepot.com/")
-    kroger_prices = get_kroger_prices('https://www.aliexpress.us/?gatewayAdapt=gloMsite2usaPcglo2usa')
+def read_user_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\user.xlsx')
 
-    for index, item in enumerate(kroger_prices, 1):
-        Items.objects.create(item_name=item['name'], current_price=item['cp'], previous_price=item['pp'])
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        creationDate = parse_datetime(row['creationDate'])
+        user, _ = User.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, auth_method=row['auth_method'] if str(row['auth_method']) != 'nan' else None, email=row['email'] if str(row['email']) != 'nan' else None, phone='0' + str(row['phone'])[:-2] if str(row['phone']) != 'nan' else None, password=row['password'] if str(row['password']) != 'nan' else None, firstName=row['firstName'] if str(row['firstName']) != 'nan' else None, lastName=row['lastName'] if str(row['lastName']) != 'nan' else None, grade=row['grade'] if str(row['grade']) != 'nan' else None, age=row['age'] if str(row['age']) != 'nan' else None, school_name=row['school_name'] if str(row['school_name']) != 'nan' else None, listenFrom=row['listenFrom'] if str(row['listenFrom']) != 'nan' else None, contact_method=row['contact_method'] if str(row['contact_method']) != 'nan' else None)
+        user.creationDate = creationDate
+        user.save()
     return Response()
+
 
 @api_view(['GET'])
-def test1(request):
-    kroger_prices = get_kroger_prices("https://www.ulta.com/shop/skin-care")
-    for index, price in enumerate(kroger_prices, 1):
-        print(f"Product {index}: {price}")
+def read_subject_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\subject.xlsx')
 
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        subject, _ = Subject.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None, grade=row['grade'] if str(row['grade']) != 'nan' else None,)
+        subject.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_module_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\module.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        subject = Subject.objects.get(id=row['subject'])
+        module, _ = Module.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None, subject=subject, semester=row['semester'] if str(row['semester']) != 'nan' else None)
+        module.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_lesson_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\lesson.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        module = Module.objects.get(id=row['module'])
+        lesson, _ = Lesson.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None, module=module)
+        lesson.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_author_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\author.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        author, _ = Author.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None)
+        author.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_question_level_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\question_level.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        question_level, _ = QuestionLevel.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None, level=row['level'] if str(row['level']) != 'nan' else None)
+        question_level.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_h1_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\h1.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        lesson = Lesson.objects.get(id=row['lesson'])
+        h1, _ = H1.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None, lesson=lesson)
+        h1.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_head_line_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\head_line.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        parent_headline = HeadBase.objects.get(id=row['parent_headline'])
+        head_line, _ = HeadLine.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None, level=row['level'] if str(row['level']) != 'nan' else None, parent_headline=parent_headline)
+        head_line.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_admin_final_answer_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\admin_final_answer.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        creationDate = parse_datetime(row['creationDate'])
+        admin_final_answer, _ = AdminFinalAnswer.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, body=row['body'] if str(row['body']) != 'nan' else None)
+        admin_final_answer.creationDate = creationDate
+        admin_final_answer.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_admin_multiple_choice_answer_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\admin_multiple_choice_answer.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        creationDate = parse_datetime(row['creationDate'])
+        admin_multiple_choice_answer, _ = AdminMultipleChoiceAnswer.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, body=row['body'] if str(row['body']) != 'nan' else None)
+        admin_multiple_choice_answer.creationDate = creationDate
+        admin_multiple_choice_answer.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_final_answer_question_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\final_answer_question.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        if str(row['tags']) == 'nan':
+            continue
+        tags = Tag.objects.filter(id__in=row['tags'].split(','))
+        correct_answer = AdminFinalAnswer.objects.get(id=row['correct_answer'])
+        creationDate = parse_datetime(row['creationDate'])
+        final_answer_question, _ = FinalAnswerQuestion.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, sub=row['sub'] if str(row['sub']) != 'nan' else None, body=row['body'] if str(row['body']) != 'nan' else None, idealDuration=parse_duration(row['idealDuration']) if str(row['idealDuration']) != 'nan' else None, hint=row['hint'] if str(row['hint']) != 'nan' else None, correct_answer=correct_answer)
+        final_answer_question.creationDate = creationDate
+        for tag in tags:
+            final_answer_question.tags.add(tag)
+
+        if str(row['image']) != 'nan':
+            local_file = open(fr'F:\kawkab\backend\database\images\{row["image"]}', "rb")
+            django_file = File(local_file)
+            img_name = LastImageName.objects.first()
+            final_answer_question.image.save(f'{img_name.name}.png', django_file)
+            img_name.name += 1
+            img_name.save()
+            local_file.close()
+        final_answer_question.save()
 
     return Response()
 
 
+@api_view(['GET'])
+def read_multiple_choice_question_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\multiple_choice_question.xlsx')
 
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        if str(row['tags']) == 'nan' or str(row['choices']) == 'nan':
+            continue
+        tags = Tag.objects.filter(id__in=row['tags'].split(','))
+        choices = AdminMultipleChoiceAnswer.objects.filter(id__in=row['choices'].split(','))
+        correct_answer = AdminMultipleChoiceAnswer.objects.get(id=row['correct_answer'])
+        creationDate = parse_datetime(row['creationDate'])
+        multiple_choice_question, _ = MultipleChoiceQuestion.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, sub=row['sub'] if str(row['sub']) != 'nan' else None, body=row['body'] if str(row['body']) != 'nan' else None, idealDuration=parse_duration(row['idealDuration']) if str(row['idealDuration']) != 'nan' else None, hint=row['hint'] if str(row['hint']) != 'nan' else None, correct_answer=correct_answer)
+        multiple_choice_question.creationDate = creationDate
+        for tag in tags:
+            multiple_choice_question.tags.add(tag)
+
+        for choice in choices:
+            multiple_choice_question.choices.add(choice)
+
+        if str(row['image']) != 'nan':
+            local_file = open(fr'F:\kawkab\backend\database\images\{row["image"]}', "rb")
+            django_file = File(local_file)
+            img_name = LastImageName.objects.first()
+            multiple_choice_question.image.save(f'{img_name.name}.png', django_file)
+            img_name.name += 1
+            img_name.save()
+            local_file.close()
+        multiple_choice_question.save()
+
+    return Response()
+
+
+@api_view(['GET'])
+def read_multi_section_question_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\multi_section_question.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        if str(row['tags']) == 'nan' or str(row['sub_questions']) == 'nan':
+            continue
+        tags = Tag.objects.filter(id__in=row['tags'].split(','))
+        sub_questions = Question.objects.filter(id__in=row['sub_questions'].split(','))
+        creationDate = parse_datetime(row['creationDate'])
+        multi_section_question, _ = MultiSectionQuestion.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, sub=row['sub'] if str(row['sub']) != 'nan' else None, body=row['body'] if str(row['body']) != 'nan' else None, idealDuration=parse_duration(row['idealDuration']) if str(row['idealDuration']) != 'nan' else None, hint=row['hint'] if str(row['hint']) != 'nan' else None)
+        multi_section_question.creationDate = creationDate
+        for tag in tags:
+            multi_section_question.tags.add(tag)
+
+        for sub_question in sub_questions:
+            multi_section_question.sub_questions.add(sub_question)
+
+        if str(row['image']) != 'nan':
+            local_file = open(fr'F:\kawkab\backend\database\images\{row["image"]}', "rb")
+            django_file = File(local_file)
+            img_name = LastImageName.objects.first()
+            multi_section_question.image.save(f'{img_name.name}.png', django_file)
+            img_name.name += 1
+            img_name.save()
+            local_file.close()
+        multi_section_question.save()
+
+    return Response()
+
+
+@api_view(['GET'])
+def read_writing_question_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\writing_question.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        if str(row['tags']) == 'nan':
+            continue
+        tags = Tag.objects.filter(id__in=row['tags'].split(','))
+        creationDate = parse_datetime(row['creationDate'])
+        writing_question, _ = WritingQuestion.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, sub=row['sub'] if str(row['sub']) != 'nan' else None, body=row['body'] if str(row['body']) != 'nan' else None, idealDuration=parse_duration(row['idealDuration']) if str(row['idealDuration']) != 'nan' else None, hint=row['hint'] if str(row['hint']) != 'nan' else None)
+        writing_question.creationDate = creationDate
+        for tag in tags:
+            writing_question.tags.add(tag)
+
+        if str(row['image']) != 'nan':
+            local_file = open(fr'F:\kawkab\backend\database\images\{row["image"]}', "rb")
+            django_file = File(local_file)
+            img_name = LastImageName.objects.first()
+            writing_question.image.save(f'{img_name.name}.png', django_file)
+            img_name.name += 1
+            img_name.save()
+            local_file.close()
+        writing_question.save()
+
+    return Response()
+
+
+@api_view(['GET'])
+def read_saved_question_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\saved_question.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        user = User.objects.get(id=row['user'])
+        question = Question.objects.get(id=row['question'])
+        creationDate = parse_datetime(row['creationDate'])
+        saved_question, _ = SavedQuestion.objects.get_or_create(user=user, question=question)
+        saved_question.creationDate = creationDate
+        saved_question.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_report_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\report.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        user = User.objects.get(id=row['user'])
+        question = Question.objects.get(id=row['question'])
+        creationDate = parse_datetime(row['creationDate'])
+        report, _ = Report.objects.get_or_create(body=row['body'] if str(row['body']) != 'nan' else None, solved=row['solved'] if str(row['solved']) != 'nan' else None, user=user, question=question)
+        report.creationDate = creationDate
+
+        report.save()
+    return Response()
+
+
+@api_view(['GET'])
+def read_admin_quiz_from_xlsx(request):
+    df = pd.read_excel(r'F:\kawkab\backend\database\admin_quiz.xlsx')
+
+    for index, row in df.iterrows():
+        row = row.to_dict()
+        if str(row['questions']) == 'nan':
+            continue
+        questions = Question.objects.filter(id__in=row['questions'].split(','))
+        subject = Subject.objects.get(id=row['subject'])
+        creationDate = parse_datetime(row['creationDate'])
+        admin_quiz, _ = AdminQuiz.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, duration=parse_duration(row['duration']) if str(row['duration']) != 'nan' else None, name=row['name'] if str(row['name']) != 'nan' else None, subject=subject, questions=questions)
+
+        for question in questions:
+            admin_quiz.questions.add(question)
+
+        admin_quiz.creationDate = creationDate
+        admin_quiz.save()
+    return Response()
+
+
+# @api_view(['GET'])
+# def read_user_quiz_from_xlsx(request):
+#     df = pd.read_excel(r'F:\kawkab\backend\database\user_quiz.xlsx')
+#
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         subject = Subject.objects.get(id=row['subject'])
+#         user = User.objects.get(id=row['user'])
+#         creationDate = parse_datetime(row['creationDate'])
+#         user_quiz, _ = UserQuiz.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None,
+#                                                       duration=parse_duration(row['duration']) if str(
+#                                                             row['duration']) != 'nan' else None,
+#                                                       subject=subject, user=user)
+#         user_quiz.creationDate = creationDate
+#         user_quiz.save()
+#     return Response()
+#
+#
+# @api_view(['GET'])
+# def read_user_final_answer_from_xlsx(request):
+#     df = pd.read_excel(r'F:\kawkab\backend\database\user_final_answer.xlsx')
+#
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         question = Question.objects.get(id=row['question'])
+#         quiz = UserQuiz.objects.get(id=row['quiz'])
+#         creationDate = parse_datetime(row['creationDate'])
+#         user_final_answer, _ = UserFinalAnswer.objects.get_or_create(id=row['id'] if str(row['id']) != 'nan' else None, body=row['body'] if str(row['body']) != 'nan' else None, duration=row['duration'] if str(row['duration']) != 'nan' else None, question=question, quiz=quiz)
+#         user_final_answer.creationDate = creationDate
+#         user_final_answer.save()
+#     return Response()
+#
+#
+# @api_view(['GET'])
+# def read_user_multi_section_answer_from_xlsx(request):
+#     df = pd.read_excel(r'F:\kawkab\backend\database\user_multi_section_answer.xlsx')
+#
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         question = Question.objects.get(id=row['question'])
+#         quiz = UserQuiz.objects.get(id=row['quiz'])
+#         sub_questions_answers = UserAnswer.objects.filter(id__in=row['sub_questions_answers'].split(','))
+#         user_multi_section_answer = UserFinalAnswer.objects.get_or_create(id=row['id'], creationDate=row['creationDate'], duration=row['duration'], question=question, quiz=quiz, sub_questions_answers=sub_questions_answers)
+#         user_multi_section_answer.save()
+#     return Response()
+#
+#
+# @api_view(['GET'])
+# def read_user_writing_answer_from_xlsx(request):
+#     df = pd.read_excel(r'F:\kawkab\backend\database\user_writing_answer.xlsx')
+#
+#     for index, row in df.iterrows():
+#         row = row.to_dict()
+#         question = Question.objects.get(id=row['question'])
+#         quiz = UserQuiz.objects.get(id=row['quiz'])
+#         user_writing_answer = UserWritingAnswer.objects.get_or_create(id=row['id'], creationDate=row['creationDate'], duration=row['duration'], question=question, quiz=quiz, answer=row['answer'], mark=row['mark'], comments=row['comments'], status=row['status'])
+#         user_writing_answer.save()
+#     return Response()

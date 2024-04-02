@@ -89,7 +89,7 @@ class Tag(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return f'{self.name}'
 
 
 class Author(Tag):
@@ -259,7 +259,7 @@ class Question(models.Model):
     hint = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return str(self.body)
+        return f'{self.body}'
 
 
 class FinalAnswerQuestion(Question):
@@ -291,6 +291,7 @@ class Solution(models.Model):
 
 
 class SavedQuestion(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     creationDate = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -300,6 +301,7 @@ class SavedQuestion(models.Model):
 
 
 class Report(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     user = models.ForeignKey(User, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     body = models.TextField(null=True, blank=True)
     question = models.ForeignKey(Question, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
@@ -334,9 +336,3 @@ class UserQuiz(Quiz):
 
 class LastImageName(models.Model):
     name = models.IntegerField(null=True, blank=True)
-
-
-class Items(models.Model):
-    item_name = models.CharField(max_length=100, null=True, blank=True)
-    current_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
-    previous_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
