@@ -40,10 +40,14 @@ def user_info(request):
         num_of_user_quizzes = user_quizzes.count()
         user_answers = UserAnswer.objects.filter(quiz__in=user_quizzes)
         num_of_user_answers = user_answers.count()
-        total_duration = user_answers.aggregate(total_duration=Sum('duration'))['total_duration'].total_seconds() // 3600
+        total_duration = user_answers.aggregate(total_duration=Sum('duration'))['total_duration']
+        if total_duration is not None:
+            total_duration_hours = total_duration.total_seconds() // 3600
+        else:
+            total_duration_hours = 0
 
-        return Response({'user_info': user_serializer, 'num_of_user_quizzes':num_of_user_quizzes,
-                         'num_of_user_answers': num_of_user_answers, 'total_duration': total_duration})
+        return Response({'user_info': user_serializer, 'num_of_user_quizzes': num_of_user_quizzes,
+                         'num_of_user_answers': num_of_user_answers, 'total_duration': total_duration_hours})
     else:
         return Response(0)
 
