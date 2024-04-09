@@ -44,7 +44,8 @@ def user_info(request):
 
         return Response({'user_info': user_serializer, 'num_of_user_quizzes':num_of_user_quizzes,
                          'num_of_user_answers': num_of_user_answers, 'total_duration': total_duration})
-
+    else:
+        return Response(0)
 
 @api_view(['POST'])
 def edit_user_info(request):
@@ -60,6 +61,9 @@ def edit_user_info(request):
         user.listenFrom = listenFrom
         user.save()
         return Response(1)
+
+    else:
+        return Response(0)
 
 
 @api_view(['POST'])
