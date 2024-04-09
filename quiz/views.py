@@ -47,6 +47,7 @@ def user_info(request):
     else:
         return Response(0)
 
+
 @api_view(['POST'])
 def edit_user_info(request):
     data = request.data
