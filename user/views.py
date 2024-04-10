@@ -125,53 +125,53 @@ def log_in(request):
 # }
 
 
-@api_view(['POST'])
-def dashboard(request):
-    data = request.data
-
-    if check_user(data):
-        user = get_user(data)
-
-        quote = Quote.objects.order_by('creationDate').first().image.url
-
-        _advertisements = Advertisement.objects.filter(active=True)
-        advertisements_serializer = AdvertisementSerializer(_advertisements, many=True)
-
-        # _advertisements = Advertisement.objects.order_by('creationDate').filter(active=True)
-        # advertisements = []
-        # for advertisement in _advertisements:
-        #     advertisements.append(advertisement.image.url)
-
-        today_date = date.today()
-        formated_date = today_date.strftime("%d-%m-%Y")
-
-        tasks = DailyTask.objects.filter(user=user, date=today_date)
-        task_serializer = DailyTaskSerializer(tasks, many=True)
-
-        subjects = Subject.objects.filter(grade=user.grade).values('id', 'name')
-        return Response({'user_name': user.firstName, 'quote': quote, 'advertisements': advertisements_serializer.data,
-                         'today_date': formated_date, 'tasks': task_serializer.data, 'subjects': subjects})
-    else:
-        return Response(0)
-
-
-@api_view(['POST'])
-def edit_tasks(request):
-    data = request.data
-    subject_id = data.pop('subject_id', None)
-    tasks = data.pop('tasks', None)
-
-    if check_user(data):
-        user = get_user(data)
-        subject = Subject.objects.get(id=subject_id)
-        today_date = date.today()
-
-        for task in tasks:
-            daily_task, _ = DailyTask.objects.get_or_create(user=user, subject=subject, date=today_date)
-            daily_task.task = task
-            daily_task.save()
-
-        return Response()
-    else:
-        return Response(0)
-
+# @api_view(['POST'])
+# def dashboard(request):
+#     data = request.data
+#
+#     if check_user(data):
+#         user = get_user(data)
+#
+#         quote = Quote.objects.order_by('creationDate').first().image.url
+#
+#         _advertisements = Advertisement.objects.filter(active=True)
+#         advertisements_serializer = AdvertisementSerializer(_advertisements, many=True)
+#
+#         # _advertisements = Advertisement.objects.order_by('creationDate').filter(active=True)
+#         # advertisements = []
+#         # for advertisement in _advertisements:
+#         #     advertisements.append(advertisement.image.url)
+#
+#         today_date = date.today()
+#         formated_date = today_date.strftime("%d-%m-%Y")
+#
+#         tasks = DailyTask.objects.filter(user=user, date=today_date)
+#         task_serializer = DailyTaskSerializer(tasks, many=True)
+#
+#         subjects = Subject.objects.filter(grade=user.grade).values('id', 'name')
+#         return Response({'user_name': user.firstName, 'quote': quote, 'advertisements': advertisements_serializer.data,
+#                          'today_date': formated_date, 'tasks': task_serializer.data, 'subjects': subjects})
+#     else:
+#         return Response(0)
+#
+#
+# @api_view(['POST'])
+# def edit_tasks(request):
+#     data = request.data
+#     subject_id = data.pop('subject_id', None)
+#     tasks = data.pop('tasks', None)
+#
+#     if check_user(data):
+#         user = get_user(data)
+#         subject = Subject.objects.get(id=subject_id)
+#         today_date = date.today()
+#
+#         for task in tasks:
+#             daily_task, _ = DailyTask.objects.get_or_create(user=user, subject=subject, date=today_date)
+#             daily_task.task = task
+#             daily_task.save()
+#
+#         return Response()
+#     else:
+#         return Response(0)
+#
