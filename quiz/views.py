@@ -1,13 +1,10 @@
 import base64
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.core.mail import send_mail
-from django.utils.dateparse import parse_datetime, parse_duration
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from school import settings
-from user.models import User
 from user.serializers import UserSerializer
 from user.utils import check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
@@ -30,24 +27,37 @@ from .utils import mark_final_answer_question, mark_multiple_choice_question, ma
 
 
 @api_view(['POST'])
-def user_info(request):
+def dashboard(request):
     data = request.data
 
     if check_user(data):
         user = get_user(data)
         user_serializer = UserSerializer(user, many=False).data
+
         user_quizzes = UserQuiz.objects.filter(user=user)
         num_of_user_quizzes = user_quizzes.count()
+
         user_answers = UserAnswer.objects.filter(quiz__in=user_quizzes)
         num_of_user_answers = user_answers.count()
+
         total_duration = user_answers.aggregate(total_duration=Sum('duration'))['total_duration']
         if total_duration is not None:
             total_duration_hours = total_duration.total_seconds() // 3600
         else:
             total_duration_hours = 0
 
+        user_answers_by_day = {}
+        current_year = datetime.datetime.now().year
+        for i in range(1, 366):
+            date = datetime.datetime(current_year, 1, 1) + datetime.timedelta(days=i - 1)
+
+            user_quizzes = UserQuiz.objects.filter(user=user, creationDate__date=date)
+            answers = UserAnswer.objects.filter(quiz__in=user_quizzes).count()
+            user_answers_by_day[i] = answers
+
         return Response({'user_info': user_serializer, 'num_of_user_quizzes': num_of_user_quizzes,
-                         'num_of_user_answers': num_of_user_answers, 'total_duration': total_duration_hours})
+                         'num_of_user_answers': num_of_user_answers, 'total_duration': total_duration_hours,
+                         'user_answers_by_day':user_answers_by_day})
     else:
         return Response(0)
 
