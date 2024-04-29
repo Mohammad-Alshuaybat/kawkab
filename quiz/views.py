@@ -701,7 +701,6 @@ def quiz_history(request):
         quiz_list = []
         for quiz in quizzes:
             try:
-                print(1)
                 date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
                 date = date[:22] + days[date[22:]]
 
@@ -789,6 +788,73 @@ def quiz_history(request):
     else:
         return Response(0)
 
+
+@api_view(['POST'])
+def analysis(request):
+    data = request.data
+
+    subject = data.pop('subject', None)
+
+    if check_user(data):
+        user = get_user(data)
+
+        subject = Subject.objects.get(id=subject)
+        headlines = subject.get_main_headlines().values('id', 'name')
+
+        modules = Module.objects.filter(subject=subject)
+        module_serializer = ModuleSerializer(modules, many=True).data
+
+        quizzes = UserQuiz.objects.filter(user=user, subject=subject)
+        subject_questions_number = 0
+        solved_questions = 0
+        correct_questions = 0
+        ideal_duration = 0
+        attempt_duration = 0
+
+        modules = {}
+        lessons = {}
+        h1s = {}
+
+        for quiz in quizzes:
+            answers = UserAnswer.objects.filter(quiz=quiz)
+
+            for answer in answers:
+                if hasattr(answer, 'userfinalanswer'):
+                    solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_final_answer_question(
+                        answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules,
+                        lessons,
+                        h1s)
+                    subject_questions_number += 1
+
+                elif hasattr(answer, 'usermultiplechoiceanswer'):
+                    solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_choice_question(
+                        answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules,
+                        lessons,
+                        h1s)
+                    subject_questions_number += 1
+
+                elif hasattr(answer, 'usermultisectionanswer'):
+                    solved_questions, correct_questions, ideal_duration, attempt_duration, modules, lessons, h1s = review_multi_section_question(
+                        answer, correct_questions, solved_questions, ideal_duration, attempt_duration, modules,
+                        lessons,
+                        h1s)
+                    subject_questions_number += answer.usermultisectionanswer.question.multisectionquestion.sub_questions.count()
+
+        return Response(
+            {'module_lesson': module_serializer,
+             'headlines': headlines,
+             'subject_quizzes_number': quizzes.count(),
+             'subject_questions_number': subject_questions_number,
+             'subject_solved_questions_number': solved_questions,
+             'subject_correct_questions_number': correct_questions,
+             'subject_total_attempt_duration': attempt_duration,
+             'subject_total_ideal_duration': ideal_duration,
+             'modules_status': modules,
+             'lessons_status': lessons,
+             'h1s_status': h1s
+             })
+    else:
+        return Response(0)
 
 @api_view(['POST'])
 def suggested_quizzes(request):
