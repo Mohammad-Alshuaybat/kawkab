@@ -790,7 +790,7 @@ def quiz_history(request):
 
 
 @api_view(['POST'])
-def analysis(request):
+def subject_analysis(request):
     data = request.data
 
     subject = data.pop('subject', None)
