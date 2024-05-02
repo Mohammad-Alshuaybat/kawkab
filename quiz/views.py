@@ -770,7 +770,7 @@ def quiz_history(request):
 
                 quiz_list.append({
                     'id': str(quiz.id),
-                    'subject': quiz.subject.name,
+                    'subject': {'name': quiz.subject.name, 'id':quiz.subject.id},
                     'date': date,
                     'quiz_duration': quiz.duration.total_seconds() if quiz.duration is not None else None,
                     'attempt_duration': attempt_duration,
