@@ -151,7 +151,7 @@ class MultiSectionQuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MultiSectionQuestion
-        fields = ['id', 'body', 'image', 'author', 'idealDuration', 'hint', 'sub_questions', 'is_extraction_question', 'type']
+        fields = ['id', 'body', 'image', 'author', 'idealDuration', 'hint', 'sub_questions', 'is_extraction_questionsims', 'type']
 
     def get_sub_questions(self, obj):
         sub_questions = []
