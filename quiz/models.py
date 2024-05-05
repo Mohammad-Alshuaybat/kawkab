@@ -272,6 +272,7 @@ class MultipleChoiceQuestion(Question):
 
 
 class MultiSectionQuestion(Question):
+    is_extraction_question = models.BooleanField(default=False, blank=True)
     sub_questions = models.ManyToManyField(Question, related_name='sections', symmetrical=False, blank=True)
 
 
