@@ -898,10 +898,11 @@ def get_shared_question(request):
         tag = question_obj.first().tags.exclude(headbase=None).first().headbase
         while hasattr(tag, 'headline'):
             tag = tag.headline.parent_headline
-        subject = str(tag.h1.lesson.module.subject.id)
+        subject_id = str(tag.h1.lesson.module.subject.id)
+        subject_name = str(tag.h1.lesson.module.subject.name)
 
         serializer = QuestionSerializer(question_obj.first(), many=False).data
-        return Response({'question': serializer, 'subject': subject})
+        return Response({'question': serializer, 'subject': {'id': subject_id, 'name':subject_name}})
 
     else:
         return Response(0)
