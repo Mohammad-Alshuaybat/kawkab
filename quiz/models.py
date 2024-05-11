@@ -72,6 +72,7 @@ class Lesson(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
     name = models.CharField(max_length=200, null=True, blank=True)
     module = models.ForeignKey(Module, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+    order = models.IntegerField(null=True, blank=True)
 
     def get_main_headlines(self):
         return H1.objects.filter(lesson=self)
@@ -86,6 +87,9 @@ class Lesson(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['module', 'order']
 
 
 class Tag(models.Model):
@@ -105,6 +109,8 @@ class QuestionLevel(Tag):
 
 
 class HeadBase(Tag):
+    order = models.IntegerField(null=True, blank=True)
+
     def get_all_child_headlines(self):
         hs = set(HeadLine.objects.filter(parent_headline=self))
         hs_level = self.level if hasattr(self, 'level') else 1
@@ -116,6 +122,9 @@ class HeadBase(Tag):
 
 class H1(HeadBase):
     lesson = models.ForeignKey(Lesson, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        ordering = ['lesson', 'order']
 
 
 class HeadLine(HeadBase):
@@ -129,9 +138,8 @@ class HeadLine(HeadBase):
     level = models.IntegerField(choices=level_choices, null=True, blank=True)
     parent_headline = models.ForeignKey(HeadBase, related_name='child_headings', db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
 
-    # def get_h1(self):
-    #
-    #     return H1.objects.filter(lesson=self)
+    class Meta:
+        ordering = ['parent_headline', 'order']
 
 
 class HeadLineInst(models.Model):
