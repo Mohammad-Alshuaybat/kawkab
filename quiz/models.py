@@ -46,6 +46,7 @@ class Module(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True)
     subject = models.ForeignKey(Subject, db_constraint=False, null=True, blank=True, on_delete=models.SET_NULL)
     semester = models.IntegerField(choices=semester_choices, null=True, blank=True)
+    order = models.IntegerField(null=True, blank=True)
 
     def get_main_headlines(self):
         h1s = H1.objects.filter(lesson__module=self)
@@ -62,6 +63,9 @@ class Module(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ['order']
 
 
 class Lesson(models.Model):
