@@ -1318,6 +1318,11 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
     return Response()
 
 
+@api_view(['GET'])
+def test(request):
+    return Response()
+
+
 # import pandas as pd
 #
 #
