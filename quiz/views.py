@@ -1318,101 +1318,101 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
     return Response()
 
 
-import pandas as pd
-
-
-@api_view(['GET'])
-def test(request):
-    df = pd.read_excel(r'F:\kawkab\backend\database\english.xlsx')
-
-    pre_module, pre_lesson, pre_h1, pre_h2, pre_h3, pre_h4, pre_h5 = '', '', '', '', '', '', ''
-    module_order, lesson_order, h1_order, h2_order, h3_order, h4_order, h5_order = 0, 0, 0, 0, 0, 0, 0
-
-    for index, row in df.iterrows():
-        if str(row['module']) == 'nan':
-            continue
-        row = row.to_dict()
-        module_name = row['module']
-        lesson_name = row['lesson']
-        h1_name = row.get('h1', 'nan')
-        h2_name = row.get('h2', 'nan')
-        h3_name = row.get('h3', 'nan')
-        h4_name = row.get('h4', 'nan')
-        h5_name = row.get('h5', 'nan')
-        if module_name != pre_module:
-            pre_module = module_name
-            module_order += 1
-            lesson_order = 0
-            try:
-                module = Module.objects.get(name=module_name)
-            except:
-                print(f'module:{module_name}')
-                continue
-            module.order = module_order
-            module.save()
-        if lesson_name != pre_lesson:
-            pre_lesson = lesson_name
-            lesson_order += 1
-            h1_order = 0
-            try:
-                lesson = Lesson.objects.get(name=lesson_name, module__name=module_name)
-            except:
-                print(f'lesson:{lesson_name}')
-                continue
-            lesson.order = lesson_order
-            lesson.save()
-        if str(h1_name) != 'nan' and h1_name != pre_h1:
-            pre_h1 = h1_name
-            h1_order += 1
-            h2_order = 0
-            try:
-                h1 = H1.objects.get(name=h1_name, lesson__name=lesson_name)
-            except:
-                print(f'h1:{h1_name} lesson:{lesson_name}')
-                continue
-            h1.order = h1_order
-            h1.save()
-        if str(h2_name) != 'nan' and h2_name != pre_h2:
-            pre_h2 = h2_name
-            h2_order += 1
-            h3_order = 0
-            try:
-                h2 = HeadLine.objects.get(name=h2_name, parent_headline__name=h1_name)
-            except:
-                print(f'h2:{h2_name}')
-                continue
-            h2.order = h2_order
-            h2.save()
-        if str(h3_name) != 'nan' and h3_name != pre_h3:
-            pre_h3 = h3_name
-            h3_order += 1
-            h4_order = 0
-            try:
-                h3 = HeadLine.objects.get(name=h3_name, parent_headline__name=h2_name)
-            except:
-                print(f'h3:{h3_name}')
-                continue
-            h3.order = h3_order
-            h3.save()
-        if str(h4_name) != 'nan' and h4_name != pre_h4:
-            pre_h4 = h4_name
-            h4_order += 1
-            h5_order = 0
-            try:
-                h4 = HeadLine.objects.get(name=h4_name, parent_headline__name=h3_name)
-            except:
-                print(f'h4:{h4_name}')
-                continue
-            h4.order = h4_order
-            h4.save()
-        if str(h5_name) != 'nan' and h5_name != pre_h5:
-            pre_h5 = h5_name
-            h5_order += 1
-            try:
-                h5 = HeadLine.objects.get(name=h5_name, parent_headline__name=h4_name)
-            except:
-                print(f'h5:{h5_name}')
-                continue
-            h5.order = h5_order
-            h5.save()
-    return Response('Done')
+# import pandas as pd
+#
+#
+# @api_view(['GET'])
+# def test(request):
+#     df = pd.read_excel(r'F:\kawkab\backend\database\english.xlsx')
+#
+#     pre_module, pre_lesson, pre_h1, pre_h2, pre_h3, pre_h4, pre_h5 = '', '', '', '', '', '', ''
+#     module_order, lesson_order, h1_order, h2_order, h3_order, h4_order, h5_order = 0, 0, 0, 0, 0, 0, 0
+#
+#     for index, row in df.iterrows():
+#         if str(row['module']) == 'nan':
+#             continue
+#         row = row.to_dict()
+#         module_name = row['module']
+#         lesson_name = row['lesson']
+#         h1_name = row.get('h1', 'nan')
+#         h2_name = row.get('h2', 'nan')
+#         h3_name = row.get('h3', 'nan')
+#         h4_name = row.get('h4', 'nan')
+#         h5_name = row.get('h5', 'nan')
+#         if module_name != pre_module:
+#             pre_module = module_name
+#             module_order += 1
+#             lesson_order = 0
+#             try:
+#                 module = Module.objects.get(name=module_name)
+#             except:
+#                 print(f'module:{module_name}')
+#                 continue
+#             module.order = module_order
+#             module.save()
+#         if lesson_name != pre_lesson:
+#             pre_lesson = lesson_name
+#             lesson_order += 1
+#             h1_order = 0
+#             try:
+#                 lesson = Lesson.objects.get(name=lesson_name, module__name=module_name)
+#             except:
+#                 print(f'lesson:{lesson_name}')
+#                 continue
+#             lesson.order = lesson_order
+#             lesson.save()
+#         if str(h1_name) != 'nan' and h1_name != pre_h1:
+#             pre_h1 = h1_name
+#             h1_order += 1
+#             h2_order = 0
+#             try:
+#                 h1 = H1.objects.get(name=h1_name, lesson__name=lesson_name)
+#             except:
+#                 print(f'h1:{h1_name} lesson:{lesson_name}')
+#                 continue
+#             h1.order = h1_order
+#             h1.save()
+#         if str(h2_name) != 'nan' and h2_name != pre_h2:
+#             pre_h2 = h2_name
+#             h2_order += 1
+#             h3_order = 0
+#             try:
+#                 h2 = HeadLine.objects.get(name=h2_name, parent_headline__name=h1_name)
+#             except:
+#                 print(f'h2:{h2_name}')
+#                 continue
+#             h2.order = h2_order
+#             h2.save()
+#         if str(h3_name) != 'nan' and h3_name != pre_h3:
+#             pre_h3 = h3_name
+#             h3_order += 1
+#             h4_order = 0
+#             try:
+#                 h3 = HeadLine.objects.get(name=h3_name, parent_headline__name=h2_name)
+#             except:
+#                 print(f'h3:{h3_name}')
+#                 continue
+#             h3.order = h3_order
+#             h3.save()
+#         if str(h4_name) != 'nan' and h4_name != pre_h4:
+#             pre_h4 = h4_name
+#             h4_order += 1
+#             h5_order = 0
+#             try:
+#                 h4 = HeadLine.objects.get(name=h4_name, parent_headline__name=h3_name)
+#             except:
+#                 print(f'h4:{h4_name}')
+#                 continue
+#             h4.order = h4_order
+#             h4.save()
+#         if str(h5_name) != 'nan' and h5_name != pre_h5:
+#             pre_h5 = h5_name
+#             h5_order += 1
+#             try:
+#                 h5 = HeadLine.objects.get(name=h5_name, parent_headline__name=h4_name)
+#             except:
+#                 print(f'h5:{h5_name}')
+#                 continue
+#             h5.order = h5_order
+#             h5.save()
+#     return Response('Done')
