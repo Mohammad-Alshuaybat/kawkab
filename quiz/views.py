@@ -698,7 +698,12 @@ def quiz_history(request):
 
         quizzes = UserQuiz.objects.filter(user=user)
         if search is not None:
-            quizzes = quizzes.filter(Q(subject__name__icontains=search) | Q(creationDate__date__icontains=search))
+            quizzes = quizzes.filter(Q(subject__name__icontains=search) |
+                                     Q(creationDate__date__icontains=search) |
+                                     Q(useranswer__question__tags__headbase__name__icontains=search) |
+                                     Q(useranswer__question__tags__headbase__h1__lesson__name__icontains=search) |
+                                     Q(useranswer__question__tags__headbase__h1__lesson__module__name__icontains=search)
+                                     )
         if subject_filter is not None:
             quizzes = quizzes.filter(subject__name=subject_filter)
 
