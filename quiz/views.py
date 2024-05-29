@@ -953,7 +953,7 @@ def share_quiz(request):
     question_set = Question.objects.filter(useranswer__quiz=quiz)
     serializer = QuestionSerializer(question_set, many=True)
     return Response({'subject': {'id': str(quiz.subject.id), 'name': quiz.subject.name}, 'questions': serializer.data,
-                     'duration': quiz.duration.total_seconds()})
+                     'duration': quiz.duration.total_seconds() if quiz.duration is not None else None})
 
 
 @api_view(['POST'])
