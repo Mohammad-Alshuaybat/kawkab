@@ -13,7 +13,7 @@ from .models import User
 #
 #
 def signup(data):
-    if check_userUID(data):
+    if _check_user(data):
         return 1
 
     else:
@@ -34,11 +34,11 @@ def signup(data):
 #         return 3
 
 
+# def _check_user(data):
+#     return User.objects.filter(**data).exists()
+
+
 def _check_user(data):
-    return User.objects.filter(**data).exists()
-
-
-def check_userUID(data):
     userUID = data.get('userUID', None)
     if userUID is not None:
         return User.objects.filter(userUID=userUID).exists()
