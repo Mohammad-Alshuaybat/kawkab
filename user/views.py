@@ -7,14 +7,13 @@ from rest_framework.response import Response
 
 from quiz.models import Subject, UserQuiz
 from school import settings
-from user.models import Quote, Advertisement, DailyTask, User
-from user.serializers import DailyTaskSerializer, AdvertisementSerializer
-from user.utils import signup, login, check_user, get_user, check_account_info
+from user.models import Quote, Advertisement, User
+from user.serializers import AdvertisementSerializer
+from user.utils import signup, _check_user
 
 
 from django.shortcuts import render
 from django.db.models import Count, Max, Avg
-from django.utils import timezone
 
 
 def statistics(request):
@@ -75,11 +74,11 @@ def statistics(request):
     return render(request, r'adminPage.html', context)
 
 
-@api_view(['POST'])
-def check_new_account_info(request):
-    # 0-->no_problems  1-->account_already_exit  2-->email_is_used  3-->phone_num_is_used
-    data = request.data
-    return Response(check_account_info(data))
+# @api_view(['POST'])
+# def check_new_account_info(request):
+#     # 0-->no_problems  1-->account_already_exit  2-->email_is_used  3-->phone_num_is_used
+#     data = request.data
+#     return Response(check_account_info(data))
 
 
 @api_view(['POST'])
@@ -87,16 +86,16 @@ def sign_up(request):
     # 0-->account_created  1-->account_already_exit  2-->email_is_used  3-->phone_num_is_used
     data = request.data
     is_signup = signup(data)
-
-    subject = 'New user'
-    message = f'A new user has Signed Up. Number of users is {User.objects.count()} now'
-    send_mail(
-        subject,
-        message,
-        settings.EMAIL_HOST_USER,
-        ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
-        fail_silently=False,
-    )
+    if is_signup:
+        subject = 'New user'
+        message = f'A new user has Signed Up. Number of users is {User.objects.count()} now'
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
+            fail_silently=False,
+        )
     return Response(is_signup)
 # {
 #     "email": "malek315@gmail.com",
@@ -110,10 +109,19 @@ def sign_up(request):
 
 
 @api_view(['POST'])
-def log_in(request):
-    # 0-->logged_in  1-->password_are_wrong  2-->email_or_phone_not_exist
+def check_user(request):
+    # true-->exits  false-->not exits
     data = request.data
-    return Response(login(data))
+    return Response(_check_user(data))
+# {
+#     "session": "",
+# }
+
+# @api_view(['POST'])
+# def log_in(request):
+#     # 0-->logged_in  1-->password_are_wrong  2-->email_or_phone_not_exist
+#     data = request.data
+#     return Response(login(data))
 # {
 #     "email": "malek315@gmail.com",
 #     "password": "password"

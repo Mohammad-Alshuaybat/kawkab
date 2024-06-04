@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from school import settings
 from user.serializers import UserSerializer
-from user.utils import check_user, get_user
+from user.utils import _check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
@@ -30,7 +30,7 @@ from .utils import mark_final_answer_question, mark_multiple_choice_question, ma
 def dashboard(request):
     data = request.data
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
         user_serializer = UserSerializer(user, many=False).data
 
@@ -69,7 +69,7 @@ def edit_user_info(request):
     school_name = data.pop('school_name', None)
     listenFrom = data.pop('listenFrom', None)
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
         user.age = age
         user.school_name = school_name
@@ -85,7 +85,7 @@ def edit_user_info(request):
 def subject_set(request):
     data = request.data
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
         subjects = Subject.objects.filter(grade=user.grade).values('id', 'name')
         return Response(subjects)
@@ -99,7 +99,7 @@ def headline_set(request):
     data = request.data
     subject_id = data.pop('subject_id', None)
 
-    if check_user(data):
+    if _check_user(data):
         subject = Subject.objects.get(id=subject_id)
         headlines = subject.get_main_headlines().values('id', 'name')
 
@@ -237,7 +237,7 @@ def build_quiz(request):
     h1_ids = data.pop('headlines', None)
     question_number = data.pop('question_num', None)
     quiz_level = data.pop('quiz_level', None)
-    if check_user(data):
+    if _check_user(data):
         h1s = H1.objects.filter(id__in=h1_ids)
 
         weighted_modules = weight_module(h1s, question_number)
@@ -273,7 +273,7 @@ def get_writing_question(request):
 
     data = request.data
     tag = data.pop('tag', None)
-    if check_user(data):
+    if _check_user(data):
         h1 = H1.objects.get(name=tag)
         question = get_questions(h1)
         return Response(question)
@@ -289,7 +289,7 @@ def submit_writing_question(request):
     duration = data.pop('attemptDuration', None)
     contact_method = data.pop('contactMethod', None)
 
-    if check_user(data):
+    if _check_user(data):
         # answer question quiz user
         user = get_user(data)
         user.contact_method = contact_method
@@ -319,7 +319,7 @@ def mark_quiz(request):
     subject = data.pop('subject', None)
     quiz_duration = data.pop('quiz_duration', None)
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
 
         attempt_duration = 0
@@ -381,7 +381,7 @@ def mark_question(request):
     data = request.data
     answers = data.pop('answers', None)
 
-    if check_user(data):  # TODO: user name
+    if _check_user(data):  # TODO: user name
         question_status = False
         for ID, ans in answers.items():
             question = Question.objects.get(id=ID)
@@ -409,7 +409,7 @@ def retake_quiz(request):
     data = request.data
     quiz_id = data.pop('quiz_id', None)
 
-    if check_user(data):
+    if _check_user(data):
         quiz = UserQuiz.objects.get(id=quiz_id)
         question_set = Question.objects.filter(useranswer__quiz=quiz)
         serializer = QuestionSerializer(question_set, many=True)
@@ -545,7 +545,7 @@ def quiz_review(request):
 
     quiz_id = data.pop('quiz_id', None)
 
-    if check_user(data):
+    if _check_user(data):
         quiz = UserQuiz.objects.get(id=quiz_id)
         answers = UserAnswer.objects.filter(quiz=quiz)
 
@@ -631,7 +631,7 @@ def save_question(request):
     data = request.data
     question_id = data.pop('question_id', None)
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
         question = Question.objects.get(id=question_id)
         SavedQuestion.objects.get_or_create(user=user, question=question)
@@ -646,7 +646,7 @@ def unsave_question(request):
     data = request.data
     question_id = data.pop('question_id', None)
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
         question = Question.objects.get(id=question_id)
         SavedQuestion.objects.get(user=user, question=question).delete()
@@ -662,7 +662,7 @@ def report(request):
     body = data.pop('body', None)
     question = data.pop('question_id', None)
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
         question = Question.objects.get(id=question)
         Report.objects.create(user=user, body=body, question=question)
@@ -690,7 +690,7 @@ def quiz_history(request):
     subject_filter = data.pop('subject_filter', None)
     sorting = data.pop('sorting', '-')  # '' from older, '-' from newer
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
 
         days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
@@ -809,7 +809,7 @@ def subject_analysis(request):
 
     subject = data.pop('subject', None)
 
-    if check_user(data):
+    if _check_user(data):
         user = get_user(data)
 
         subject = Subject.objects.get(id=subject)
@@ -874,7 +874,7 @@ def subject_analysis(request):
 def suggested_quizzes(request):
     data = request.data
 
-    if check_user(data):
+    if _check_user(data):
         quizzes = AdminQuiz.objects.all().order_by('-creationDate')
 
         if not quizzes.exists():
@@ -893,7 +893,7 @@ def take_quiz(request):
     data = request.data
     quiz_id = data.pop('quiz_id', None)
 
-    if check_user(data):
+    if _check_user(data):
         quiz = AdminQuiz.objects.get(id=quiz_id)
         serializer = QuestionSerializer(quiz.questions.all(), many=True)
         return Response(serializer.data)

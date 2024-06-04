@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from user.models import User, DailyTask, Advertisement
+from user.models import User, Advertisement
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -13,14 +13,3 @@ class AdvertisementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advertisement
         fields = ['image']
-
-
-class DailyTaskSerializer(serializers.ModelSerializer):
-    subject = serializers.SerializerMethodField()
-
-    def get_subject(self, obj):
-        return obj.subject.name
-
-    class Meta:
-        model = DailyTask
-        fields = ['subject', 'task', 'done']

@@ -2,7 +2,7 @@ from django.contrib import admin
 from import_export.admin import ExportActionMixin
 
 from quiz.models import UserQuiz
-from .models import User, DailyTask, Quote, Advertisement
+from .models import User, Quote, Advertisement
 
 
 class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
@@ -10,8 +10,7 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
 
 
 class UserExportAllFields(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('user_name', 'age', 'school_name', 'listenFrom', 'auth_method', 'account', 'quizzes_num', 'last_quiz', 'creationDate')
-    ordering = ('-creationDate',)
+    list_display = ('user_name', 'userUID', 'age', 'school_name', 'listenFrom', 'quizzes_num', 'last_quiz')
 
     @staticmethod
     def user_name(obj):
@@ -21,15 +20,6 @@ class UserExportAllFields(ExportActionMixin, admin.ModelAdmin):
     def last_quiz(obj):
         if UserQuiz.objects.filter(user=obj).exists():
             return UserQuiz.objects.filter(user=obj).order_by('creationDate').last().creationDate
-        else:
-            return None
-
-    @staticmethod
-    def account(obj):
-        if obj.email is not None:
-            return obj.email
-        elif obj.phone is not None:
-            return obj.phone
         else:
             return None
 
@@ -48,6 +38,5 @@ class UserExportAllFields(ExportActionMixin, admin.ModelAdmin):
 
 
 admin.site.register(User, UserExportAllFields)
-admin.site.register(DailyTask, ExportAllFields)
 admin.site.register(Quote, ExportAllFields)
 admin.site.register(Advertisement, ExportAllFields)
