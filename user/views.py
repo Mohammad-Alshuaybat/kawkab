@@ -83,19 +83,20 @@ def statistics(request):
 
 @api_view(['POST'])
 def sign_up(request):
-    # 0-->account_created  1-->account_already_exit  2-->email_is_used  3-->phone_num_is_used
+    # 0-->account_created  1-->account_already_exit
     data = request.data
     is_signup = signup(data)
-    if is_signup:
+    if not is_signup:
         subject = 'New user'
         message = f'A new user has Signed Up. Number of users is {User.objects.count()} now'
-        send_mail(
-            subject,
-            message,
-            settings.EMAIL_HOST_USER,
-            ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
-            fail_silently=False,
-        )
+        # send_mail(
+        #     subject,
+        #     message,
+        #     settings.EMAIL_HOST_USER,
+        #     ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
+        #     fail_silently=False,
+        # )
+        print(subject)
     return Response(is_signup)
 # {
 #     "email": "malek315@gmail.com",
