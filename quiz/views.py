@@ -14,6 +14,7 @@ from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, Admi
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer, AdminQuizSerializer
 
 from django.db.models import Count, Q, Sum
+from django.db.models import Prefetch
 
 import random
 import datetime
@@ -233,23 +234,42 @@ def build_quiz(request):
         return serializer.data
 
     data = request.data
-    print(data)
+
     h1_ids = data.pop('headlines', None)
     question_number = data.pop('question_num', None)
     quiz_level = data.pop('quiz_level', None)
+    subject = data.pop('subject', None)
+
     if _check_user(data):
-        h1s = H1.objects.filter(id__in=h1_ids)
+        user = get_user(data)
+
+        if h1_ids is None and subject is not None: # revision feature
+            quizzes = UserQuiz.objects.filter(user=user, subject__id=subject)
+
+            answers = UserAnswer.objects.filter(quiz__in=quizzes).select_related('question').prefetch_related(
+                Prefetch('question__tags', queryset=Tag.objects.all())
+            )
+
+            headlines = set()
+            for answer in answers:
+                if answer.question:
+                    headlines.update(answer.question.tags.exclude(headbase__h1=None))
+
+            h1s = list(headlines)
+
+        else:
+            h1s = H1.objects.filter(id__in=h1_ids)
 
         weighted_modules = weight_module(h1s, question_number)
-        print(weighted_modules, '\n\n')
+
         weighted_lessons = weight_lessons(h1s)
-        print(weighted_lessons, '\n\n')
+
         lesson_headline = lesson_headlines(weighted_lessons, h1s)
-        print(lesson_headline, '\n\n')
+
         modules_lessons_weights = lesson_module(weighted_modules, weighted_lessons)
-        print(modules_lessons_weights, '\n\n')
+
         modules_lessons_normalized_weights = normalize_lessons_weight(modules_lessons_weights)
-        print(modules_lessons_normalized_weights, '\n\n')
+
         # level = quiz_level(quiz_level, question_number)
         questions = get_questions(lesson_headline, modules_lessons_normalized_weights)
 
