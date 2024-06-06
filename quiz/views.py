@@ -255,7 +255,7 @@ def build_quiz(request):
                 if answer.question:
                     headlines.update(answer.question.tags.exclude(headbase__h1=None))
 
-            h1s = list(headlines)
+            h1s = headlines
 
         else:
             h1s = H1.objects.filter(id__in=h1_ids)
