@@ -253,12 +253,11 @@ def build_quiz(request):
             headlines = set()
             for answer in answers:
                 if answer.question:
-                    headlines.update(answer.question.tags.exclude(headbase__h1=None))
+                    headlines.update(answer.question.tags.exclude(headbase__h1=None).values_list('id', flat=True))
 
-            h1s = headlines
+            h1_ids = list(headlines)
 
-        else:
-            h1s = H1.objects.filter(id__in=h1_ids)
+        h1s = H1.objects.filter(id__in=h1_ids)
 
         weighted_modules = weight_module(h1s, question_number)
 
