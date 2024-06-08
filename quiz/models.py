@@ -273,6 +273,12 @@ class Question(models.Model):
     def __str__(self):
         return f'{self.body}'
 
+    # def save(self, *args, **kwargs):
+    #     if self.image is not None:
+    #         self.image.delete()
+    #
+    #     super(Question, self).save(*args, **kwargs)
+
 
 class FinalAnswerQuestion(Question):
     correct_answer = models.ForeignKey(AdminFinalAnswer, db_constraint=False, null=True, blank=True, on_delete=models.CASCADE)

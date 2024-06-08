@@ -647,6 +647,51 @@ def quiz_review(request):
 
 
 @api_view(['POST'])
+def saved_questions(request):
+    data = request.data
+
+    if _check_user(data):
+        user = get_user(data)
+        _saved_questions = SavedQuestion.objects.filter(user=user)
+
+        days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
+                'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
+
+        serialized_saved_questions = []
+        for saved_question in _saved_questions:
+            date = saved_question.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
+            date = date[:22] + days[date[22:]]
+
+            subject = saved_question.question.tags.exclude(headbase__h1=None).first().lesson.module.subject
+            subject = {'id': subject.id, 'name': subject.name}
+
+            body = saved_question.question.body
+            id = saved_question.question.id
+
+            serialized_saved_questions.append({'date': date, 'subject': subject, 'body': body, 'id': id})
+
+        return Response(serialized_saved_questions)
+
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
+def get_saved_question(request):
+    data = request.data
+
+    question_id = data.pop('ID', None)
+    question_obj = Question.objects.filter(id=question_id)
+
+    if question_obj.exists():
+        serializer = QuestionSerializer(question_obj.first(), many=False).data
+        return Response({'question': serializer})
+
+    else:
+        return Response(0)
+
+
+@api_view(['POST'])
 def save_question(request):
     data = request.data
     question_id = data.pop('question_id', None)
