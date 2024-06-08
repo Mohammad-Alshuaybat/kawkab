@@ -40,6 +40,12 @@ class UserWritingAnswerExportAllFields(ExportActionMixin, admin.ModelAdmin):
         return None
 
 
+class QuestionAdmin(ExportActionMixin, admin.ModelAdmin):
+    search_fields = ['id', 'body', 'image']
+
+
+admin.site.register(Question, QuestionAdmin)
+
 admin.site.register(Subject, ExportAllFields)
 admin.site.register(Module, ExportAllFields)
 admin.site.register(Lesson, ExportAllFields)
@@ -55,7 +61,6 @@ admin.site.register(AdminFinalAnswer, ExportAllFields)
 
 
 admin.site.register(LastImageName, ExportAllFields)
-admin.site.register(Question, ExportAllFields)
 admin.site.register(Tag, ExportAllFields)
 admin.site.register(MultiSectionQuestion, ExportAllFields)
 admin.site.register(UserMultiSectionAnswer, ExportAllFields)

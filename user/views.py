@@ -89,14 +89,14 @@ def sign_up(request):
     if not is_signup:
         subject = 'New user'
         message = f'A new user has Signed Up. Number of users is {User.objects.count()} now'
-        # send_mail(
-        #     subject,
-        #     message,
-        #     settings.EMAIL_HOST_USER,
-        #     ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
-        #     fail_silently=False,
-        # )
-        print(subject)
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            ['malek315@gmail.com', 'osamafitiani2001@gmail.com'],
+            fail_silently=False,
+        )
+
     return Response(is_signup)
 # {
 #     "email": "malek315@gmail.com",
