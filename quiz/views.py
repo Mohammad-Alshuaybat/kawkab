@@ -1353,4 +1353,14 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
 
 @api_view(['POST'])
 def test(request):
+    subject = 'New user'
+    message = f'A new user has Signed Up. Number of users is now'
+
+    send_mail(
+        subject,
+        message,
+        settings.EMAIL_HOST_USER,
+        ['malek315@gmail.com'],
+        fail_silently=False,
+    )
     return Response()
