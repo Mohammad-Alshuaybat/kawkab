@@ -38,7 +38,8 @@ def dashboard(request):
         user_quizzes = UserQuiz.objects.filter(user=user)
         num_of_user_quizzes = user_quizzes.count()
 
-        user_answers = UserAnswer.objects.filter(quiz__in=user_quizzes)
+        user_answers = UserAnswer.objects.filter(quiz__in=user_quizzes).filter(Q(userfinalanswer__body__isnull=False)|Q(usermultiplechoiceanswer__choice__isnull=False)).distinct()
+
         num_of_user_answers = user_answers.count()
 
         total_duration = user_answers.aggregate(total_duration=Sum('duration'))['total_duration']
@@ -53,12 +54,12 @@ def dashboard(request):
             date = datetime.datetime(current_year, 1, 1) + datetime.timedelta(days=i - 1)
 
             user_quizzes = UserQuiz.objects.filter(user=user, creationDate__date=date)
-            answers = UserAnswer.objects.filter(quiz__in=user_quizzes).count()
+            answers = UserAnswer.objects.filter(quiz__in=user_quizzes).filter(Q(userfinalanswer__body__isnull=False) | Q(usermultiplechoiceanswer__choice__isnull=False)).distinct().count()
             user_answers_by_day[i] = answers
 
         return Response({'user_info': user_serializer, 'num_of_user_quizzes': num_of_user_quizzes,
                          'num_of_user_answers': num_of_user_answers, 'total_duration': total_duration_hours,
-                         'user_answers_by_day':user_answers_by_day})
+                         'user_answers_by_day': user_answers_by_day})
     else:
         return Response(0)
 
@@ -1353,14 +1354,4 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
 
 @api_view(['POST'])
 def test(request):
-    subject = 'New user'
-    message = f'A new user has Signed Up. Number of users is now'
-
-    send_mail(
-        subject,
-        message,
-        settings.EMAIL_HOST_USER,
-        ['malek315@gmail.com'],
-        fail_silently=False,
-    )
     return Response()
