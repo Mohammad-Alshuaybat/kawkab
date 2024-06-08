@@ -699,7 +699,7 @@ def save_question(request):
     if _check_user(data):
         user = get_user(data)
         question = Question.objects.get(id=question_id)
-        SavedQuestion.objects.get_or_create(user=user, question=question)
+        ques, _ = SavedQuestion.objects.get_or_create(user=user, question=question)
         return Response(1)
 
     else:
