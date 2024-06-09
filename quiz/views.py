@@ -9,8 +9,8 @@ from user.serializers import UserSerializer
 from user.utils import _check_user, get_user
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
-    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, Report, SavedQuestion, UserAnswer, MultiSectionQuestion, \
-    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz, Tag
+    UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, UserAnswer, MultiSectionQuestion, \
+    UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz, Tag#, Report, SavedQuestion
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer, AdminQuizSerializer
 
 from django.db.models import Count, Q, Sum
@@ -646,34 +646,34 @@ def quiz_review(request):
         return Response(0)
 
 
-@api_view(['POST'])
-def saved_questions(request):
-    data = request.data
-
-    if _check_user(data):
-        user = get_user(data)
-        _saved_questions = SavedQuestion.objects.filter(user=user)
-
-        days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
-                'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
-
-        serialized_saved_questions = []
-        for saved_question in _saved_questions:
-            date = saved_question.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
-            date = date[:22] + days[date[22:]]
-
-            subject = saved_question.question.tags.exclude(headbase__h1=None).first().lesson.module.subject
-            subject = {'id': subject.id, 'name': subject.name}
-
-            body = saved_question.question.body
-            id = saved_question.question.id
-
-            serialized_saved_questions.append({'date': date, 'subject': subject, 'body': body, 'id': id})
-
-        return Response(serialized_saved_questions)
-
-    else:
-        return Response(0)
+# @api_view(['POST'])
+# def saved_questions(request):
+#     data = request.data
+#
+#     if _check_user(data):
+#         user = get_user(data)
+#         _saved_questions = SavedQuestion.objects.filter(user=user)
+#
+#         days = {'Sunday': 'الأحد', 'Monday': 'الإثنين', 'Tuesday': 'الثلاثاء', 'Wednesday': 'الأربعاء',
+#                 'Thursday': 'الخميس', 'Friday': 'الجمعة', 'Saturday': 'السبت'}
+#
+#         serialized_saved_questions = []
+#         for saved_question in _saved_questions:
+#             date = saved_question.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
+#             date = date[:22] + days[date[22:]]
+#
+#             subject = saved_question.question.tags.exclude(headbase__h1=None).first().lesson.module.subject
+#             subject = {'id': subject.id, 'name': subject.name}
+#
+#             body = saved_question.question.body
+#             id = saved_question.question.id
+#
+#             serialized_saved_questions.append({'date': date, 'subject': subject, 'body': body, 'id': id})
+#
+#         return Response(serialized_saved_questions)
+#
+#     else:
+#         return Response(0)
 
 
 @api_view(['POST'])
@@ -691,60 +691,62 @@ def get_saved_question(request):
         return Response(0)
 
 
-@api_view(['POST'])
-def save_question(request):
-    data = request.data
-    question_id = data.pop('question_id', None)
-
-    if _check_user(data):
-        user = get_user(data)
-        question = Question.objects.get(id=question_id)
-        ques, _ = SavedQuestion.objects.get_or_create(user=user, question=question)
-        return Response(1)
-
-    else:
-        return Response(0)
-
-
-@api_view(['POST'])
-def unsave_question(request):
-    data = request.data
-    question_id = data.pop('question_id', None)
-
-    if _check_user(data):
-        user = get_user(data)
-        question = Question.objects.get(id=question_id)
-        SavedQuestion.objects.get(user=user, question=question).delete()
-        return Response(1)
-
-    else:
-        return Response(0)
-
-
-@api_view(['POST'])
-def report(request):
-    data = request.data
-    body = data.pop('body', None)
-    question = data.pop('question_id', None)
-
-    if _check_user(data):
-        user = get_user(data)
-        question = Question.objects.get(id=question)
-        Report.objects.create(user=user, body=body, question=question)
-
-        subject = 'Report from user'
-        message = f'{user.firstName} {user.lastName} said there is this issue {body} in this question {question.id}\nplease check it as soon as possible'
-        send_mail(
-            subject,
-            message,
-            settings.EMAIL_HOST_USER,
-            ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
-            fail_silently=False,
-        )
-        return Response(1)
-
-    else:
-        return Response(0)
+# @api_view(['POST'])
+# def save_question(request):
+#     data = request.data
+#     question_id = data.pop('question_id', None)
+#
+#     if _check_user(data):
+#         user = get_user(data)
+#         print(user.ID)
+#         question = Question.objects.get(id=question_id)
+#         print(question)
+#         ques = SavedQuestion.objects.create(user=user, question=question)
+#         return Response(1)
+#
+#     else:
+#         return Response(0)
+#
+#
+# @api_view(['POST'])
+# def unsave_question(request):
+#     data = request.data
+#     question_id = data.pop('question_id', None)
+#
+#     if _check_user(data):
+#         user = get_user(data)
+#         question = Question.objects.get(id=question_id)
+#         SavedQuestion.objects.get(user=user, question=question).delete()
+#         return Response(1)
+#
+#     else:
+#         return Response(0)
+#
+#
+# @api_view(['POST'])
+# def report(request):
+#     data = request.data
+#     body = data.pop('body', None)
+#     question = data.pop('question_id', None)
+#
+#     if _check_user(data):
+#         user = get_user(data)
+#         question = Question.objects.get(id=question)
+#         Report.objects.create(user=user, body=body, question=question)
+#
+#         subject = 'Report from user'
+#         message = f'{user.firstName} {user.lastName} said there is this issue {body} in this question {question.id}\nplease check it as soon as possible'
+#         send_mail(
+#             subject,
+#             message,
+#             settings.EMAIL_HOST_USER,
+#             ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
+#             fail_silently=False,
+#         )
+#         return Response(1)
+#
+#     else:
+#         return Response(0)
 
 
 @api_view(['POST'])
