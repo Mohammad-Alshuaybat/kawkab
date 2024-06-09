@@ -5,7 +5,7 @@ from .models import Subject, QuestionLevel, Module, Lesson, \
     AdminAnswer, UserAnswer, AdminFinalAnswer, UserFinalAnswer, AdminMultipleChoiceAnswer, \
     UserMultipleChoiceAnswer, FinalAnswerQuestion, MultipleChoiceQuestion, Solution, AdminQuiz, UserQuiz, Question, \
     HeadLine, H1, LastImageName, Author, HeadLineInst, MultiSectionQuestion, \
-    UserMultiSectionAnswer, WritingQuestion, UserWritingAnswer, Tag#, SavedQuestion, Report
+    UserMultiSectionAnswer, WritingQuestion, UserWritingAnswer, Tag, SavedQuestion, Report
 
 
 class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
@@ -78,6 +78,5 @@ admin.site.register(Solution, ExportAllFields)
 admin.site.register(AdminQuiz, ExportAllFields)  # abstract
 
 admin.site.register(UserQuiz, QuizExportAllFields)
-# admin.site.register(SavedQuestion, ExportAllFields)
-# admin.site.register(RepodQuestion, ExportAllFields)
-# admin.site.register(Report, ExportAllFields)
+admin.site.register(SavedQuestion, ExportAllFields)
+admin.site.register(Report, ExportAllFields)
