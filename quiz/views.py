@@ -659,8 +659,8 @@ def saved_questions(request):
 
         serialized_saved_questions = []
         for saved_question in _saved_questions:
-            date = saved_question.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
-            date = date[:22] + days[date[22:]]
+            date = saved_question.creationDate.strftime('%I:%M %p • %d/%m/%Y • %A')
+            date = date[:24] + days[date[24:]]
 
             subject = saved_question.question.tags.exclude(headbase__h1=None).first().headbase.h1.lesson.module.subject
             subject = {'id': subject.id, 'name': subject.name}
@@ -780,8 +780,8 @@ def quiz_history(request):
         quiz_list = []
         for quiz in filtered_quizzes:
             try:
-                date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
-                date = date[:22] + days[date[22:]]
+                date = quiz.creationDate.strftime('%I:%M %p • %d/%m/%Y • %A')
+                date = date[:24] + days[date[24:]]
 
                 attempt_duration = quiz.useranswer_set.aggregate(Sum('duration'))['duration__sum']
                 attempt_duration = attempt_duration.total_seconds() if attempt_duration else 0
