@@ -1286,6 +1286,7 @@ def add_suggested_quiz(request):
 @api_view(['GET'])
 def reset_questions_level_and_ideal_duration(request):
     questions = Question.objects.all()
+    QuestionLevel.objects.all().delete()
     for question in questions:
         question.idealDuration = datetime.timedelta(seconds=120)
         level = QuestionLevel.objects.create(name='inAverage', level=2)
