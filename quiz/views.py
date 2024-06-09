@@ -662,7 +662,7 @@ def saved_questions(request):
             date = saved_question.creationDate.strftime('%I:%M %p • %d/%m/%Y %A')
             date = date[:22] + days[date[22:]]
 
-            subject = saved_question.question.tags.exclude(headbase__h1=None).first().lesson.module.subject
+            subject = saved_question.question.tags.exclude(headbase__h1=None).first().headbase.h1.lesson.module.subject
             subject = {'id': subject.id, 'name': subject.name}
 
             body = saved_question.question.body
