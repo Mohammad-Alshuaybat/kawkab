@@ -13,7 +13,7 @@ class User(models.Model):
     # )
 
     id = models.UUIDField(default=uuid.uuid4, unique=True, primary_key=True, editable=False)
-    # creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    creationDate = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     # auth_method = models.IntegerField(choices=auth_choices, null=True, blank=True)
 
