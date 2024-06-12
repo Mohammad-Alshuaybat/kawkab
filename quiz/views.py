@@ -514,6 +514,7 @@ def similar_questions(request):
     by_headlines = data.pop('by_headlines', False)
     by_author = data.pop('by_author', False)
     by_level = data.pop('by_level', False)
+    phone = data.pop('phone', False)
 
     question_weight = {}
 
@@ -540,7 +541,11 @@ def similar_questions(request):
 
     questions = []
     for question_id in sorted_question[:len(question_set)] if not is_single_question else sorted_question:
-        questions.append(Question.objects.get(id=question_id))
+        if phone:
+            if hasattr(Question.objects.get(id=question_id), 'multiplechoicequestion'):
+                questions.append(Question.objects.get(id=question_id))
+        else:
+            questions.append(Question.objects.get(id=question_id))
 
     serializer = QuestionSerializer(questions, many=True)
     if is_single_question:
