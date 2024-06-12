@@ -223,7 +223,7 @@ def build_quiz(request):
                 while len(temp_question_set) < question_num:
                     headline = list(lesson_headline[lesson])[headline_counter % len(lesson_headline[lesson])]
                     if phone:
-                        _questions = Question.objects.filter(tags=headline, sub=False).exclue(multiplechoicequestion=None)  # .filter(tags=quiz_level[0])
+                        _questions = Question.objects.filter(tags=headline, sub=False).exclude(multiplechoicequestion=None)  # .filter(tags=quiz_level[0])
                     else:
                         _questions = Question.objects.filter(tags=headline, sub=False)  # .filter(tags=quiz_level[0])
                     # quiz_level.pop(quiz_level[0])
