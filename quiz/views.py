@@ -199,7 +199,7 @@ def build_quiz(request):
         else:
             return []
 
-    def get_questions(lesson_headline, modules_lessons_normalized_weights, quiz_level=[]):
+    def get_questions(lesson_headline, modules_lessons_normalized_weights, phone, quiz_level=[]):
         """
         lesson_headline = {    # here headlines are from all levels 1-5
             'lesson1': {h1, h2, h3},
@@ -222,8 +222,10 @@ def build_quiz(request):
                 temp_question_set = set()
                 while len(temp_question_set) < question_num:
                     headline = list(lesson_headline[lesson])[headline_counter % len(lesson_headline[lesson])]
-
-                    _questions = Question.objects.filter(tags=headline, sub=False)  # .filter(tags=quiz_level[0])
+                    if phone:
+                        _questions = Question.objects.filter(tags=headline, sub=False).exclue(multiplechoicequestion=None)  # .filter(tags=quiz_level[0])
+                    else:
+                        _questions = Question.objects.filter(tags=headline, sub=False)  # .filter(tags=quiz_level[0])
                     # quiz_level.pop(quiz_level[0])
                     if _questions:
                         temp_question_set.add(random.choice(_questions))
@@ -240,6 +242,7 @@ def build_quiz(request):
     question_number = data.pop('question_num', None)
     quiz_level = data.pop('quiz_level', None)
     subject = data.pop('subject', None)
+    phone = data.pop('phone', False)
 
     if _check_user(data):
         user = get_user(data)
@@ -271,7 +274,7 @@ def build_quiz(request):
         modules_lessons_normalized_weights = normalize_lessons_weight(modules_lessons_weights)
 
         # level = quiz_level(quiz_level, question_number)
-        questions = get_questions(lesson_headline, modules_lessons_normalized_weights)
+        questions = get_questions(lesson_headline, modules_lessons_normalized_weights, phone)
 
         # while recursion_num < 3 and len(questions) < question_number:
         #     print(recursion_num)
@@ -634,7 +637,7 @@ def quiz_review(request):
                                                         time_based_modules, time_based_lessons, time_based_h1s)
 
         answers_serializer = UserAnswerSerializer(answers, many=True).data
-        print(best_worst_skills)
+
         return Response(
             {'answers': answers_serializer,
              'question_num': question_num, 'correct_questions_num': correct_questions,
