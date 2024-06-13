@@ -803,7 +803,7 @@ def quiz_history(request):
                     if answer.status == 1:
                         quiz_list.append({
                             'id': str(quiz.id),
-                            'subject': quiz.subject.name,
+                            'subject': {'name': quiz.subject.name, 'id': quiz.subject.id},
                             'date': date,
                             'quiz_duration': None,
                             'attempt_duration': attempt_duration,
