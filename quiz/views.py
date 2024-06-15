@@ -742,13 +742,16 @@ def report(request):
 
         subject = 'Report from user'
         message = f'{user.firstName} {user.lastName} said there is this issue {body} in this question {question.id}\nplease check it as soon as possible'
-        send_mail(
-            subject,
-            message,
-            settings.EMAIL_HOST_USER,
-            ['malek315@gmail.com', 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'],
-            fail_silently=False,
-        )
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                ['malek315@gmail.com', 'osamafitiani2001@gmail.com'], # 'farishomsi@gmail.com', 'shashaqaruti.k99@gmail.com'
+                fail_silently=False,
+            )
+        except:
+            pass
         return Response(1)
 
     else:
