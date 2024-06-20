@@ -42,11 +42,14 @@ INSTALLED_APPS = [
 
     'storages',
 
+    'channels',
+
     'rest_framework',
     'corsheaders',
     
     'user.apps.UserConfig',
     'quiz.apps.QuizConfig',
+    'game.apps.GameConfig',
 ]
 
 MIDDLEWARE = [
@@ -78,6 +81,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'school.wsgi.application'
+ASGI_APPLICATION = 'school.asgi.application'
 
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
