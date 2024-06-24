@@ -9,9 +9,9 @@ class ExportAllFields(ExportActionMixin, admin.ModelAdmin):
     pass
 
 
-class UserExportAllFields(ExportActionMixin, admin.ModelAdmin):
-    list_display = ('user_name', 'userUID', 'age', 'school_name', 'listenFrom', 'quizzes_num', 'last_quiz', 'creationDate')
-
+class UserAdmin(ExportActionMixin, admin.ModelAdmin):
+    list_display = ('userUID', 'user_name', 'age', 'school_name', 'listenFrom', 'quizzes_num', 'last_quiz', 'creationDate')
+    search_fields = ['userUID', 'firstName', 'lastName', 'age', 'school_name', 'listenFrom']
     ordering = (['-creationDate'])
 
     @staticmethod
@@ -29,16 +29,7 @@ class UserExportAllFields(ExportActionMixin, admin.ModelAdmin):
     def quizzes_num(obj):
         return UserQuiz.objects.filter(user=obj).count()
 
-# class UserWritingAnswerExportAllFields(ExportActionMixin, admin.ModelAdmin):
-#     list_display = ('creation_date', 'user', 'contact_info', 'status')
-#     ordering = ('status',)
-#
-#     def creation_date(self, obj):
-#         if obj.quiz:
-#             return obj.quiz.creationDate
-#         return None
 
-
-admin.site.register(User, UserExportAllFields)
+admin.site.register(User, UserAdmin)
 admin.site.register(Quote, ExportAllFields)
 admin.site.register(Advertisement, ExportAllFields)
