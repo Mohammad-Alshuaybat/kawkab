@@ -31,6 +31,7 @@ class User(models.Model):
     school_name = models.CharField(max_length=100, null=True, blank=True)
     listenFrom = models.CharField(max_length=50, null=True, blank=True)
     contact_method = models.CharField(max_length=50, null=True, blank=True)
+    admin = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
         return f'{self.firstName} {self.lastName}'
