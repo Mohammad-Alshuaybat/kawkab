@@ -12,6 +12,7 @@ from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, Admi
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, UserAnswer, MultiSectionQuestion, \
     UserMultiSectionAnswer, UserWritingAnswer, WritingQuestion, AdminQuiz, Quiz, Tag, Report, SavedQuestion
 from .serializers import ModuleSerializer, QuestionSerializer, UserAnswerSerializer, AdminQuizSerializer
+from django.shortcuts import render
 
 from django.db.models import Count, Q, Sum
 from django.db.models import Prefetch
@@ -1407,6 +1408,35 @@ Discuss the benefits and drawbacks of using renewable energy sources for transpo
         q.save()
 
     return Response()
+
+
+def subjectStatistics(request, subject):
+    data = [
+            {
+                "subject_name": subject,
+                "total_ques_num": Question.objects.filter(tags__headbase__h1__lesson__module__subject__name=subject).count(),
+                "units": [
+                    {
+                        "unit_name": mod.name,
+                        "ques_num": Question.objects.filter(tags__headbase__h1__lesson__module=mod).count(),
+                        "lessons": [
+                            {
+                                "lesson_name": les.name,
+                                "ques_num": Question.objects.filter(tags__headbase__h1__lesson=les).count(),
+                                "h1": [
+                                    {
+                                        "h1_name": h1.name,
+                                        "ques_num": Question.objects.filter(tags__headbase__h1=h1).count()
+                                    } for h1 in H1.objects.filter(lesson=les)
+                                ],
+                            } for les in Lesson.objects.filter(module=mod)
+                        ],
+                    } for mod in Module.objects.filter(subject__name=subject)
+                ],
+            },
+        ]
+
+    return render(request, 'subjectStatistics.html', {'data': data})
 
 
 @api_view(['POST'])
