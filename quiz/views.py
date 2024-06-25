@@ -3,10 +3,11 @@ from django.core.files.base import ContentFile
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.db.models import F, Value, IntegerField
 
 from school import settings
 from user.serializers import UserSerializer
-from user.utils import _check_user, get_user
+from user.utils import _check_user, get_user, _check_admin
 from .models import Subject, Module, Question, Lesson, FinalAnswerQuestion, AdminFinalAnswer, \
     MultipleChoiceQuestion, AdminMultipleChoiceAnswer, QuestionLevel, H1, HeadLine, HeadBase, UserFinalAnswer, \
     UserMultipleChoiceAnswer, UserQuiz, Author, LastImageName, UserAnswer, MultiSectionQuestion, \
@@ -1031,6 +1032,23 @@ def share_quiz(request):
     serializer = QuestionSerializer(question_set, many=True)
     return Response({'subject': {'id': str(quiz.subject.id), 'name': quiz.subject.name}, 'questions': serializer.data,
                      'duration': quiz.duration.total_seconds() if quiz.duration is not None else None})
+
+
+@api_view(['POST'])
+def get_admin_suggestions(request):
+    data = request.data
+    # if _check_admin(data):
+    h1s = H1.objects.annotate(level=Value(1, output_field=IntegerField()))
+    headlines = HeadLine.objects.all()
+
+    # Combine into a single queryset
+    combined_queryset = h1s.union(headlines)
+
+    # Serialize queryset to list of dictionaries
+    headBases = list(combined_queryset.values('name', 'level'))
+
+    authors = Author.objects.all().values_list('name', flat=True)
+    return Response({"headBases": headBases, 'authors': authors})
 
 
 @api_view(['POST'])
