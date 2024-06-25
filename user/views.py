@@ -9,8 +9,7 @@ from quiz.models import Subject, UserQuiz
 from school import settings
 from user.models import Quote, Advertisement, User
 from user.serializers import AdvertisementSerializer
-from user.utils import signup, _check_user
-
+from user.utils import signup, _check_user, _check_admin
 
 from django.shortcuts import render
 from django.db.models import Count, Max, Avg
@@ -120,6 +119,13 @@ def check_user(request):
 # {
 #     "session": "",
 # }
+
+
+@api_view(['POST'])
+def check_admin(request):
+    # true-->exits  false-->not exits
+    data = request.data
+    return Response(_check_admin(data))
 
 # @api_view(['POST'])
 # def log_in(request):
