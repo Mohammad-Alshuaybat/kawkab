@@ -1434,19 +1434,20 @@ def subjectStatistics(request, subject):
     data = [
             {
                 "subject_name": subject,
-                "total_ques_num": Question.objects.filter(tags__headbase__h1__lesson__module__subject__name=subject).filter(multisectionquestion=None).count(),
+                "total_ques_num": Question.objects.filter(tags__in=Subject.objects.get(name=subject).get_all_headlines()).filter(multisectionquestion=None).count(),
                 "units": [
                     {
                         "unit_name": mod.name,
-                        "ques_num": Question.objects.filter(tags__headbase__h1__lesson__module=mod).filter(multisectionquestion=None).count(),
+                        "ques_num": Question.objects.filter(tags__in=mod.get_all_headlines()).filter(multisectionquestion=None).count(),
                         "lessons": [
                             {
                                 "lesson_name": les.name,
-                                "ques_num": Question.objects.filter(tags__headbase__h1__lesson=les).filter(multisectionquestion=None).count(),
+                                "ques_num": Question.objects.filter(tags__in=les.get_all_headlines()).filter(multisectionquestion=None).count(),
                                 "h1": [
                                     {
                                         "h1_name": h1.name,
-                                        "ques_num": Question.objects.filter(tags__headbase__h1=h1).filter(multisectionquestion=None).count()
+                                        "ques_num": Question.objects.filter(tags__in=h1.get_all_child_headlines().union(
+                                            {h1})).filter(multisectionquestion=None).count()
                                     } for h1 in H1.objects.filter(lesson=les)
                                 ],
                             } for les in Lesson.objects.filter(module=mod)
