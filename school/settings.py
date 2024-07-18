@@ -85,14 +85,14 @@ ASGI_APPLICATION = 'school.asgi.application'
 
 DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "False") == "True"
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [(os.environ.get('REDIS_HOST', 'localhost'), 6379)],
-        },
-    },
-}
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [(os.environ.get('REDIS_HOST', 'localhost'), 6379)],
+#         },
+#     },
+# }
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases

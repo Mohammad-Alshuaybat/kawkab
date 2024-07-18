@@ -1038,7 +1038,7 @@ def share_quiz(request):
 def get_admin_suggestions(request):
     data = request.data
     if _check_admin(data):
-        h1s = H1.objects.annotate(level=Value(1, output_field=IntegerField()))
+        h1s = H1.objects.all().annotate(level=Value(1, output_field=IntegerField()))
         headlines = HeadLine.objects.all()
 
         # Combine into a single queryset
